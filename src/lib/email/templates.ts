@@ -1,7 +1,7 @@
 /**
  * Email templates for Boca Banker
  *
- * Each template returns a complete HTML email string styled with the navy/gold theme.
+ * Each template returns a complete HTML email string styled with the light/amber theme.
  */
 
 function emailWrapper(content: string): string {
@@ -17,13 +17,17 @@ function emailWrapper(content: string): string {
     <tr>
       <td align="center" style="padding: 40px 20px;">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+          <!-- Accent Bar -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #F59E0B, #EAB308); height: 4px; border-radius: 12px 12px 0 0;"></td>
+          </tr>
           <!-- Header -->
           <tr>
-            <td style="background-color: #0F1B2D; padding: 32px 40px; border-radius: 12px 12px 0 0; text-align: center;">
-              <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: #C9A84C; letter-spacing: 1px;">
-                Boca Banker
+            <td style="background-color: #FAFAF8; padding: 32px 40px 24px; text-align: center;">
+              <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: #1F2937; letter-spacing: 1px;">
+                Boca <span style="color: #D97706;">Banker</span>
               </h1>
-              <p style="margin: 8px 0 0; font-size: 13px; color: #94A3B8; letter-spacing: 0.5px;">
+              <p style="margin: 8px 0 0; font-size: 13px; color: #6B7280; letter-spacing: 0.5px;">
                 Cost Segregation &amp; Tax Strategy
               </p>
             </td>
@@ -36,11 +40,11 @@ function emailWrapper(content: string): string {
           </tr>
           <!-- Footer -->
           <tr>
-            <td style="background-color: #0F1B2D; padding: 24px 40px; border-radius: 0 0 12px 12px; text-align: center;">
-              <p style="margin: 0 0 8px; font-size: 12px; color: #64748B;">
+            <td style="background-color: #F3F4F6; padding: 24px 40px; border-radius: 0 0 12px 12px; text-align: center;">
+              <p style="margin: 0 0 8px; font-size: 12px; color: #6B7280;">
                 Boca Banker - Professional Cost Segregation Services
               </p>
-              <p style="margin: 0; font-size: 11px; color: #475569;">
+              <p style="margin: 0; font-size: 11px; color: #9CA3AF;">
                 This email is for informational purposes only and does not constitute tax advice.
                 Please consult with a qualified tax professional before making any decisions.
               </p>
@@ -54,11 +58,11 @@ function emailWrapper(content: string): string {
 </html>`;
 }
 
-function goldButton(text: string, href: string): string {
+function amberButton(text: string, href: string): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin: 28px 0;">
   <tr>
-    <td style="background: linear-gradient(135deg, #C9A84C, #D4B962); border-radius: 8px;">
-      <a href="${href}" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: 600; color: #0F1B2D; text-decoration: none; border-radius: 8px;">
+    <td style="background: linear-gradient(135deg, #F59E0B, #EAB308); border-radius: 10px;">
+      <a href="${href}" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: 600; color: #FFFFFF; text-decoration: none; border-radius: 10px;">
         ${text}
       </a>
     </td>
@@ -78,7 +82,7 @@ interface OutreachParams {
 
 export function outreachTemplate({ clientName, senderName, customMessage }: OutreachParams): string {
   const body = `
-    <h2 style="margin: 0 0 16px; font-size: 20px; color: #0F1B2D;">Hello ${clientName},</h2>
+    <h2 style="margin: 0 0 16px; font-size: 20px; color: #1F2937;">Hello ${clientName},</h2>
     <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
       I hope this message finds you well. My name is ${senderName}, and I specialize in
       helping property owners like you maximize tax savings through <strong>cost segregation studies</strong>.
@@ -97,11 +101,11 @@ export function outreachTemplate({ clientName, senderName, customMessage }: Outr
       I would love the opportunity to show you how much you could save. Would you be available
       for a brief 15-minute call this week?
     </p>
-    ${goldButton('Schedule a Consultation', 'https://bocabanker.com/schedule')}
+    ${amberButton('Schedule a Consultation', 'https://bocabanker.com')}
     <p style="margin: 0; font-size: 15px; color: #374151;">
       Best regards,<br />
-      <strong style="color: #0F1B2D;">${senderName}</strong><br />
-      <span style="color: #C9A84C;">Boca Banker</span>
+      <strong style="color: #1F2937;">${senderName}</strong><br />
+      <span style="color: #D97706;">Boca Banker</span>
     </p>
   `;
   return emailWrapper(body);
@@ -122,7 +126,7 @@ export function followUpTemplate({ clientName, senderName, propertyAddress }: Fo
     : '';
 
   const body = `
-    <h2 style="margin: 0 0 16px; font-size: 20px; color: #0F1B2D;">Hi ${clientName},</h2>
+    <h2 style="margin: 0 0 16px; font-size: 20px; color: #1F2937;">Hi ${clientName},</h2>
     <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
       I wanted to follow up on my previous message about how a cost segregation study could
       benefit you. Many of our clients are surprised to learn they could reduce their current-year
@@ -133,11 +137,11 @@ export function followUpTemplate({ clientName, senderName, propertyAddress }: Fo
       Our no-obligation analysis takes just a few minutes to set up, and we can provide you
       with a preliminary estimate of your potential savings.
     </p>
-    ${goldButton('Get Your Free Estimate', 'https://bocabanker.com/estimate')}
+    ${amberButton('Get Your Free Estimate', 'https://bocabanker.com')}
     <p style="margin: 0; font-size: 15px; color: #374151;">
       Looking forward to hearing from you,<br />
-      <strong style="color: #0F1B2D;">${senderName}</strong><br />
-      <span style="color: #C9A84C;">Boca Banker</span>
+      <strong style="color: #1F2937;">${senderName}</strong><br />
+      <span style="color: #D97706;">Boca Banker</span>
     </p>
   `;
   return emailWrapper(body);
@@ -155,7 +159,7 @@ export function reportDeliveryTemplate({
   totalSavings,
 }: ReportDeliveryParams): string {
   const body = `
-    <h2 style="margin: 0 0 16px; font-size: 20px; color: #0F1B2D;">Great news, ${clientName}!</h2>
+    <h2 style="margin: 0 0 16px; font-size: 20px; color: #1F2937;">Great news, ${clientName}!</h2>
     <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
       Your cost segregation study report is ready. Here is a quick summary:
     </p>
@@ -163,49 +167,20 @@ export function reportDeliveryTemplate({
       <tr>
         <td style="padding: 20px;">
           <p style="margin: 0 0 8px; font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Study</p>
-          <p style="margin: 0 0 16px; font-size: 16px; color: #0F1B2D; font-weight: 600;">${studyName}</p>
+          <p style="margin: 0 0 16px; font-size: 16px; color: #1F2937; font-weight: 600;">${studyName}</p>
           <p style="margin: 0 0 8px; font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Estimated Total Tax Savings</p>
-          <p style="margin: 0; font-size: 28px; color: #C9A84C; font-weight: 700;">${totalSavings}</p>
+          <p style="margin: 0; font-size: 28px; color: #D97706; font-weight: 700;">${totalSavings}</p>
         </td>
       </tr>
     </table>
     <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
       You can access your full report, including detailed depreciation schedules and asset breakdowns,
-      by logging into your Boca Banker dashboard.
+      by visiting our website.
     </p>
-    ${goldButton('View Full Report', 'https://bocabanker.com/dashboard/studies')}
+    ${amberButton('View Full Report', 'https://bocabanker.com')}
     <p style="margin: 0; font-size: 15px; color: #374151;">
       If you have any questions, do not hesitate to reach out.<br />
-      <strong style="color: #0F1B2D;">The Boca Banker Team</strong>
-    </p>
-  `;
-  return emailWrapper(body);
-}
-
-interface WelcomeParams {
-  clientName: string;
-}
-
-export function welcomeTemplate({ clientName }: WelcomeParams): string {
-  const body = `
-    <h2 style="margin: 0 0 16px; font-size: 20px; color: #0F1B2D;">Welcome to Boca Banker, ${clientName}!</h2>
-    <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
-      Thank you for choosing Boca Banker for your cost segregation and tax strategy needs. We
-      are excited to help you maximize the value of your real estate investments.
-    </p>
-    <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
-      Here is what you can do with your new account:
-    </p>
-    <ul style="margin: 0 0 16px; padding-left: 20px; font-size: 15px; color: #374151; line-height: 1.8;">
-      <li>Run <strong>depreciation calculations</strong> for any property</li>
-      <li>Generate <strong>cost segregation study reports</strong></li>
-      <li>Chat with our <strong>AI-powered tax advisor</strong></li>
-      <li>Track all your <strong>properties and clients</strong> in one place</li>
-    </ul>
-    ${goldButton('Go to Dashboard', 'https://bocabanker.com/dashboard')}
-    <p style="margin: 0; font-size: 15px; color: #374151;">
-      Welcome aboard,<br />
-      <strong style="color: #0F1B2D;">The Boca Banker Team</strong>
+      <strong style="color: #1F2937;">The Boca Banker Team</strong>
     </p>
   `;
   return emailWrapper(body);

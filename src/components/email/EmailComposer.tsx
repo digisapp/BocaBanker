@@ -31,10 +31,6 @@ const TEMPLATE_DEFAULTS: Record<
     subject: 'Your Cost Segregation Report is Ready',
     body: 'Great news! Your cost segregation study report has been completed and is ready for review. You can access the full report, including detailed depreciation schedules and asset breakdowns, through your Boca Banker dashboard.\n\nPlease do not hesitate to reach out if you have any questions.',
   },
-  welcome: {
-    subject: 'Welcome to Boca Banker',
-    body: 'Welcome to Boca Banker! We are excited to help you maximize the value of your real estate investments through professional cost segregation analysis.\n\nWith your account, you can run depreciation calculations, generate study reports, and chat with our AI-powered tax advisor.',
-  },
 };
 
 export default function EmailComposer() {

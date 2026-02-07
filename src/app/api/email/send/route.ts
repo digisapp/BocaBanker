@@ -5,7 +5,6 @@ import {
   outreachTemplate,
   followUpTemplate,
   reportDeliveryTemplate,
-  welcomeTemplate,
 } from '@/lib/email/templates';
 
 export async function POST(request: NextRequest) {
@@ -48,9 +47,6 @@ export async function POST(request: NextRequest) {
             studyName: studyName || 'Cost Segregation Study',
             totalSavings: totalSavings || '$0',
           });
-          break;
-        case 'welcome':
-          emailHtml = welcomeTemplate({ clientName: client });
           break;
         default:
           emailHtml = `<p>${subject}</p>`;

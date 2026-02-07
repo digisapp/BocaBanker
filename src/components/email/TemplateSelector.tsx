@@ -1,6 +1,6 @@
 'use client';
 
-import { Mail, UserPlus, FileText, MessageSquare } from 'lucide-react';
+import { Mail, FileText, MessageSquare } from 'lucide-react';
 
 interface TemplateSelectorProps {
   onSelect: (templateName: string) => void;
@@ -28,13 +28,6 @@ const TEMPLATES = [
     description: 'Notify client that their study report is ready',
     preview: 'Deliver a completed cost seg study report',
     icon: FileText,
-  },
-  {
-    name: 'welcome',
-    label: 'Welcome',
-    description: 'Welcome new clients to Boca Banker',
-    preview: 'Onboard a new client with account information',
-    icon: UserPlus,
   },
 ];
 

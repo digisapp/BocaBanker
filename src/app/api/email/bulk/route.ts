@@ -8,7 +8,6 @@ import {
   outreachTemplate,
   followUpTemplate,
   reportDeliveryTemplate,
-  welcomeTemplate,
 } from '@/lib/email/templates';
 
 /**
@@ -108,9 +107,6 @@ export async function POST(request: NextRequest) {
             studyName: 'Cost Segregation Study',
             totalSavings: 'See report for details',
           });
-          break;
-        case 'welcome':
-          html = welcomeTemplate({ clientName });
           break;
         default:
           html = `<p>${subject}</p>`;

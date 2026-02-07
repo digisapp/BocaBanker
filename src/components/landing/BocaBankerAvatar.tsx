@@ -42,53 +42,79 @@ export default function BocaBankerAvatar({ className, size = 200 }: AvatarProps)
       <ellipse cx="142" cy="88" rx="6" ry="10" fill="#E0B88A" />
       <path d="M144 85 Q142 88 144 91" stroke="#D4A878" strokeWidth="1" fill="none" />
 
-      {/* Hair — full volume swept back, silver/white */}
-      {/* Main hair mass */}
+      {/* Hair — thick, wavy, flowing McConaughey style */}
+      {/* Back hair mass — flows down to shoulders */}
       <path
-        d="M54 82 C50 52 66 26 100 26 C134 26 150 52 146 82
-           C146 68 134 38 100 38 C66 38 54 68 54 82Z"
-        fill="#C8C0B8"
+        d="M44 96 C38 60 56 16 100 14 C144 16 162 60 156 96
+           C158 108 154 120 148 130 C142 126 146 104 146 88
+           C150 52 134 28 100 26 C66 28 50 52 54 88
+           C54 104 58 126 52 130 C46 120 42 108 44 96Z"
+        fill="#5C3A1E"
       />
-      {/* Top volume — swept-back wave crest */}
+      {/* Main hair crown — big volume on top */}
       <path
-        d="M60 62 C58 38 76 22 100 20 C124 22 142 38 140 62
-           C138 46 126 30 100 28 C74 30 62 46 60 62Z"
-        fill="#D8D2CC"
+        d="M48 80 C44 48 64 18 100 16 C136 18 156 48 152 80
+           C152 64 138 32 100 30 C62 32 48 64 48 80Z"
+        fill="#6B4226"
       />
-      {/* Peak wave on top */}
+      {/* Top wave crest — high volume */}
       <path
-        d="M72 42 C78 24 92 18 104 18 C116 20 126 28 128 42
-           C124 32 114 24 102 24 C88 24 78 32 72 42Z"
-        fill="#E8E4E0"
+        d="M54 58 C52 30 72 10 100 8 C128 10 148 30 146 58
+           C144 38 128 18 100 16 C72 18 56 38 54 58Z"
+        fill="#7A4E30"
       />
-      {/* Left side volume — flows down past ear */}
-      <path d="M52 84 C48 66 52 48 62 40 C56 54 54 70 56 88Z" fill="#D8D2CC" />
-      <path d="M54 86 C52 74 54 60 60 52 C56 62 55 76 57 88Z" fill="#E8E4E0" opacity="0.5" />
-      {/* Right side volume — flows down past ear */}
-      <path d="M148 84 C152 66 148 48 138 40 C144 54 146 70 144 88Z" fill="#D8D2CC" />
-      <path d="M146 86 C148 74 146 60 140 52 C144 62 145 76 143 88Z" fill="#E8E4E0" opacity="0.5" />
-      {/* Flow highlight — bright white shine on waves */}
-      <path d="M76 30 Q88 22 104 24" stroke="#F5F2F0" strokeWidth="2.5" fill="none" opacity="0.7" />
-      <path d="M80 36 Q92 28 108 30" stroke="#F0ECE8" strokeWidth="1.5" fill="none" opacity="0.5" />
-      {/* Extra white highlights */}
-      <path d="M88 26 Q96 22 106 24" stroke="white" strokeWidth="1.5" fill="none" opacity="0.4" />
-      {/* Silver depth at temples */}
-      <path d="M66 50 Q74 40 84 44" stroke="#B0A8A0" strokeWidth="1.5" fill="none" opacity="0.5" />
-      <path d="M134 50 Q126 40 116 44" stroke="#B0A8A0" strokeWidth="1.5" fill="none" opacity="0.5" />
-      {/* Subtle part line */}
-      <path d="M94 22 Q98 38 96 50" stroke="#B8B0A8" strokeWidth="0.8" fill="none" opacity="0.25" />
+      {/* Peak wave — tousled top */}
+      <path
+        d="M64 40 C68 16 86 6 102 6 C118 8 134 18 136 40
+           C132 24 118 12 102 12 C84 12 70 24 64 40Z"
+        fill="#8B5E3C"
+      />
+      {/* Extra top flip — windswept volume */}
+      <path
+        d="M70 28 C76 10 90 2 106 4 C120 6 130 14 132 28
+           C128 16 118 8 104 8 C90 8 78 14 70 28Z"
+        fill="#9A6D48"
+      />
+      {/* Left side — thick waves flowing down past ear to shoulder */}
+      <path d="M44 96 C38 68 44 42 56 32 C48 50 44 72 46 98 C46 112 48 124 52 132 L44 128 C40 116 42 106 44 96Z" fill="#6B4226" />
+      <path d="M48 100 C44 76 48 52 58 40 C52 56 48 78 50 100 C50 110 52 120 54 128 L48 124Z" fill="#7A4E30" />
+      {/* Left flowing wave locks */}
+      <path d="M46 90 C42 80 44 62 54 48 C48 64 46 80 48 96 C48 108 50 118 52 126" stroke="#8B5E3C" strokeWidth="3" fill="none" opacity="0.6" />
+      <path d="M50 92 C48 82 48 68 56 54 C50 68 50 84 52 100" stroke="#9A6D48" strokeWidth="2" fill="none" opacity="0.4" />
+      {/* Right side — thick waves flowing down past ear to shoulder */}
+      <path d="M156 96 C162 68 156 42 144 32 C152 50 156 72 154 98 C154 112 152 124 148 132 L156 128 C160 116 158 106 156 96Z" fill="#6B4226" />
+      <path d="M152 100 C156 76 152 52 142 40 C148 56 152 78 150 100 C150 110 148 120 146 128 L152 124Z" fill="#7A4E30" />
+      {/* Right flowing wave locks */}
+      <path d="M154 90 C158 80 156 62 146 48 C152 64 154 80 152 96 C152 108 150 118 148 126" stroke="#8B5E3C" strokeWidth="3" fill="none" opacity="0.6" />
+      <path d="M150 92 C152 82 152 68 144 54 C150 68 150 84 148 100" stroke="#9A6D48" strokeWidth="2" fill="none" opacity="0.4" />
+      {/* Sun-kissed highlights — warm golden streaks */}
+      <path d="M74 20 Q88 10 106 12" stroke="#C4956A" strokeWidth="3" fill="none" opacity="0.6" />
+      <path d="M78 28 Q92 18 110 20" stroke="#B8845A" strokeWidth="2.5" fill="none" opacity="0.5" />
+      <path d="M86 14 Q98 8 112 12" stroke="#D4A878" strokeWidth="2" fill="none" opacity="0.4" />
+      {/* Highlight streaks through waves */}
+      <path d="M66 44 Q78 32 90 36" stroke="#C4956A" strokeWidth="2" fill="none" opacity="0.45" />
+      <path d="M134 44 Q122 32 110 36" stroke="#C4956A" strokeWidth="2" fill="none" opacity="0.45" />
+      {/* Left side highlights */}
+      <path d="M48 70 Q50 58 56 48" stroke="#B8845A" strokeWidth="2" fill="none" opacity="0.35" />
+      <path d="M50 90 Q48 78 52 66" stroke="#C4956A" strokeWidth="1.5" fill="none" opacity="0.3" />
+      {/* Right side highlights */}
+      <path d="M152 70 Q150 58 144 48" stroke="#B8845A" strokeWidth="2" fill="none" opacity="0.35" />
+      <path d="M150 90 Q152 78 148 66" stroke="#C4956A" strokeWidth="1.5" fill="none" opacity="0.3" />
+      {/* Tousled wave texture on top */}
+      <path d="M80 22 C86 14 96 10 106 12" stroke="#A0704F" strokeWidth="1.5" fill="none" opacity="0.35" />
+      <path d="M90 18 C96 12 108 10 116 16" stroke="#D4A878" strokeWidth="1" fill="none" opacity="0.3" />
 
-      {/* Eyebrows — thick, distinguished */}
+      {/* Eyebrows — thick, brown */}
       <path
         d="M70 66 Q80 58 92 65"
-        stroke="#A09890"
+        stroke="#6B4226"
         strokeWidth="3.5"
         strokeLinecap="round"
         fill="none"
       />
       <path
         d="M71 67 Q80 61 90 67"
-        stroke="#B0A8A0"
+        stroke="#8B5E3C"
         strokeWidth="1.5"
         strokeLinecap="round"
         fill="none"
@@ -96,14 +122,14 @@ export default function BocaBankerAvatar({ className, size = 200 }: AvatarProps)
       />
       <path
         d="M108 65 Q120 58 130 66"
-        stroke="#A09890"
+        stroke="#6B4226"
         strokeWidth="3.5"
         strokeLinecap="round"
         fill="none"
       />
       <path
         d="M110 67 Q120 61 129 67"
-        stroke="#B0A8A0"
+        stroke="#8B5E3C"
         strokeWidth="1.5"
         strokeLinecap="round"
         fill="none"
@@ -151,30 +177,30 @@ export default function BocaBankerAvatar({ className, size = 200 }: AvatarProps)
       {/* Chin shadow */}
       <path d="M82 125 Q100 130 118 125" stroke="#D4A878" strokeWidth="1" opacity="0.3" fill="none" />
 
-      {/* Silver beard — trimmed, distinguished */}
+      {/* Brown beard — rugged scruff */}
       {/* Jaw beard outline */}
       <path
         d="M68 104 C66 112 68 122 78 128 Q88 134 100 135 Q112 134 122 128 C132 122 134 112 132 104"
-        fill="#C8C2BC"
+        fill="#7A4E30"
         opacity="0.55"
       />
       {/* Inner beard depth */}
       <path
         d="M74 108 C72 116 74 124 82 129 Q92 133 100 134 Q108 133 118 129 C126 124 128 116 126 108"
-        fill="#D5D0CC"
+        fill="#8B5E3C"
         opacity="0.45"
       />
       {/* Mustache */}
       <path
         d="M84 104 Q88 100 100 100 Q112 100 116 104 Q112 107 100 108 Q88 107 84 104Z"
-        fill="#B8B2AC"
+        fill="#6B4226"
         opacity="0.7"
       />
       {/* Beard texture strokes */}
-      <path d="M82 118 Q90 122 100 122" stroke="#B8B2AC" strokeWidth="0.8" fill="none" opacity="0.3" />
-      <path d="M100 122 Q110 122 118 118" stroke="#B8B2AC" strokeWidth="0.8" fill="none" opacity="0.3" />
-      <path d="M86 124 Q94 128 100 128" stroke="#C8C2BC" strokeWidth="0.6" fill="none" opacity="0.25" />
-      <path d="M100 128 Q106 128 114 124" stroke="#C8C2BC" strokeWidth="0.6" fill="none" opacity="0.25" />
+      <path d="M82 118 Q90 122 100 122" stroke="#6B4226" strokeWidth="0.8" fill="none" opacity="0.3" />
+      <path d="M100 122 Q110 122 118 118" stroke="#6B4226" strokeWidth="0.8" fill="none" opacity="0.3" />
+      <path d="M86 124 Q94 128 100 128" stroke="#7A4E30" strokeWidth="0.6" fill="none" opacity="0.25" />
+      <path d="M100 128 Q106 128 114 124" stroke="#7A4E30" strokeWidth="0.6" fill="none" opacity="0.25" />
 
       {/* Gradients */}
       <defs>

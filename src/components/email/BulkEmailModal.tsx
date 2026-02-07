@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Send, Loader2, Users, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -33,7 +33,6 @@ const TEMPLATE_SUBJECTS: Record<string, string> = {
   outreach: 'Maximize Your Tax Savings with Cost Segregation',
   'follow-up': 'Following Up: Cost Segregation Opportunity',
   'report-delivery': 'Your Cost Segregation Report is Ready',
-  welcome: 'Welcome to Boca Banker',
 };
 
 interface BulkEmailModalProps {
@@ -160,11 +159,12 @@ export default function BulkEmailModal({ trigger }: BulkEmailModalProps) {
           {/* Custom Message */}
           <div className="space-y-2">
             <Label className="text-gray-500">Custom Message (optional)</Label>
-            <Input
+            <Textarea
               placeholder="Add a personal note..."
               value={customMessage}
               onChange={(e) => setCustomMessage(e.target.value)}
-              className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
+              rows={3}
+              className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20 resize-none"
             />
           </div>
 
