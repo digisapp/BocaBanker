@@ -40,22 +40,30 @@ function getTextContent(message: UIMessage): string {
   return '';
 }
 
-export function ChatInterface() {
+interface ChatInterfaceProps {
+  initialGuestHandoff?: boolean;
+}
+
+export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<
     string | null
   >(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [guestHandoff, setGuestHandoff] = useState(initialGuestHandoff);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: '/api/chat',
-        body: () => ({ conversationId: activeConversationId }),
+        body: () => ({
+          conversationId: activeConversationId,
+          ...(guestHandoff ? { isGuestHandoff: true } : {}),
+        }),
       }),
-    [activeConversationId]
+    [activeConversationId, guestHandoff]
   );
 
   const {
@@ -71,6 +79,33 @@ export function ChatInterface() {
   });
 
   const isLoading = status === 'submitted' || status === 'streaming';
+
+  // Guest handoff: load guest chat history from localStorage and bootstrap
+  useEffect(() => {
+    if (!initialGuestHandoff) return;
+
+    try {
+      const stored = localStorage.getItem('bb_guest_chat_history');
+      if (stored) {
+        const guestMessages = JSON.parse(stored) as UIMessage[];
+        // Filter out the greeting message and only keep user/assistant messages with content
+        const validMessages = guestMessages.filter(
+          (m) => m.id !== 'greeting' && (m.role === 'user' || m.role === 'assistant')
+        );
+        if (validMessages.length > 0) {
+          setMessages(validMessages);
+        }
+        // Clear guest storage
+        localStorage.removeItem('bb_guest_chat_history');
+        localStorage.removeItem('bb_guest_msg_count');
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+
+    // Clear the handoff flag after first send
+    setGuestHandoff(false);
+  }, [initialGuestHandoff, setMessages]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

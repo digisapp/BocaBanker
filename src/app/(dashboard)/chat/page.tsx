@@ -1,7 +1,16 @@
 'use client';
 
+import { Suspense } from 'react';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { Landmark } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+
+function ChatContent() {
+  const searchParams = useSearchParams();
+  const fromGuest = searchParams.get('from') === 'guest';
+
+  return <ChatInterface initialGuestHandoff={fromGuest} />;
+}
 
 export default function ChatPage() {
   return (
@@ -22,7 +31,9 @@ export default function ChatPage() {
       </div>
 
       {/* Chat Interface */}
-      <ChatInterface />
+      <Suspense fallback={<div className="flex-1" />}>
+        <ChatContent />
+      </Suspense>
     </div>
   );
 }

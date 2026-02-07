@@ -10,16 +10,14 @@ import {
   ArrowRight,
   Zap,
   TrendingUp,
-  Building2,
   BarChart3,
   FileText,
-  Sparkles,
   MessageCircle,
-  Send,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
+import GuestChatWidget from '@/components/landing/GuestChatWidget'
 
 /* ─── Scroll Reveal ─── */
 function Reveal({
@@ -145,13 +143,6 @@ const features = [
   },
 ]
 
-const chatMessages = [
-  { from: 'user', text: 'What kind of tax savings can I expect on a $2M commercial property?' },
-  { from: 'bot', text: 'Great question! On a $2M commercial property, a cost segregation study typically reclassifies 20-40% of the building cost into shorter-lived assets. That could mean $150K-$300K in first-year bonus depreciation deductions. Want me to run the numbers for a specific property?' },
-  { from: 'user', text: 'Yes! It\'s an office building in Boca, purchased last month.' },
-  { from: 'bot', text: 'Perfect — a Boca Raton office building is my specialty! Let me pull up the calculator. At a 37% tax rate with 100% bonus depreciation, you\'re looking at roughly $185K in first-year tax savings. Want me to generate the full study?' },
-]
-
 const stats = [
   { value: 40, suffix: '+', label: 'Years of Experience', prefix: '', emoji: '🌴' },
   { value: 2, suffix: 'B+', label: 'Property Value Analyzed', prefix: '$', emoji: '🏢' },
@@ -220,13 +211,6 @@ export default function Home() {
             {/* Text side */}
             <div className="flex-1 text-center lg:text-left">
               <Reveal>
-                <div className="inline-flex items-center gap-2 rounded-full bg-sky-100 px-4 py-1.5 text-sm font-medium text-sky-700 mb-6">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Boca Raton &bull; Palm Beach &bull; South Florida
-                </div>
-              </Reveal>
-
-              <Reveal delay={100}>
                 <h1 className="font-serif font-bold tracking-tight text-gray-900 leading-[1.1]">
                   <span className="block text-4xl sm:text-5xl md:text-6xl">Meet</span>
                   <span className="block text-5xl sm:text-6xl md:text-7xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-500 bg-clip-text text-transparent mt-1">
@@ -237,7 +221,7 @@ export default function Home() {
 
               <Reveal delay={200}>
                 <p className="mt-6 text-lg sm:text-xl text-gray-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                  Your AI-powered banking wingman with{' '}
+                  Your AI-powered banking specialist with{' '}
                   <span className="font-semibold text-gray-800">40 years of South Florida smarts</span>.
                   He knows cost segregation inside and out, never takes a coffee break,
                   and has the best tan in fintech.
@@ -252,7 +236,7 @@ export default function Home() {
                     className="h-13 min-w-[200px] bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-base hover:opacity-90 shadow-lg shadow-amber-500/25 rounded-xl"
                   >
                     <Link href="/signup">
-                      Talk to Him Free
+                      Live Chat for Free
                       <MessageCircle className="ml-2 h-5 w-5" />
                     </Link>
                   </Button>
@@ -313,7 +297,7 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════
-         CHAT PREVIEW — Show him in action
+         LIVE CHAT — Try him out
          ══════════════════════════════════════ */}
       <section className="py-20 sm:py-28 px-6 bg-[#FAFAF8]">
         <div className="mx-auto max-w-5xl">
@@ -330,59 +314,13 @@ export default function Home() {
               </h2>
               <p className="mt-4 text-gray-500 max-w-lg mx-auto">
                 Boca Banker has been crunching numbers since before spreadsheets were cool.
-                Here&apos;s a taste of what he can do.
+                Try 3 free messages — no signup required.
               </p>
             </div>
           </Reveal>
 
           <Reveal delay={100}>
-            <div className="mx-auto max-w-2xl bg-white rounded-3xl shadow-xl shadow-black/5 border border-gray-100 overflow-hidden">
-              {/* Chat header */}
-              <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                <BocaBankerAvatar size={36} />
-                <div>
-                  <p className="font-semibold text-gray-900 text-sm">Boca Banker</p>
-                  <p className="text-xs text-green-500 flex items-center gap-1">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
-                    Online &bull; Ready to chat
-                  </p>
-                </div>
-              </div>
-
-              {/* Messages */}
-              <div className="p-6 space-y-4 max-h-[400px] overflow-y-auto">
-                {chatMessages.map((msg, i) => (
-                  <Reveal key={i} delay={i * 150}>
-                    <div className={cn(
-                      'flex gap-3',
-                      msg.from === 'user' ? 'justify-end' : 'justify-start'
-                    )}>
-                      {msg.from === 'bot' && (
-                        <BocaBankerAvatar size={32} className="flex-shrink-0 mt-1" />
-                      )}
-                      <div className={cn(
-                        'max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
-                        msg.from === 'user'
-                          ? 'bg-sky-500 text-white rounded-br-md'
-                          : 'bg-gray-100 text-gray-800 rounded-bl-md'
-                      )}>
-                        {msg.text}
-                      </div>
-                    </div>
-                  </Reveal>
-                ))}
-              </div>
-
-              {/* Input mock */}
-              <div className="px-6 py-4 border-t border-gray-100">
-                <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
-                  <span className="text-sm text-gray-400 flex-1">Ask Boca Banker anything...</span>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
-                    <Send className="h-4 w-4" />
-                  </div>
-                </div>
-              </div>
-            </div>
+            <GuestChatWidget />
           </Reveal>
         </div>
       </section>
@@ -520,7 +458,7 @@ export default function Home() {
                 asChild
                 variant="outline"
                 size="lg"
-                className="h-14 min-w-[160px] border-white/30 text-white text-base hover:bg-white/10 rounded-xl"
+                className="h-14 min-w-[160px] border-white/30 text-[#0F1B2D] bg-white/20 text-base hover:bg-white/30 rounded-xl font-semibold"
               >
                 <Link href="/login">Sign In</Link>
               </Button>
