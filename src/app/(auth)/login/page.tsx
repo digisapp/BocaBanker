@@ -138,13 +138,7 @@ export default function LoginPage() {
             </Button>
 
             <p className="text-sm text-gray-500 text-center">
-              Don&apos;t have an account?{' '}
-              <Link
-                href="/signup"
-                className="text-amber-600 hover:text-amber-700 font-medium transition-colors"
-              >
-                Sign Up
-              </Link>
+              Admin access only
             </p>
           </CardFooter>
         </form>

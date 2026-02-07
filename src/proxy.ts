@@ -63,8 +63,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Redirect authenticated users away from login/signup to dashboard
-  if ((pathname === '/login' || pathname === '/signup') && user) {
+  // Redirect authenticated users away from login to dashboard
+  if (pathname === '/login' && user) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
@@ -87,7 +87,6 @@ export const config = {
     '/documents/:path*',
     '/settings/:path*',
     '/login',
-    '/signup',
     '/reset-password',
   ],
 }

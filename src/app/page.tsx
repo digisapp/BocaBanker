@@ -170,17 +170,9 @@ export default function Home() {
               Boca Banker
             </span>
           </Link>
-          <div className="flex items-center gap-3">
-            <Button asChild variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm">
-              <Link href="/login">Login</Link>
-            </Button>
-            <Button asChild className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90 text-sm px-5 shadow-lg shadow-amber-500/20">
-              <Link href="/signup">
-                Get Started
-                <ArrowRight className="ml-1.5 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
+          <Button asChild variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm">
+            <Link href="/login">Sign In</Link>
+          </Button>
         </div>
       </nav>
 
@@ -212,25 +204,13 @@ export default function Home() {
 
               <Reveal delay={200}>
                 <p className="mt-6 text-lg sm:text-xl text-gray-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                  Your AI-powered banking specialist with{' '}
-                  <span className="font-semibold text-gray-800">40 years of South Florida smarts</span>.
-                  He knows cost segregation inside and out, never takes a coffee break,
-                  and has the best tan in fintech.
+                  Your AI-powered banking specialist. He knows banking, mortgages, and cost segregation
+                  inside and out, never takes a coffee break, and has the best tan in fintech.
                 </p>
               </Reveal>
 
               <Reveal delay={300}>
                 <div className="mt-8 flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">
-                  <Button
-                    asChild
-                    size="lg"
-                    className="h-13 min-w-[200px] bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-base hover:opacity-90 shadow-lg shadow-amber-500/25 rounded-xl"
-                  >
-                    <Link href="/signup">
-                      Live Chat for Free
-                      <MessageCircle className="ml-2 h-5 w-5" />
-                    </Link>
-                  </Button>
                   <Button
                     asChild
                     variant="outline"
@@ -390,24 +370,16 @@ export default function Home() {
               Join banking pros across South Florida who use Boca Banker to find millions in tax savings.
               Free to start. Zero vacation days required.
             </p>
-            <div className="mt-10 flex flex-col sm:flex-row items-center gap-4 justify-center">
+            <div className="mt-10">
               <Button
                 asChild
                 size="lg"
                 className="h-14 min-w-[220px] bg-white text-sky-700 font-bold text-base hover:bg-white/90 shadow-xl shadow-black/10 rounded-xl"
               >
-                <Link href="/signup">
-                  Create Free Account
+                <Link href="/login">
+                  Sign In
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="h-14 min-w-[160px] border-white/30 text-[#0F1B2D] bg-white/20 text-base hover:bg-white/30 rounded-xl font-semibold"
-              >
-                <Link href="/login">Sign In</Link>
               </Button>
             </div>
           </div>
@@ -427,9 +399,7 @@ export default function Home() {
               </span>
             </div>
             <div className="flex items-center gap-8 text-sm text-gray-500">
-              <Link href="/login" className="hover:text-gray-900 transition-colors">Login</Link>
-              <Link href="/signup" className="hover:text-gray-900 transition-colors">Sign Up</Link>
-              <Link href="/dashboard" className="hover:text-gray-900 transition-colors">Dashboard</Link>
+              <Link href="/login" className="hover:text-gray-900 transition-colors">Sign In</Link>
             </div>
             <p className="text-xs text-gray-400">
               &copy; {new Date().getFullYear()} Boca Banker. All rights reserved.
