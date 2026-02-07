@@ -144,7 +144,6 @@ const features = [
 ]
 
 const stats = [
-  { value: 40, suffix: '+', label: 'Years of Experience', prefix: '', emoji: '🌴' },
   { value: 2, suffix: 'B+', label: 'Property Value Analyzed', prefix: '$', emoji: '🏢' },
   { value: 500, suffix: '+', label: 'Studies Completed', prefix: '', emoji: '📊' },
   { value: 85, suffix: '%', label: 'Time Saved', prefix: '', emoji: '⚡' },
@@ -253,23 +252,9 @@ export default function Home() {
 
             </div>
 
-            {/* Avatar side */}
-            <Reveal delay={200} className="flex-shrink-0">
-              <div className="relative">
-                {/* Glow behind avatar */}
-                <div className="absolute inset-0 scale-110 rounded-full bg-gradient-to-br from-sky-300/40 via-amber-200/30 to-teal-200/20 blur-[40px]" />
-                {/* Avatar */}
-                <div className="relative animate-float-slow">
-                  <BocaBankerAvatar size={280} className="drop-shadow-2xl sm:w-[320px] sm:h-[320px]" />
-                </div>
-                {/* Floating badges */}
-                <div className="absolute -top-2 -right-2 bg-white rounded-2xl px-3 py-1.5 shadow-lg shadow-black/5 border border-gray-100 text-sm font-medium text-gray-700 animate-float-fast">
-                  🌴 40 yrs exp
-                </div>
-                <div className="absolute -bottom-2 -left-4 bg-white rounded-2xl px-3 py-1.5 shadow-lg shadow-black/5 border border-gray-100 text-sm font-medium text-gray-700 animate-float-medium">
-                  🧠 AI Powered
-                </div>
-              </div>
+            {/* Live chat widget */}
+            <Reveal delay={200} className="flex-1 min-w-0 w-full lg:max-w-lg">
+              <GuestChatWidget />
             </Reveal>
           </div>
         </div>
@@ -293,35 +278,6 @@ export default function Home() {
               </Reveal>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════
-         LIVE CHAT — Try him out
-         ══════════════════════════════════════ */}
-      <section className="py-20 sm:py-28 px-6 bg-[#FAFAF8]">
-        <div className="mx-auto max-w-5xl">
-          <Reveal>
-            <div className="text-center mb-12">
-              <p className="text-sm font-semibold tracking-widest uppercase text-sky-600 mb-3">
-                See Him in Action
-              </p>
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">
-                Drop him a question.{' '}
-                <span className="bg-gradient-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent">
-                  He doesn&apos;t bite.
-                </span>
-              </h2>
-              <p className="mt-4 text-gray-500 max-w-lg mx-auto">
-                Boca Banker has been crunching numbers since before spreadsheets were cool.
-                Try 3 free messages — no signup required.
-              </p>
-            </div>
-          </Reveal>
-
-          <Reveal delay={100}>
-            <GuestChatWidget />
-          </Reveal>
         </div>
       </section>
 
