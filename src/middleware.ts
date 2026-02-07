@@ -39,8 +39,25 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // Protect dashboard routes - redirect to login if not authenticated
-  if (pathname.startsWith('/dashboard') && !user) {
+  // Protected route prefixes (all routes under the (dashboard) layout group)
+  const protectedPrefixes = [
+    '/dashboard',
+    '/chat',
+    '/clients',
+    '/properties',
+    '/studies',
+    '/calculators',
+    '/email',
+    '/documents',
+    '/settings',
+  ]
+
+  const isProtected = protectedPrefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(prefix + '/')
+  )
+
+  // Redirect to login if not authenticated
+  if (isProtected && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
@@ -59,5 +76,17 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/signup'],
+  matcher: [
+    '/dashboard/:path*',
+    '/chat/:path*',
+    '/clients/:path*',
+    '/properties/:path*',
+    '/studies/:path*',
+    '/calculators/:path*',
+    '/email/:path*',
+    '/documents/:path*',
+    '/settings/:path*',
+    '/login',
+    '/signup',
+  ],
 }
