@@ -8,7 +8,6 @@ import {
   Users,
   Mail,
   ArrowRight,
-  Shield,
   Zap,
   TrendingUp,
   Building2,
@@ -268,19 +267,6 @@ export default function Home() {
                 </div>
               </Reveal>
 
-              <Reveal delay={400}>
-                <div className="mt-8 flex items-center gap-5 justify-center lg:justify-start text-sm text-gray-500">
-                  <div className="flex items-center gap-1.5">
-                    <Shield className="h-4 w-4 text-teal-500" />
-                    Bank-Grade Secure
-                  </div>
-                  <div className="h-4 w-px bg-gray-200" />
-                  <div className="flex items-center gap-1.5">
-                    <Zap className="h-4 w-4 text-amber-500" />
-                    Powered by Grok AI
-                  </div>
-                </div>
-              </Reveal>
             </div>
 
             {/* Avatar side */}
@@ -563,9 +549,6 @@ export default function Home() {
             <p className="text-xs text-gray-400">
               &copy; {new Date().getFullYear()} Boca Banker. All rights reserved.
             </p>
-          </div>
-          <div className="mt-6 text-center text-xs text-gray-300">
-            Boca Raton &bull; Palm Beach &bull; South Florida 🌴
           </div>
         </div>
       </footer>
