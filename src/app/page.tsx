@@ -5,7 +5,6 @@ import Link from 'next/link'
 import {
   Brain,
   Calculator,
-  ArrowRight,
   MessageCircle,
   Building2,
   DollarSign,
@@ -94,14 +93,14 @@ const features = [
   {
     icon: Brain,
     title: 'AI Chat Assistant',
-    desc: 'Ask him anything about cost segregation, tax strategy, or property analysis. He responds in seconds with 40 years of banking wisdom.',
+    desc: 'Ask him anything about banking, mortgages, cost segregation, or property analysis. He responds in seconds with decades of financial expertise.',
     color: 'bg-sky-100 text-sky-600',
     border: 'border-sky-200',
   },
   {
     icon: Calculator,
     title: 'Cost Seg Calculator',
-    desc: 'Plug in a property, get MACRS depreciation schedules, bonus dep, and NPV-optimized tax savings. IRS-compliant, always.',
+    desc: 'Tell him about your property and get MACRS depreciation schedules, bonus dep estimates, and tax savings projections on the spot.',
     color: 'bg-amber-100 text-amber-600',
     border: 'border-amber-200',
   },
@@ -136,9 +135,10 @@ const features = [
 ]
 
 const stats = [
-  { value: 2, suffix: 'B+', label: 'Property Value Analyzed', prefix: '$', emoji: '🏢' },
+  { value: 2, suffix: 'B+', label: 'Property Values Analyzed', prefix: '$', emoji: '🏢' },
   { value: 500, suffix: '+', label: 'Studies Completed', prefix: '', emoji: '📊' },
-  { value: 85, suffix: '%', label: 'Time Saved', prefix: '', emoji: '⚡' },
+  { value: 40, suffix: '+', label: 'Years of Experience', prefix: '', emoji: '🏦' },
+  { value: 85, suffix: '%', label: 'Faster Than Manual Analysis', prefix: '', emoji: '⚡' },
 ]
 
 /* ─── Page ─── */
@@ -204,23 +204,11 @@ export default function Home() {
 
               <Reveal delay={200}>
                 <p className="mt-6 text-lg sm:text-xl text-gray-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                  Your AI-powered banking specialist. He knows banking, mortgages, and cost segregation
+                  Your AI-powered financial specialist. He knows banking, mortgages, and cost segregation
                   inside and out, never takes a coffee break, and has the best tan in fintech.
                 </p>
               </Reveal>
 
-              <Reveal delay={300}>
-                <div className="mt-8 flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="lg"
-                    className="h-13 min-w-[160px] border-gray-300 text-gray-700 text-base hover:bg-gray-50 rounded-xl"
-                  >
-                    <Link href="/login">Sign In</Link>
-                  </Button>
-                </div>
-              </Reveal>
 
             </div>
 
@@ -270,7 +258,7 @@ export default function Home() {
                 </span>
               </h2>
               <p className="mt-4 text-gray-500 max-w-lg mx-auto">
-                AI chat, cost seg calculations, real estate guidance, mortgage intelligence, and tax strategy — all at your fingertips.
+                Just ask Boca Banker — he handles cost seg analysis, mortgage guidance, real estate strategy, and tax planning so you don&apos;t have to.
               </p>
             </div>
           </Reveal>
@@ -367,21 +355,16 @@ export default function Home() {
               Ready to put him to work?
             </h2>
             <p className="mt-5 text-lg text-white/80 max-w-xl mx-auto">
-              Join banking pros across South Florida who use Boca Banker to find millions in tax savings.
-              Free to start. Zero vacation days required.
+              Ask him about banking, mortgages, or cost segregation — he&apos;s ready to chat right now.
+              Zero vacation days required.
             </p>
-            <div className="mt-10">
-              <Button
-                asChild
-                size="lg"
-                className="h-14 min-w-[220px] bg-white text-sky-700 font-bold text-base hover:bg-white/90 shadow-xl shadow-black/10 rounded-xl"
-              >
-                <Link href="/login">
-                  Sign In
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="mt-8 inline-flex items-center gap-2 bg-white text-sky-700 font-bold text-base px-8 py-3.5 rounded-xl hover:bg-white/90 shadow-xl shadow-black/10 transition-opacity"
+            >
+              <MessageCircle className="h-5 w-5" />
+              Chat Now
+            </button>
           </div>
         </Reveal>
       </section>

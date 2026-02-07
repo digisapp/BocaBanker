@@ -21,7 +21,7 @@ const GREETING_MESSAGE: UIMessage = {
   parts: [
     {
       type: 'text' as const,
-      text: "Hey there! I'm Boca Banker — Ask me anything about cost segregation, tax strategy, or property analysis. I'm all ears!",
+      text: "Hey there! I'm Boca Banker — Ask me anything about banking, mortgages, cost segregation, or property analysis. I'm all ears!",
     },
   ],
 };

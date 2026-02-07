@@ -67,8 +67,8 @@ export default function InlineLeadCaptureCard({ onDismiss, onSuccess }: InlineLe
             <p className="font-semibold text-sm text-gray-900">Check your email!</p>
           </div>
           <p className="text-xs text-gray-500 leading-relaxed">
-            We sent a magic link to <span className="font-medium text-gray-700">{email}</span>.
-            Click it to continue with full access.
+            We sent a confirmation to <span className="font-medium text-gray-700">{email}</span>.
+            Boca Banker will follow up with your personalized analysis.
           </p>
           <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-2">
             <Mail className="h-3 w-3" />
@@ -87,7 +87,7 @@ export default function InlineLeadCaptureCard({ onDismiss, onSuccess }: InlineLe
           I&apos;d love to dig deeper for you!
         </p>
         <p className="text-xs text-gray-500 mb-3">
-          Drop your info and I&apos;ll send you a magic link for full access.
+          Drop your info so I can follow up with a personalized analysis.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-2">
