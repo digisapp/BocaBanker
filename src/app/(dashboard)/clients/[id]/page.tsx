@@ -71,9 +71,21 @@ export default function ClientDetailPage() {
         setClient(data)
       } catch {
         router.push('/clients')
-      } finally {
-        setLoading(false)
+        return
       }
+
+      // Fetch properties for this client
+      try {
+        const propsRes = await fetch(`/api/properties?client_id=${params.id}&limit=50`)
+        if (propsRes.ok) {
+          const propsData = await propsRes.json()
+          setProperties(propsData.properties || [])
+        }
+      } catch {
+        // Properties fetch is non-critical
+      }
+
+      setLoading(false)
     }
 
     fetchClient()
