@@ -160,78 +160,12 @@ export default function BocaBankerAvatar({ className, size = 200 }: AvatarProps)
       {/* Lip highlight */}
       <path d="M90 109 Q100 105 110 109" stroke="#C0905E" strokeWidth="0.8" fill="none" opacity="0.3" />
 
-      {/* ===== THE BEARD — full, iconic, silver/salt-and-pepper ===== */}
-      {/* Outer beard shape — full coverage jaw to chin, wide and distinguished */}
-      <path
-        d="M62 98 C58 108 56 118 60 128 C64 136 76 144 100 146
-           C124 144 136 136 140 128 C144 118 142 108 138 98"
-        fill="#8C8C8C"
-        opacity="0.7"
-      />
-      {/* Mid beard layer */}
-      <path
-        d="M66 100 C62 110 60 120 64 130 C68 138 80 144 100 145
-           C120 144 132 138 136 130 C140 120 138 110 134 100"
-        fill="#9E9E9E"
-        opacity="0.6"
-      />
-      {/* Inner beard — lighter silver */}
-      <path
-        d="M70 104 C66 112 66 122 70 130 C76 138 88 142 100 143
-           C112 142 124 138 130 130 C134 122 134 112 130 104"
-        fill="#AEAEAE"
-        opacity="0.5"
-      />
-      {/* Chin beard — thick rounded bottom */}
-      <path
-        d="M80 134 Q90 148 100 150 Q110 148 120 134"
-        fill="#9E9E9E"
-        opacity="0.6"
-      />
-      <path
-        d="M84 136 Q92 148 100 149 Q108 148 116 136"
-        fill="#AEAEAE"
-        opacity="0.5"
-      />
-      {/* Mustache — full, distinguished */}
-      <path
-        d="M80 100 Q84 96 100 96 Q116 96 120 100 Q116 106 100 107 Q84 106 80 100Z"
-        fill="#787878"
-        opacity="0.75"
-      />
-      {/* Mustache highlight */}
-      <path
-        d="M84 100 Q90 97 100 97 Q110 97 116 100"
-        stroke="#9E9E9E"
-        strokeWidth="1"
-        fill="none"
-        opacity="0.4"
-      />
-      {/* Beard texture — vertical strokes for that full beard look */}
-      <path d="M76 110 L74 124" stroke="#787878" strokeWidth="1" fill="none" opacity="0.25" />
-      <path d="M82 108 L80 126" stroke="#808080" strokeWidth="1" fill="none" opacity="0.2" />
-      <path d="M88 108 L86 130" stroke="#787878" strokeWidth="1" fill="none" opacity="0.25" />
-      <path d="M94 108 L92 136" stroke="#808080" strokeWidth="1" fill="none" opacity="0.2" />
-      <path d="M100 108 L100 140" stroke="#787878" strokeWidth="1" fill="none" opacity="0.2" />
-      <path d="M106 108 L108 136" stroke="#808080" strokeWidth="1" fill="none" opacity="0.2" />
-      <path d="M112 108 L114 130" stroke="#787878" strokeWidth="1" fill="none" opacity="0.25" />
-      <path d="M118 108 L120 126" stroke="#808080" strokeWidth="1" fill="none" opacity="0.2" />
-      <path d="M124 110 L126 124" stroke="#787878" strokeWidth="1" fill="none" opacity="0.25" />
-      {/* Beard wave texture — horizontal */}
-      <path d="M72 116 Q86 120 100 119 Q114 120 128 116" stroke="#808080" strokeWidth="0.8" fill="none" opacity="0.2" />
-      <path d="M76 124 Q88 128 100 127 Q112 128 124 124" stroke="#9E9E9E" strokeWidth="0.7" fill="none" opacity="0.2" />
-      <path d="M82 132 Q92 136 100 136 Q108 136 118 132" stroke="#808080" strokeWidth="0.7" fill="none" opacity="0.2" />
-      {/* Dark depth at jaw edges */}
-      <path d="M64 104 Q62 114 64 124" stroke="#5A5A5A" strokeWidth="2" fill="none" opacity="0.2" />
-      <path d="M136 104 Q138 114 136 124" stroke="#5A5A5A" strokeWidth="2" fill="none" opacity="0.2" />
-      {/* Silver-white beard highlights */}
-      <path d="M90 112 L88 128" stroke="#C8C8C8" strokeWidth="1" fill="none" opacity="0.25" />
-      <path d="M100 112 L100 134" stroke="#C8C8C8" strokeWidth="1" fill="none" opacity="0.2" />
-      <path d="M110 112 L112 128" stroke="#C8C8C8" strokeWidth="1" fill="none" opacity="0.25" />
+      {/* Chin shadow */}
+      <path d="M82 125 Q100 130 118 125" stroke="#C0905E" strokeWidth="1" opacity="0.3" fill="none" />
 
-      {/* Cheek lines / laugh lines — the distinguished look */}
-      <path d="M68 96 Q72 102 74 108" stroke="#C0905E" strokeWidth="1" fill="none" opacity="0.25" />
-      <path d="M132 96 Q128 102 126 108" stroke="#C0905E" strokeWidth="1" fill="none" opacity="0.25" />
+      {/* Jaw definition */}
+      <path d="M68 96 Q72 108 78 118" stroke="#C0905E" strokeWidth="1" fill="none" opacity="0.2" />
+      <path d="M132 96 Q128 108 122 118" stroke="#C0905E" strokeWidth="1" fill="none" opacity="0.2" />
 
       {/* Gradients */}
       <defs>
