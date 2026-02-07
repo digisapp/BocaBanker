@@ -1,0 +1,15 @@
+-- Create app role for runtime connection
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'app_user') THEN
+    CREATE ROLE app_user WITH LOGIN PASSWORD 'BocaBanker2026AppUser!' NOSUPERUSER NOCREATEDB NOCREATEROLE;
+  END IF;
+END
+$$;
+
+-- Grant permissions
+GRANT USAGE ON SCHEMA public TO app_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO app_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO app_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO app_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO app_user;
