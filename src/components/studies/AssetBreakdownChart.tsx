@@ -10,12 +10,12 @@ import {
 } from 'recharts'
 
 const CATEGORY_COLORS: Record<string, string> = {
-  personal_property_5yr: '#C9A84C',
+  personal_property_5yr: '#F59E0B',
   personal_property_7yr: '#3B82F6',
   land_improvements_15yr: '#10B981',
   building_27_5yr: '#8B5CF6',
-  building_39yr: '#F59E0B',
-  land: '#64748B',
+  building_39yr: '#EF4444',
+  land: '#6B7280',
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -58,12 +58,12 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 
   const item = payload[0].payload
   return (
-    <div className="glass-card p-3 shadow-lg">
-      <p className="text-sm font-medium text-[#F8FAFC]">
+    <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-lg">
+      <p className="text-sm font-medium text-gray-900">
         {CATEGORY_LABELS[item.category] || item.category}
       </p>
-      <p className="text-sm text-[#C9A84C] font-semibold">{formatCurrency(item.amount)}</p>
-      <p className="text-xs text-[#64748B]">{item.percentage.toFixed(1)}% of total</p>
+      <p className="text-sm text-amber-600 font-semibold">{formatCurrency(item.amount)}</p>
+      <p className="text-xs text-gray-500">{item.percentage.toFixed(1)}% of total</p>
     </div>
   )
 }
@@ -87,7 +87,7 @@ function CustomLegend({ payload }: { payload?: LegendPayloadItem[] }) {
               className="h-3 w-3 rounded-full"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-xs text-[#94A3B8]">
+            <span className="text-xs text-gray-500">
               {entry.value} ({data.percentage?.toFixed(1)}%)
             </span>
           </div>
@@ -101,7 +101,7 @@ export default function AssetBreakdownChart({ data }: AssetBreakdownChartProps) 
   const chartData = data.map((item) => ({
     ...item,
     name: CATEGORY_LABELS[item.category] || item.category,
-    fill: CATEGORY_COLORS[item.category] || '#64748B',
+    fill: CATEGORY_COLORS[item.category] || '#6B7280',
   }))
 
   return (

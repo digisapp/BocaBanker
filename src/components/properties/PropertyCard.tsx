@@ -81,30 +81,30 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
   return (
     <div
-      className="glass-card-hover p-5 cursor-pointer group"
+      className="bg-white rounded-2xl border border-gray-100 hover:shadow-md hover:border-amber-200 transition-all p-5 cursor-pointer group"
       onClick={() => router.push(`/properties/${property.id}`)}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[rgba(201,168,76,0.1)] group-hover:bg-[rgba(201,168,76,0.2)] transition-colors">
-            <Building2 className="h-5 w-5 text-[#C9A84C]" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 group-hover:bg-amber-100 transition-colors">
+            <Building2 className="h-5 w-5 text-amber-600" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-[#F8FAFC] truncate max-w-[200px]">
+            <p className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
               {property.address}
             </p>
             {location && (
               <div className="flex items-center gap-1 mt-0.5">
-                <MapPin className="h-3 w-3 text-[#64748B]" />
-                <p className="text-xs text-[#64748B]">{location}</p>
+                <MapPin className="h-3 w-3 text-gray-400" />
+                <p className="text-xs text-gray-500">{location}</p>
               </div>
             )}
           </div>
         </div>
         <Badge
           variant="secondary"
-          className="bg-[rgba(201,168,76,0.1)] text-[#C9A84C] border-[rgba(201,168,76,0.2)] text-[10px] shrink-0"
+          className="bg-amber-50 text-amber-600 border-amber-200 text-[10px] shrink-0"
         >
           {PROPERTY_TYPE_LABELS[property.propertyType] || property.propertyType}
         </Badge>
@@ -112,25 +112,25 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
       {/* Purchase Price */}
       <div className="mb-4">
-        <p className="text-2xl font-bold text-gold-gradient">
+        <p className="text-2xl font-bold text-amber-600">
           {formatCurrency(purchasePrice)}
         </p>
-        <p className="text-xs text-[#64748B] mt-0.5">Purchase Price</p>
+        <p className="text-xs text-gray-500 mt-0.5">Purchase Price</p>
       </div>
 
       {/* Building / Land Split */}
       {(buildingValue || landValue) && (
         <div className="mb-4">
-          <div className="flex gap-1 h-2 rounded-full overflow-hidden bg-[rgba(255,255,255,0.05)]">
+          <div className="flex gap-1 h-2 rounded-full overflow-hidden bg-gray-100">
             {buildingPct !== null && (
               <div
-                className="bg-[#3B82F6] rounded-full transition-all"
+                className="bg-sky-500 rounded-full transition-all"
                 style={{ width: `${buildingPct}%` }}
               />
             )}
             {landPct !== null && (
               <div
-                className="bg-[#64748B] rounded-full transition-all"
+                className="bg-gray-400 rounded-full transition-all"
                 style={{ width: `${landPct}%` }}
               />
             )}
@@ -138,16 +138,16 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           <div className="flex justify-between mt-1.5">
             {buildingValue && (
               <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-[#3B82F6]" />
-                <span className="text-xs text-[#94A3B8]">
+                <div className="h-2 w-2 rounded-full bg-sky-500" />
+                <span className="text-xs text-gray-500">
                   Building {formatCurrency(buildingValue)}
                 </span>
               </div>
             )}
             {landValue && (
               <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-[#64748B]" />
-                <span className="text-xs text-[#94A3B8]">
+                <div className="h-2 w-2 rounded-full bg-gray-400" />
+                <span className="text-xs text-gray-500">
                   Land {formatCurrency(landValue)}
                 </span>
               </div>
@@ -157,17 +157,17 @@ export default function PropertyCard({ property }: PropertyCardProps) {
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-3 border-t border-[rgba(201,168,76,0.08)]">
+      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
         {property.squareFootage && (
           <div className="flex items-center gap-1.5">
-            <Ruler className="h-3.5 w-3.5 text-[#64748B]" />
-            <span className="text-xs text-[#94A3B8]">
+            <Ruler className="h-3.5 w-3.5 text-gray-400" />
+            <span className="text-xs text-gray-500">
               {formatNumber(property.squareFootage)} sqft
             </span>
           </div>
         )}
         {property.clientName && (
-          <span className="text-xs text-[#64748B] truncate max-w-[120px]">
+          <span className="text-xs text-gray-500 truncate max-w-[120px]">
             {property.clientName}
           </span>
         )}

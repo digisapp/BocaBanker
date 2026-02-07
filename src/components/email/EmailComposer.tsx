@@ -95,54 +95,54 @@ export default function EmailComposer() {
     <div className="space-y-6">
       {/* Template Selector */}
       <div>
-        <Label className="text-[#94A3B8] mb-3 block">Choose a Template (optional)</Label>
+        <Label className="text-gray-500 mb-3 block">Choose a Template (optional)</Label>
         <TemplateSelector onSelect={handleTemplateSelect} selected={template} />
       </div>
 
       {/* Compose Form */}
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label className="text-[#94A3B8]">To</Label>
+          <Label className="text-gray-500">To</Label>
           <Input
             type="email"
             placeholder="recipient@example.com"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white placeholder:text-[#64748B] focus:border-[#C9A84C]"
+            className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
           />
         </div>
 
         <div className="space-y-2">
-          <Label className="text-[#94A3B8]">Subject</Label>
+          <Label className="text-gray-500">Subject</Label>
           <Input
             placeholder="Email subject..."
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white placeholder:text-[#64748B] focus:border-[#C9A84C]"
+            className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
           />
         </div>
 
         <div className="space-y-2">
-          <Label className="text-[#94A3B8]">Body</Label>
+          <Label className="text-gray-500">Body</Label>
           <Textarea
             placeholder="Write your message..."
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={10}
-            className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white placeholder:text-[#64748B] focus:border-[#C9A84C] resize-none"
+            className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20 resize-none"
           />
         </div>
 
         {/* Status Messages */}
         {status === 'success' && (
-          <div className="flex items-center gap-2 text-emerald-400 text-sm">
+          <div className="flex items-center gap-2 text-emerald-500 text-sm">
             <CheckCircle className="h-4 w-4" />
             Email sent successfully!
           </div>
         )}
 
         {status === 'error' && (
-          <div className="flex items-center gap-2 text-red-400 text-sm">
+          <div className="flex items-center gap-2 text-red-500 text-sm">
             <AlertCircle className="h-4 w-4" />
             {errorMessage || 'Failed to send email'}
           </div>
@@ -152,7 +152,7 @@ export default function EmailComposer() {
         <Button
           onClick={handleSend}
           disabled={!to || !subject || !body || status === 'sending'}
-          className="bg-gold-gradient text-[#0F1B2D] hover:opacity-90 font-semibold w-full sm:w-auto"
+          className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold w-full sm:w-auto"
         >
           {status === 'sending' ? (
             <>

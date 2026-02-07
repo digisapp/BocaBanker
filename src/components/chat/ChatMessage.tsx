@@ -28,7 +28,7 @@ export function ChatMessage({ role, content, createdAt }: ChatMessageProps) {
       {/* Assistant avatar */}
       {!isUser && (
         <div className="flex-shrink-0 mt-1">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gold-gradient text-navy font-serif font-bold text-xs">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-serif font-bold text-xs">
             BB
           </div>
         </div>
@@ -38,8 +38,8 @@ export function ChatMessage({ role, content, createdAt }: ChatMessageProps) {
         className={cn(
           'max-w-[75%] rounded-xl px-4 py-3',
           isUser
-            ? 'bg-navy-lighter text-foreground rounded-br-sm'
-            : 'glass-card border-l-2 border-l-gold rounded-bl-sm'
+            ? 'bg-sky-500 text-white rounded-br-sm'
+            : 'bg-gray-100 text-gray-800 border-l-2 border-l-amber-500 rounded-bl-sm'
         )}
       >
         <div className="whitespace-pre-wrap text-sm leading-relaxed">
@@ -50,7 +50,7 @@ export function ChatMessage({ role, content, createdAt }: ChatMessageProps) {
           <div
             className={cn(
               'mt-1.5 text-[10px]',
-              isUser ? 'text-muted-foreground text-right' : 'text-muted-foreground'
+              isUser ? 'text-sky-100 text-right' : 'text-gray-500'
             )}
           >
             {formattedTime}

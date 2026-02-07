@@ -12,14 +12,14 @@ export default function EmailPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-gradient text-[#0F1B2D]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
             <Mail className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-serif font-bold text-gold-gradient">
+            <h1 className="text-2xl font-serif font-bold text-amber-600">
               Email Outreach
             </h1>
-            <p className="text-sm text-[#94A3B8]">
+            <p className="text-sm text-gray-500">
               Compose and send emails to clients
             </p>
           </div>
@@ -29,7 +29,7 @@ export default function EmailPage() {
           <Link href="/email/history">
             <Button
               variant="outline"
-              className="border-[rgba(201,168,76,0.3)] text-[#C9A84C] hover:bg-[#243654]"
+              className="border-gray-200 text-amber-600 hover:bg-amber-50"
             >
               <History className="h-4 w-4 mr-2" />
               History
@@ -39,7 +39,7 @@ export default function EmailPage() {
       </div>
 
       {/* Composer */}
-      <div className="glass-card p-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <EmailComposer />
       </div>
     </div>

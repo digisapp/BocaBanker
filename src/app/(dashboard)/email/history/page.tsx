@@ -33,10 +33,10 @@ interface EmailLogEntry {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  sent: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  delivered: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  bounced: 'bg-red-500/20 text-red-400 border-red-500/30',
-  failed: 'bg-red-500/20 text-red-400 border-red-500/30',
+  sent: 'bg-blue-50 text-blue-600 border-blue-200',
+  delivered: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+  bounced: 'bg-red-50 text-red-600 border-red-200',
+  failed: 'bg-red-50 text-red-600 border-red-200',
 };
 
 export default function EmailHistoryPage() {
@@ -95,16 +95,16 @@ export default function EmailHistoryPage() {
             <Button
               variant="ghost"
               size="icon"
-              className="text-[#94A3B8] hover:text-white hover:bg-[#243654]"
+              className="text-gray-500 hover:text-amber-600 hover:bg-amber-50"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-serif font-bold text-gold-gradient">
+            <h1 className="text-2xl font-serif font-bold text-amber-600">
               Email History
             </h1>
-            <p className="text-sm text-[#94A3B8]">{total} total emails</p>
+            <p className="text-sm text-gray-500">{total} total emails</p>
           </div>
         </div>
         <Select
@@ -114,23 +114,23 @@ export default function EmailHistoryPage() {
             setPage(1);
           }}
         >
-          <SelectTrigger className="w-[160px] bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]">
+          <SelectTrigger className="w-[160px] bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500">
             <SelectValue placeholder="Filter status" />
           </SelectTrigger>
-          <SelectContent className="bg-[#1A2B45] border-[rgba(201,168,76,0.15)]">
-            <SelectItem value="all" className="text-white hover:bg-[#243654] focus:bg-[#243654]">
+          <SelectContent className="bg-white border-gray-200">
+            <SelectItem value="all" className="text-gray-900 focus:bg-amber-50 focus:text-amber-700">
               All Status
             </SelectItem>
-            <SelectItem value="sent" className="text-white hover:bg-[#243654] focus:bg-[#243654]">
+            <SelectItem value="sent" className="text-gray-900 focus:bg-amber-50 focus:text-amber-700">
               Sent
             </SelectItem>
-            <SelectItem value="delivered" className="text-white hover:bg-[#243654] focus:bg-[#243654]">
+            <SelectItem value="delivered" className="text-gray-900 focus:bg-amber-50 focus:text-amber-700">
               Delivered
             </SelectItem>
-            <SelectItem value="bounced" className="text-white hover:bg-[#243654] focus:bg-[#243654]">
+            <SelectItem value="bounced" className="text-gray-900 focus:bg-amber-50 focus:text-amber-700">
               Bounced
             </SelectItem>
-            <SelectItem value="failed" className="text-white hover:bg-[#243654] focus:bg-[#243654]">
+            <SelectItem value="failed" className="text-gray-900 focus:bg-amber-50 focus:text-amber-700">
               Failed
             </SelectItem>
           </SelectContent>
@@ -138,50 +138,50 @@ export default function EmailHistoryPage() {
       </div>
 
       {/* Table */}
-      <div className="glass-card overflow-x-auto">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-[#C9A84C]" />
+            <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
           </div>
         ) : logs.length === 0 ? (
           <div className="text-center py-16">
-            <Mail className="h-12 w-12 text-[#64748B] mx-auto mb-3" />
-            <p className="text-[#94A3B8]">No emails found</p>
+            <Mail className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+            <p className="text-gray-500">No emails found</p>
           </div>
         ) : (
           <Table>
             <TableHeader>
-              <TableRow className="border-[rgba(201,168,76,0.15)] hover:bg-transparent">
-                <TableHead className="text-[#C9A84C]">Date</TableHead>
-                <TableHead className="text-[#C9A84C]">Recipient</TableHead>
-                <TableHead className="text-[#C9A84C]">Subject</TableHead>
-                <TableHead className="text-[#C9A84C]">Template</TableHead>
-                <TableHead className="text-[#C9A84C]">Status</TableHead>
+              <TableRow className="border-gray-200 hover:bg-transparent">
+                <TableHead className="text-amber-600">Date</TableHead>
+                <TableHead className="text-amber-600">Recipient</TableHead>
+                <TableHead className="text-amber-600">Subject</TableHead>
+                <TableHead className="text-amber-600">Template</TableHead>
+                <TableHead className="text-amber-600">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {logs.map((log) => (
                 <TableRow
                   key={log.id}
-                  className="border-[rgba(201,168,76,0.08)] hover:bg-[#243654]/30"
+                  className="border-gray-100 hover:bg-amber-50/50"
                 >
-                  <TableCell className="text-[#94A3B8] text-sm whitespace-nowrap">
+                  <TableCell className="text-gray-500 text-sm whitespace-nowrap">
                     {formatDate(log.sentAt)}
                   </TableCell>
                   <TableCell>
                     <div>
-                      <p className="text-white text-sm">{log.toEmail}</p>
+                      <p className="text-gray-900 text-sm">{log.toEmail}</p>
                       {log.clientFirstName && (
-                        <p className="text-xs text-[#64748B]">
+                        <p className="text-xs text-gray-400">
                           {log.clientFirstName} {log.clientLastName}
                         </p>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-white text-sm max-w-[200px] truncate">
+                  <TableCell className="text-gray-900 text-sm max-w-[200px] truncate">
                     {log.subject}
                   </TableCell>
-                  <TableCell className="text-[#94A3B8] text-sm capitalize">
+                  <TableCell className="text-gray-500 text-sm capitalize">
                     {log.template ? log.template.replace('-', ' ') : '--'}
                   </TableCell>
                   <TableCell>
@@ -207,11 +207,11 @@ export default function EmailHistoryPage() {
             size="sm"
             disabled={page <= 1}
             onClick={() => setPage(page - 1)}
-            className="border-[rgba(201,168,76,0.15)] text-[#94A3B8] hover:bg-[#243654] disabled:opacity-40"
+            className="border-gray-200 text-gray-500 hover:bg-amber-50 disabled:opacity-40"
           >
             Previous
           </Button>
-          <span className="text-sm text-[#94A3B8]">
+          <span className="text-sm text-gray-500">
             Page {page} of {totalPages}
           </span>
           <Button
@@ -219,7 +219,7 @@ export default function EmailHistoryPage() {
             size="sm"
             disabled={page >= totalPages}
             onClick={() => setPage(page + 1)}
-            className="border-[rgba(201,168,76,0.15)] text-[#94A3B8] hover:bg-[#243654] disabled:opacity-40"
+            className="border-gray-200 text-gray-500 hover:bg-amber-50 disabled:opacity-40"
           >
             Next
           </Button>

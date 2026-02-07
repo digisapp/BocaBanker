@@ -27,9 +27,9 @@ export interface ClientRow {
 }
 
 const statusColorMap: Record<string, string> = {
-  active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  prospect: 'bg-gold/20 text-gold border-gold/30',
-  inactive: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+  active: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+  prospect: 'bg-amber-50 text-amber-600 border-amber-200',
+  inactive: 'bg-gray-100 text-gray-500 border-gray-200',
 }
 
 interface ClientsTableProps {
@@ -46,7 +46,7 @@ export function ClientsTable({ data, onDelete }: ClientsTableProps) {
       header: 'Name',
       accessorFn: (row) => `${row.firstName} ${row.lastName}`,
       cell: ({ row }) => (
-        <div className="font-medium text-foreground">
+        <div className="font-medium text-gray-900">
           {row.original.firstName} {row.original.lastName}
         </div>
       ),
@@ -55,7 +55,7 @@ export function ClientsTable({ data, onDelete }: ClientsTableProps) {
       accessorKey: 'email',
       header: 'Email',
       cell: ({ row }) => (
-        <span className="text-muted-foreground">
+        <span className="text-gray-500">
           {row.original.email || '--'}
         </span>
       ),
@@ -64,7 +64,7 @@ export function ClientsTable({ data, onDelete }: ClientsTableProps) {
       accessorKey: 'phone',
       header: 'Phone',
       cell: ({ row }) => (
-        <span className="text-muted-foreground">
+        <span className="text-gray-500">
           {row.original.phone || '--'}
         </span>
       ),
@@ -73,7 +73,7 @@ export function ClientsTable({ data, onDelete }: ClientsTableProps) {
       accessorKey: 'company',
       header: 'Company',
       cell: ({ row }) => (
-        <span className="text-muted-foreground">
+        <span className="text-gray-500">
           {row.original.company || '--'}
         </span>
       ),
@@ -101,14 +101,14 @@ export function ClientsTable({ data, onDelete }: ClientsTableProps) {
       enableSorting: false,
       cell: ({ row }) => {
         const tags = row.original.tags
-        if (!tags || tags.length === 0) return <span className="text-muted-foreground">--</span>
+        if (!tags || tags.length === 0) return <span className="text-gray-500">--</span>
         return (
           <div className="flex flex-wrap gap-1">
             {tags.slice(0, 3).map((tag) => (
               <Badge
                 key={tag}
                 variant="secondary"
-                className="bg-navy-lighter text-foreground/70 border-gold/10 text-[10px]"
+                className="bg-gray-100 text-gray-700 border-gray-200 text-[10px]"
               >
                 {tag}
               </Badge>
@@ -116,7 +116,7 @@ export function ClientsTable({ data, onDelete }: ClientsTableProps) {
             {tags.length > 3 && (
               <Badge
                 variant="secondary"
-                className="bg-navy-lighter text-muted-foreground text-[10px]"
+                className="bg-gray-100 text-gray-500 text-[10px]"
               >
                 +{tags.length - 3}
               </Badge>
@@ -130,9 +130,9 @@ export function ClientsTable({ data, onDelete }: ClientsTableProps) {
       header: 'Created',
       cell: ({ row }) => {
         const date = row.original.createdAt
-        if (!date) return <span className="text-muted-foreground">--</span>
+        if (!date) return <span className="text-gray-500">--</span>
         return (
-          <span className="text-muted-foreground text-sm">
+          <span className="text-gray-500 text-sm">
             {new Date(date).toLocaleDateString('en-US', {
               month: 'short',
               day: 'numeric',
@@ -153,7 +153,7 @@ export function ClientsTable({ data, onDelete }: ClientsTableProps) {
               <Button
                 variant="ghost"
                 size="icon-xs"
-                className="text-muted-foreground hover:text-gold"
+                className="text-gray-500 hover:text-amber-600"
                 onClick={(e) => e.stopPropagation()}
               >
                 <MoreHorizontal className="h-4 w-4" />
@@ -161,7 +161,7 @@ export function ClientsTable({ data, onDelete }: ClientsTableProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="bg-navy-light border-gold/20"
+              className="bg-white border-gray-200"
             >
               <DropdownMenuItem
                 onClick={(e) => {
@@ -181,7 +181,7 @@ export function ClientsTable({ data, onDelete }: ClientsTableProps) {
                 <Pencil className="h-4 w-4 mr-2" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-gold/10" />
+              <DropdownMenuSeparator className="bg-gray-100" />
               <DropdownMenuItem
                 variant="destructive"
                 onClick={(e) => {

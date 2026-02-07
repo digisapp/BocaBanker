@@ -55,16 +55,16 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload || payload.length === 0) return null
 
   return (
-    <div className="glass-card p-3 shadow-lg">
-      <p className="text-sm font-medium text-[#F8FAFC] mb-1">Year {label}</p>
+    <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-lg">
+      <p className="text-sm font-medium text-gray-900 mb-1">Year {label}</p>
       {payload.map((entry, index) => (
         <div key={index} className="flex items-center gap-2">
           <div
             className="h-2.5 w-2.5 rounded-sm"
             style={{ backgroundColor: entry.color }}
           />
-          <span className="text-xs text-[#94A3B8]">{entry.name}:</span>
-          <span className="text-xs font-medium text-[#F8FAFC]">
+          <span className="text-xs text-gray-500">{entry.name}:</span>
+          <span className="text-xs font-medium text-gray-900">
             {formatCurrencyFull(entry.value)}
           </span>
         </div>
@@ -74,7 +74,6 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 }
 
 export default function DepreciationChart({ data, maxYears = 20 }: DepreciationChartProps) {
-  // Limit the number of displayed years for readability
   const displayData = data.slice(0, maxYears)
 
   return (
@@ -83,38 +82,38 @@ export default function DepreciationChart({ data, maxYears = 20 }: DepreciationC
         <BarChart data={displayData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke="rgba(201, 168, 76, 0.08)"
+            stroke="rgba(0,0,0,0.06)"
             vertical={false}
           />
           <XAxis
             dataKey="year"
-            tick={{ fill: '#64748B', fontSize: 11 }}
-            axisLine={{ stroke: 'rgba(201, 168, 76, 0.15)' }}
+            tick={{ fill: '#6B7280', fontSize: 11 }}
+            axisLine={{ stroke: 'rgba(0,0,0,0.1)' }}
             tickLine={false}
           />
           <YAxis
             tickFormatter={formatCurrency}
-            tick={{ fill: '#64748B', fontSize: 11 }}
+            tick={{ fill: '#6B7280', fontSize: 11 }}
             axisLine={false}
             tickLine={false}
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend
             formatter={(value: string) => (
-              <span className="text-xs text-[#94A3B8]">{value}</span>
+              <span className="text-xs text-gray-500">{value}</span>
             )}
           />
           <Bar
             dataKey="accelerated"
             name="With Cost Seg"
-            fill="#C9A84C"
+            fill="#F59E0B"
             radius={[3, 3, 0, 0]}
             maxBarSize={24}
           />
           <Bar
             dataKey="straightLine"
             name="Without Cost Seg"
-            fill="#475569"
+            fill="#D1D5DB"
             radius={[3, 3, 0, 0]}
             maxBarSize={24}
           />

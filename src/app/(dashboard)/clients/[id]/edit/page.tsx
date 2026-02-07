@@ -75,7 +75,7 @@ export default function EditClientPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-gold" />
+        <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
       </div>
     )
   }
@@ -107,19 +107,19 @@ export default function EditClientPage() {
           variant="ghost"
           size="icon"
           onClick={() => router.back()}
-          className="text-muted-foreground hover:text-gold"
+          className="text-gray-500 hover:text-amber-600"
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center">
-            <Pencil className="h-5 w-5 text-gold" />
+          <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
+            <Pencil className="h-5 w-5 text-amber-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="text-2xl font-bold text-gray-900">
               Edit Client
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-500">
               {client.firstName} {client.lastName}
             </p>
           </div>

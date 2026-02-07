@@ -129,11 +129,11 @@ export function ColumnMapper({
 
   return (
     <div className="space-y-6">
-      <div className="glass-card p-6">
-        <h3 className="text-lg font-semibold text-gold mb-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-amber-600 mb-4">
           Map CSV Columns
         </h3>
-        <p className="text-sm text-muted-foreground mb-6">
+        <p className="text-sm text-gray-500 mb-6">
           Match each CSV column to the corresponding client field. First Name
           and Last Name are required.
         </p>
@@ -142,23 +142,23 @@ export function ColumnMapper({
           {csvHeaders.map((header) => (
             <div
               key={header}
-              className="flex items-center gap-4 p-3 rounded-lg bg-navy/50 border border-gold/10"
+              className="flex items-center gap-4 p-3 rounded-lg bg-gray-50 border border-gray-200"
             >
               <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium text-foreground truncate block">
+                <span className="text-sm font-medium text-gray-900 truncate block">
                   {header}
                 </span>
               </div>
-              <ArrowRight className="h-4 w-4 text-gold/50 shrink-0" />
+              <ArrowRight className="h-4 w-4 text-gray-400 shrink-0" />
               <div className="flex-1">
                 <Select
                   value={mapping[header] ?? '__skip__'}
                   onValueChange={(value) => handleFieldChange(header, value)}
                 >
-                  <SelectTrigger className="w-full bg-navy-light/50 border-gold/20 text-foreground">
+                  <SelectTrigger className="w-full bg-gray-50 border-gray-200 text-gray-900">
                     <SelectValue placeholder="Select field..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-navy-light border-gold/20">
+                  <SelectContent className="bg-white border-gray-200">
                     {CLIENT_FIELDS.map((field) => (
                       <SelectItem
                         key={field.value}
@@ -181,7 +181,7 @@ export function ColumnMapper({
       </div>
 
       {!hasRequiredFields && (
-        <p className="text-sm text-destructive">
+        <p className="text-sm text-red-500">
           You must map both First Name and Last Name to proceed.
         </p>
       )}
@@ -190,7 +190,7 @@ export function ColumnMapper({
         <Button
           onClick={handleConfirm}
           disabled={!hasRequiredFields}
-          className="bg-gold-gradient text-navy font-semibold hover:opacity-90 px-8"
+          className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90 px-8"
         >
           Confirm Mapping
         </Button>

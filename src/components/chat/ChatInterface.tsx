@@ -144,19 +144,19 @@ export function ChatInterface() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] glass-card overflow-hidden">
+    <div className="flex h-[calc(100vh-8rem)] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       {/* Sidebar - Conversation History */}
       <div
         className={cn(
-          'border-r border-gold/15 bg-navy/40 transition-all duration-300 flex flex-col',
+          'border-r border-gray-200 bg-gray-50 transition-all duration-300 flex flex-col',
           sidebarOpen ? 'w-72' : 'w-0 overflow-hidden'
         )}
       >
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gold/15">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div className="flex items-center gap-2">
-            <History className="h-4 w-4 text-gold" />
-            <span className="text-sm font-medium text-foreground">
+            <History className="h-4 w-4 text-amber-600" />
+            <span className="text-sm font-medium text-gray-900">
               Conversations
             </span>
           </div>
@@ -164,7 +164,7 @@ export function ChatInterface() {
             variant="ghost"
             size="icon-xs"
             onClick={startNewConversation}
-            className="text-gold hover:text-gold-light hover:bg-gold/10"
+            className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
             title="New conversation"
           >
             <MessageSquarePlus className="h-4 w-4" />
@@ -176,10 +176,10 @@ export function ChatInterface() {
           <div className="p-2 space-y-1">
             {conversations.length === 0 ? (
               <div className="px-3 py-8 text-center">
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-500">
                   No conversations yet.
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-gray-500 mt-1">
                   Start chatting with Boca Banker!
                 </p>
               </div>
@@ -190,16 +190,16 @@ export function ChatInterface() {
                   onClick={() => loadConversation(conv.id)}
                   className={cn(
                     'w-full text-left px-3 py-2.5 rounded-lg transition-all text-sm',
-                    'hover:bg-navy-lighter/60',
+                    'hover:bg-gray-100',
                     activeConversationId === conv.id
-                      ? 'bg-navy-lighter border border-gold/20 text-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
+                      ? 'bg-white border border-gray-200 text-gray-900 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-900'
                   )}
                 >
                   <div className="truncate font-medium text-xs">
                     {conv.title}
                   </div>
-                  <div className="text-[10px] text-muted-foreground/60 mt-0.5">
+                  <div className="text-[10px] text-gray-400 mt-0.5">
                     {formatDate(conv.updatedAt)}
                   </div>
                 </button>
@@ -212,12 +212,12 @@ export function ChatInterface() {
       {/* Main Chat Area */}
       <div className="flex flex-1 flex-col min-w-0">
         {/* Chat Header */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-gold/15">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200">
           <Button
             variant="ghost"
             size="icon-xs"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-gray-500 hover:text-gray-900"
           >
             <ChevronLeft
               className={cn(
@@ -227,14 +227,14 @@ export function ChatInterface() {
             />
           </Button>
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gold-gradient text-navy font-serif font-bold text-xs">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-serif font-bold text-xs">
               BB
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-foreground">
+              <h2 className="text-sm font-semibold text-gray-900">
                 Boca Banker
               </h2>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-[10px] text-gray-500">
                 Cost Segregation & Tax Strategy Advisor
               </p>
             </div>
@@ -245,17 +245,17 @@ export function ChatInterface() {
         <ScrollArea className="flex-1 p-4">
           {loadingHistory ? (
             <div className="flex items-center justify-center h-full">
-              <Loader2 className="h-6 w-6 animate-spin text-gold" />
+              <Loader2 className="h-6 w-6 animate-spin text-amber-600" />
             </div>
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center px-8">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gold-gradient/20 mb-4">
-                <Landmark className="h-8 w-8 text-gold" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 mb-4">
+                <Landmark className="h-8 w-8 text-amber-600" />
               </div>
-              <h3 className="text-lg font-serif font-semibold text-gold-gradient mb-2">
+              <h3 className="text-lg font-serif font-semibold text-amber-600 mb-2">
                 Welcome to Boca Banker
               </h3>
-              <p className="text-sm text-muted-foreground max-w-md leading-relaxed">
+              <p className="text-sm text-gray-500 max-w-md leading-relaxed">
                 I have over 40 years of experience in commercial banking, real
                 estate finance, and cost segregation analysis. Ask me anything
                 about accelerating depreciation, tax strategy, or maximizing
@@ -271,7 +271,7 @@ export function ChatInterface() {
                   <button
                     key={suggestion}
                     onClick={() => handleChatSubmit(suggestion)}
-                    className="glass-card-hover px-3 py-2.5 text-xs text-left text-muted-foreground hover:text-foreground transition-colors"
+                    className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-gray-200 hover:shadow px-3 py-2.5 text-xs text-left text-gray-500 hover:text-gray-900 transition-colors"
                   >
                     {suggestion}
                   </button>
@@ -290,18 +290,18 @@ export function ChatInterface() {
               {isLoading &&
                 messages[messages.length - 1]?.role !== 'assistant' && (
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gold-gradient text-navy font-serif font-bold text-xs flex-shrink-0">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-serif font-bold text-xs flex-shrink-0">
                       BB
                     </div>
-                    <div className="glass-card border-l-2 border-l-gold rounded-xl rounded-bl-sm px-4 py-3">
+                    <div className="bg-gray-100 text-gray-800 border-l-2 border-l-amber-500 rounded-xl rounded-bl-sm px-4 py-3">
                       <div className="flex items-center gap-1.5">
-                        <div className="h-1.5 w-1.5 rounded-full bg-gold animate-pulse" />
+                        <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
                         <div
-                          className="h-1.5 w-1.5 rounded-full bg-gold animate-pulse"
+                          className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"
                           style={{ animationDelay: '0.2s' }}
                         />
                         <div
-                          className="h-1.5 w-1.5 rounded-full bg-gold animate-pulse"
+                          className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"
                           style={{ animationDelay: '0.4s' }}
                         />
                       </div>

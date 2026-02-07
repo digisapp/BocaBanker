@@ -160,14 +160,14 @@ export default function BonusDepreciationCalculator() {
   return (
     <div className="space-y-6">
       {/* Input Section */}
-      <div className="glass-card p-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-gradient text-[#0F1B2D]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
             <Zap className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="font-semibold text-white">Bonus Depreciation Analysis</h3>
-            <p className="text-sm text-[#94A3B8]">
+            <h3 className="font-semibold text-gray-900">Bonus Depreciation Analysis</h3>
+            <p className="text-sm text-gray-500">
               See how much can be reclassified and bonus depreciation impact
             </p>
           </div>
@@ -175,28 +175,28 @@ export default function BonusDepreciationCalculator() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Total Building Value ($)</Label>
+            <Label className="text-gray-500">Total Building Value ($)</Label>
             <Input
               type="number"
               placeholder="e.g. 3000000"
               value={buildingValue}
               onChange={(e) => setBuildingValue(e.target.value)}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white placeholder:text-[#64748B] focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Property Type</Label>
+            <Label className="text-gray-500">Property Type</Label>
             <Select value={propertyType} onValueChange={setPropertyType}>
-              <SelectTrigger className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]">
+              <SelectTrigger className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#1A2B45] border-[rgba(201,168,76,0.15)]">
+              <SelectContent className="bg-white border-gray-200">
                 {PROPERTY_TYPES.map((t) => (
                   <SelectItem
                     key={t}
                     value={t}
-                    className="text-white hover:bg-[#243654] focus:bg-[#243654] capitalize"
+                    className="text-gray-900 focus:bg-amber-50 focus:text-amber-700 capitalize"
                   >
                     {t.replace('-', ' ')}
                   </SelectItem>
@@ -209,7 +209,7 @@ export default function BonusDepreciationCalculator() {
         <div className="flex gap-3 mt-6">
           <Button
             onClick={handleCalculate}
-            className="bg-gold-gradient text-[#0F1B2D] hover:opacity-90 font-semibold"
+            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
           >
             Analyze Bonus Depreciation
           </Button>
@@ -217,7 +217,7 @@ export default function BonusDepreciationCalculator() {
             <Button
               onClick={handleReset}
               variant="outline"
-              className="border-[rgba(201,168,76,0.3)] text-[#C9A84C] hover:bg-[#243654]"
+              className="border-gray-200 text-amber-600 hover:bg-amber-50"
             >
               Reset
             </Button>
@@ -229,34 +229,34 @@ export default function BonusDepreciationCalculator() {
         <>
           {/* Reclassification Summary */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="glass-card p-5 text-center">
-              <p className="text-sm text-[#94A3B8] mb-1">Reclassified</p>
-              <p className="text-3xl font-bold text-[#C9A84C]">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
+              <p className="text-sm text-gray-500 mb-1">Reclassified</p>
+              <p className="text-3xl font-bold text-amber-600">
                 {result.reclassifiedPercentage}%
               </p>
-              <p className="text-sm text-[#64748B] mt-1">
+              <p className="text-sm text-gray-400 mt-1">
                 {formatCurrency(result.reclassifiedAmount)}
               </p>
             </div>
-            <div className="glass-card p-5 text-center">
-              <p className="text-sm text-[#94A3B8] mb-1">Bonus Depreciation</p>
-              <p className="text-3xl font-bold text-white">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
+              <p className="text-sm text-gray-500 mb-1">Bonus Depreciation</p>
+              <p className="text-3xl font-bold text-gray-900">
                 {formatCurrency(result.bonusDepreciationTotal)}
               </p>
-              <p className="text-sm text-[#64748B] mt-1">On eligible assets</p>
+              <p className="text-sm text-gray-400 mt-1">On eligible assets</p>
             </div>
-            <div className="glass-card p-5 text-center">
-              <p className="text-sm text-[#94A3B8] mb-1">Additional First-Year</p>
-              <p className="text-3xl font-bold text-emerald-400">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
+              <p className="text-sm text-gray-500 mb-1">Additional First-Year</p>
+              <p className="text-3xl font-bold text-emerald-500">
                 {formatCurrency(result.additionalDeduction)}
               </p>
-              <p className="text-sm text-[#64748B] mt-1">Extra deduction</p>
+              <p className="text-sm text-gray-400 mt-1">Extra deduction</p>
             </div>
           </div>
 
           {/* Before / After Comparison Chart */}
-          <div className="glass-card p-6">
-            <h3 className="font-semibold text-white mb-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">
               First-Year Deduction Comparison
             </h3>
             <div className="h-[250px]">
@@ -264,34 +264,34 @@ export default function BonusDepreciationCalculator() {
                 <BarChart data={comparisonData} layout="vertical" barCategoryGap="30%">
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="rgba(201,168,76,0.1)"
+                    stroke="rgba(0,0,0,0.06)"
                     horizontal={false}
                   />
                   <XAxis
                     type="number"
-                    stroke="#64748B"
-                    tick={{ fill: '#94A3B8', fontSize: 12 }}
+                    stroke="#9CA3AF"
+                    tick={{ fill: '#6B7280', fontSize: 12 }}
                     tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
                   />
                   <YAxis
                     type="category"
                     dataKey="name"
-                    stroke="#64748B"
-                    tick={{ fill: '#94A3B8', fontSize: 13 }}
+                    stroke="#9CA3AF"
+                    tick={{ fill: '#6B7280', fontSize: 13 }}
                     width={140}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#1A2B45',
-                      border: '1px solid rgba(201,168,76,0.2)',
-                      borderRadius: '8px',
-                      color: '#F8FAFC',
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid #E5E7EB',
+                      borderRadius: '12px',
+                      color: '#111827',
                     }}
                     formatter={(value) => [formatCurrency(value as number), 'Deduction']}
                   />
                   <Bar
                     dataKey="deduction"
-                    fill="#C9A84C"
+                    fill="#F59E0B"
                     radius={[0, 4, 4, 0]}
                     barSize={40}
                   />
@@ -301,16 +301,16 @@ export default function BonusDepreciationCalculator() {
 
             {/* Comparison cards */}
             <div className="flex items-center justify-center gap-4 mt-6">
-              <div className="glass-card p-4 flex-1 text-center">
-                <p className="text-xs text-[#94A3B8] mb-1">Without Cost Seg</p>
-                <p className="text-xl font-bold text-white">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex-1 text-center">
+                <p className="text-xs text-gray-500 mb-1">Without Cost Seg</p>
+                <p className="text-xl font-bold text-gray-900">
                   {formatCurrency(result.withoutCostSegFirstYear)}
                 </p>
               </div>
-              <ArrowRight className="h-6 w-6 text-[#C9A84C] flex-shrink-0" />
-              <div className="glass-card p-4 flex-1 text-center border-[rgba(201,168,76,0.3)]">
-                <p className="text-xs text-[#C9A84C] mb-1">With Cost Seg</p>
-                <p className="text-xl font-bold text-[#C9A84C]">
+              <ArrowRight className="h-6 w-6 text-amber-600 flex-shrink-0" />
+              <div className="bg-white rounded-2xl border border-amber-200 shadow-sm p-4 flex-1 text-center">
+                <p className="text-xs text-amber-600 mb-1">With Cost Seg</p>
+                <p className="text-xl font-bold text-amber-600">
                   {formatCurrency(result.withCostSegFirstYear)}
                 </p>
               </div>
@@ -318,36 +318,36 @@ export default function BonusDepreciationCalculator() {
           </div>
 
           {/* Asset Breakdown */}
-          <div className="glass-card p-6">
-            <h3 className="font-semibold text-white mb-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">
               Asset Reclassification Breakdown
             </h3>
             <div className="space-y-3">
               {result.breakdown.map((item) => (
                 <div
                   key={item.category}
-                  className="flex items-center justify-between p-3 rounded-lg bg-[#0F1B2D]/50"
+                  className="flex items-center justify-between p-3 rounded-lg bg-gray-50"
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-2 h-2 rounded-full ${
-                        item.bonusEligible ? 'bg-[#C9A84C]' : 'bg-[#64748B]'
+                        item.bonusEligible ? 'bg-amber-500' : 'bg-gray-400'
                       }`}
                     />
                     <div>
-                      <p className="text-sm text-white">{item.description}</p>
-                      <p className="text-xs text-[#64748B]">
+                      <p className="text-sm text-gray-900">{item.description}</p>
+                      <p className="text-xs text-gray-400">
                         {item.percentage}% of total
                         {item.bonusEligible && ' - Bonus eligible'}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-white">
+                    <p className="text-sm font-medium text-gray-900">
                       {formatCurrency(item.amount)}
                     </p>
                     {item.firstYearDeduction > 0 && (
-                      <p className="text-xs text-[#C9A84C]">
+                      <p className="text-xs text-amber-600">
                         Yr 1: {formatCurrency(item.firstYearDeduction)}
                       </p>
                     )}

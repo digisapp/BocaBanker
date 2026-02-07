@@ -58,9 +58,9 @@ const TYPE_LABELS: Record<string, string> = {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-[rgba(100,116,139,0.15)] text-[#94A3B8]',
-  in_progress: 'bg-[rgba(59,130,246,0.15)] text-[#3B82F6]',
-  completed: 'bg-[rgba(16,185,129,0.15)] text-[#10B981]',
+  draft: 'bg-gray-100 text-gray-500',
+  in_progress: 'bg-blue-50 text-blue-600',
+  completed: 'bg-emerald-50 text-emerald-600',
 }
 
 interface PropertyDetail {
@@ -160,24 +160,24 @@ export default function PropertyDetailPage() {
             variant="ghost"
             size="icon"
             onClick={() => router.push('/properties')}
-            className="text-[#94A3B8] hover:text-[#C9A84C] hover:bg-[rgba(201,168,76,0.1)]"
+            className="text-gray-500 hover:text-amber-600 hover:bg-amber-50"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-[#F8FAFC]">{property.address}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{property.address}</h1>
               <Badge
                 variant="secondary"
-                className="bg-[rgba(201,168,76,0.1)] text-[#C9A84C] border-[rgba(201,168,76,0.2)]"
+                className="bg-amber-50 text-amber-600 border-amber-200"
               >
                 {TYPE_LABELS[property.propertyType] || property.propertyType}
               </Badge>
             </div>
             {location && (
               <div className="flex items-center gap-1.5 mt-1">
-                <MapPin className="h-3.5 w-3.5 text-[#64748B]" />
-                <span className="text-sm text-[#64748B]">{location}</span>
+                <MapPin className="h-3.5 w-3.5 text-gray-500" />
+                <span className="text-sm text-gray-500">{location}</span>
               </div>
             )}
           </div>
@@ -188,7 +188,7 @@ export default function PropertyDetailPage() {
             variant="outline"
             size="sm"
             onClick={() => router.push(`/properties/${id}/edit`)}
-            className="border-[rgba(201,168,76,0.15)] text-[#94A3B8] hover:text-[#C9A84C] hover:bg-[rgba(201,168,76,0.1)]"
+            className="border-gray-200 text-gray-700 hover:bg-gray-50"
           >
             <Pencil className="h-4 w-4 mr-1.5" />
             Edit
@@ -205,15 +205,15 @@ export default function PropertyDetailPage() {
                 Delete
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="bg-[#1A2B45] border-[rgba(201,168,76,0.15)]">
+            <AlertDialogContent className="bg-white border-gray-200">
               <AlertDialogHeader>
-                <AlertDialogTitle className="text-[#F8FAFC]">Delete Property</AlertDialogTitle>
-                <AlertDialogDescription className="text-[#94A3B8]">
+                <AlertDialogTitle className="text-gray-900">Delete Property</AlertDialogTitle>
+                <AlertDialogDescription className="text-gray-500">
                   Are you sure you want to delete this property? This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="border-[rgba(201,168,76,0.15)] text-[#94A3B8]">
+                <AlertDialogCancel className="border-gray-200 text-gray-700">
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction
@@ -231,48 +231,48 @@ export default function PropertyDetailPage() {
 
       {/* Financial Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="glass-card p-5">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="h-4 w-4 text-[#C9A84C]" />
-            <span className="text-xs text-[#64748B] uppercase tracking-wide">Purchase Price</span>
+            <DollarSign className="h-4 w-4 text-amber-600" />
+            <span className="text-xs text-gray-500 uppercase tracking-wide">Purchase Price</span>
           </div>
-          <p className="text-2xl font-bold text-gold-gradient">
+          <p className="text-2xl font-bold text-amber-600">
             {formatCurrency(property.purchasePrice)}
           </p>
         </div>
 
-        <div className="glass-card p-5">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <div className="flex items-center gap-2 mb-2">
             <Building2 className="h-4 w-4 text-[#3B82F6]" />
-            <span className="text-xs text-[#64748B] uppercase tracking-wide">Building Value</span>
+            <span className="text-xs text-gray-500 uppercase tracking-wide">Building Value</span>
           </div>
-          <p className="text-2xl font-bold text-[#F8FAFC]">
+          <p className="text-2xl font-bold text-gray-900">
             {formatCurrency(property.buildingValue)}
           </p>
         </div>
 
-        <div className="glass-card p-5">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <div className="flex items-center gap-2 mb-2">
-            <MapPin className="h-4 w-4 text-[#64748B]" />
-            <span className="text-xs text-[#64748B] uppercase tracking-wide">Land Value</span>
+            <MapPin className="h-4 w-4 text-gray-500" />
+            <span className="text-xs text-gray-500 uppercase tracking-wide">Land Value</span>
           </div>
-          <p className="text-2xl font-bold text-[#F8FAFC]">
+          <p className="text-2xl font-bold text-gray-900">
             {formatCurrency(property.landValue)}
           </p>
         </div>
       </div>
 
       {/* Property Details */}
-      <div className="glass-card p-6">
-        <h2 className="text-lg font-semibold text-[#F8FAFC] mb-4">Property Details</h2>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Property Details</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {property.squareFootage && (
             <div>
               <div className="flex items-center gap-1.5 mb-1">
-                <Ruler className="h-3.5 w-3.5 text-[#64748B]" />
-                <span className="text-xs text-[#64748B]">Square Footage</span>
+                <Ruler className="h-3.5 w-3.5 text-gray-500" />
+                <span className="text-xs text-gray-500">Square Footage</span>
               </div>
-              <p className="text-sm font-medium text-[#F8FAFC]">
+              <p className="text-sm font-medium text-gray-900">
                 {new Intl.NumberFormat('en-US').format(property.squareFootage)} sqft
               </p>
             </div>
@@ -281,20 +281,20 @@ export default function PropertyDetailPage() {
           {property.yearBuilt && (
             <div>
               <div className="flex items-center gap-1.5 mb-1">
-                <Calendar className="h-3.5 w-3.5 text-[#64748B]" />
-                <span className="text-xs text-[#64748B]">Year Built</span>
+                <Calendar className="h-3.5 w-3.5 text-gray-500" />
+                <span className="text-xs text-gray-500">Year Built</span>
               </div>
-              <p className="text-sm font-medium text-[#F8FAFC]">{property.yearBuilt}</p>
+              <p className="text-sm font-medium text-gray-900">{property.yearBuilt}</p>
             </div>
           )}
 
           {property.purchaseDate && (
             <div>
               <div className="flex items-center gap-1.5 mb-1">
-                <Calendar className="h-3.5 w-3.5 text-[#64748B]" />
-                <span className="text-xs text-[#64748B]">Purchase Date</span>
+                <Calendar className="h-3.5 w-3.5 text-gray-500" />
+                <span className="text-xs text-gray-500">Purchase Date</span>
               </div>
-              <p className="text-sm font-medium text-[#F8FAFC]">
+              <p className="text-sm font-medium text-gray-900">
                 {new Date(property.purchaseDate).toLocaleDateString('en-US', {
                   year: 'numeric',
                   month: 'long',
@@ -306,34 +306,34 @@ export default function PropertyDetailPage() {
 
           {property.clientName && (
             <div>
-              <span className="text-xs text-[#64748B]">Client</span>
-              <p className="text-sm font-medium text-[#F8FAFC] mt-1">{property.clientName}</p>
+              <span className="text-xs text-gray-500">Client</span>
+              <p className="text-sm font-medium text-gray-900 mt-1">{property.clientName}</p>
               {property.clientCompany && (
-                <p className="text-xs text-[#64748B]">{property.clientCompany}</p>
+                <p className="text-xs text-gray-500">{property.clientCompany}</p>
               )}
             </div>
           )}
         </div>
 
         {property.description && (
-          <div className="mt-6 pt-4 border-t border-[rgba(201,168,76,0.08)]">
-            <span className="text-xs text-[#64748B]">Description</span>
-            <p className="text-sm text-[#94A3B8] mt-1">{property.description}</p>
+          <div className="mt-6 pt-4 border-t border-gray-100">
+            <span className="text-xs text-gray-500">Description</span>
+            <p className="text-sm text-gray-500 mt-1">{property.description}</p>
           </div>
         )}
       </div>
 
       {/* Linked Studies */}
-      <div className="glass-card p-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <FileBarChart className="h-5 w-5 text-[#C9A84C]" />
-            <h2 className="text-lg font-semibold text-[#F8FAFC]">Cost Segregation Studies</h2>
+            <FileBarChart className="h-5 w-5 text-amber-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Cost Segregation Studies</h2>
           </div>
           <Button
             size="sm"
             onClick={() => router.push(`/studies/new?property_id=${id}`)}
-            className="bg-gold-gradient text-[#0F1B2D] font-semibold hover:opacity-90"
+            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
           >
             <Plus className="h-4 w-4 mr-1.5" />
             New Study
@@ -342,9 +342,9 @@ export default function PropertyDetailPage() {
 
         {studies.length === 0 ? (
           <div className="text-center py-8">
-            <FileBarChart className="h-10 w-10 text-[#64748B] mx-auto mb-3" />
-            <p className="text-sm text-[#64748B]">No studies for this property yet.</p>
-            <p className="text-xs text-[#475569] mt-1">
+            <FileBarChart className="h-10 w-10 text-gray-500 mx-auto mb-3" />
+            <p className="text-sm text-gray-500">No studies for this property yet.</p>
+            <p className="text-xs text-gray-400 mt-1">
               Create a cost segregation study to analyze tax savings.
             </p>
           </div>
@@ -353,14 +353,14 @@ export default function PropertyDetailPage() {
             {studies.map((study) => (
               <div
                 key={study.id}
-                className="flex items-center justify-between p-4 rounded-lg bg-[rgba(15,27,45,0.5)] border border-[rgba(201,168,76,0.08)] hover:border-[rgba(201,168,76,0.2)] cursor-pointer transition-all"
+                className="flex items-center justify-between p-4 rounded-lg bg-gray-50 border border-gray-100 hover:border-amber-200 cursor-pointer transition-all"
                 onClick={() => router.push(`/studies/${study.id}`)}
               >
                 <div className="flex items-center gap-3">
-                  <FileBarChart className="h-4 w-4 text-[#C9A84C]" />
+                  <FileBarChart className="h-4 w-4 text-amber-600" />
                   <div>
-                    <p className="text-sm font-medium text-[#F8FAFC]">{study.studyName}</p>
-                    <p className="text-xs text-[#64748B]">
+                    <p className="text-sm font-medium text-gray-900">{study.studyName}</p>
+                    <p className="text-xs text-gray-500">
                       {new Date(study.createdAt).toLocaleDateString()}
                     </p>
                   </div>
@@ -368,10 +368,10 @@ export default function PropertyDetailPage() {
                 <div className="flex items-center gap-4">
                   {study.totalFirstYearDeduction && (
                     <div className="text-right">
-                      <p className="text-sm font-medium text-[#C9A84C]">
+                      <p className="text-sm font-medium text-amber-600">
                         {formatCurrency(study.totalFirstYearDeduction)}
                       </p>
-                      <p className="text-[10px] text-[#64748B]">First Year</p>
+                      <p className="text-[10px] text-gray-500">First Year</p>
                     </div>
                   )}
                   <Badge

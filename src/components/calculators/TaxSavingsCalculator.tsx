@@ -155,14 +155,14 @@ export default function TaxSavingsCalculator() {
   return (
     <div className="space-y-6">
       {/* Input Section */}
-      <div className="glass-card p-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-gradient text-[#0F1B2D]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
             <DollarSign className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="font-semibold text-white">Tax Savings Estimator</h3>
-            <p className="text-sm text-[#94A3B8]">
+            <h3 className="font-semibold text-gray-900">Tax Savings Estimator</h3>
+            <p className="text-sm text-gray-500">
               Estimate tax savings from a cost segregation study
             </p>
           </div>
@@ -170,28 +170,28 @@ export default function TaxSavingsCalculator() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Property Value ($)</Label>
+            <Label className="text-gray-500">Property Value ($)</Label>
             <Input
               type="number"
               placeholder="e.g. 2000000"
               value={propertyValue}
               onChange={(e) => setPropertyValue(e.target.value)}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white placeholder:text-[#64748B] focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Property Type</Label>
+            <Label className="text-gray-500">Property Type</Label>
             <Select value={propertyType} onValueChange={setPropertyType}>
-              <SelectTrigger className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]">
+              <SelectTrigger className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#1A2B45] border-[rgba(201,168,76,0.15)]">
+              <SelectContent className="bg-white border-gray-200">
                 {PROPERTY_TYPES.map((t) => (
                   <SelectItem
                     key={t}
                     value={t}
-                    className="text-white hover:bg-[#243654] focus:bg-[#243654] capitalize"
+                    className="text-gray-900 focus:bg-amber-50 focus:text-amber-700 capitalize"
                   >
                     {t.replace('-', ' ')}
                   </SelectItem>
@@ -201,18 +201,18 @@ export default function TaxSavingsCalculator() {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Tax Rate (%)</Label>
+            <Label className="text-gray-500">Tax Rate (%)</Label>
             <Input
               type="number"
               placeholder="37"
               value={taxRate}
               onChange={(e) => setTaxRate(e.target.value)}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white placeholder:text-[#64748B] focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">
+            <Label className="text-gray-500">
               Bonus Depreciation: {bonusRate}%
             </Label>
             <input
@@ -222,9 +222,9 @@ export default function TaxSavingsCalculator() {
               step={1}
               value={bonusRate}
               onChange={(e) => setBonusRate(parseInt(e.target.value))}
-              className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[#C9A84C] bg-[#243654] mt-2"
+              className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-amber-500 bg-gray-200 mt-2"
             />
-            <div className="flex justify-between text-xs text-[#64748B]">
+            <div className="flex justify-between text-xs text-gray-400">
               <span>0%</span>
               <span>50%</span>
               <span>100%</span>
@@ -235,7 +235,7 @@ export default function TaxSavingsCalculator() {
         <div className="flex gap-3 mt-6">
           <Button
             onClick={handleCalculate}
-            className="bg-gold-gradient text-[#0F1B2D] hover:opacity-90 font-semibold"
+            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
           >
             Estimate Tax Savings
           </Button>
@@ -243,7 +243,7 @@ export default function TaxSavingsCalculator() {
             <Button
               onClick={handleReset}
               variant="outline"
-              className="border-[rgba(201,168,76,0.3)] text-[#C9A84C] hover:bg-[#243654]"
+              className="border-gray-200 text-amber-600 hover:bg-amber-50"
             >
               Reset
             </Button>
@@ -254,42 +254,42 @@ export default function TaxSavingsCalculator() {
       {/* Summary Cards */}
       {result && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="glass-card p-5">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-4 w-4 text-[#C9A84C]" />
-              <span className="text-sm text-[#94A3B8]">First-Year Savings</span>
+              <TrendingUp className="h-4 w-4 text-amber-600" />
+              <span className="text-sm text-gray-500">First-Year Savings</span>
             </div>
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-bold text-gray-900">
               {formatCurrency(result.firstYearSavings)}
             </p>
           </div>
 
-          <div className="glass-card p-5">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center gap-2 mb-2">
-              <BarChart3 className="h-4 w-4 text-[#C9A84C]" />
-              <span className="text-sm text-[#94A3B8]">5-Year Savings</span>
+              <BarChart3 className="h-4 w-4 text-amber-600" />
+              <span className="text-sm text-gray-500">5-Year Savings</span>
             </div>
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-bold text-gray-900">
               {formatCurrency(result.fiveYearSavings)}
             </p>
           </div>
 
-          <div className="glass-card p-5">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center gap-2 mb-2">
-              <PiggyBank className="h-4 w-4 text-[#C9A84C]" />
-              <span className="text-sm text-[#94A3B8]">Total Savings</span>
+              <PiggyBank className="h-4 w-4 text-amber-600" />
+              <span className="text-sm text-gray-500">Total Savings</span>
             </div>
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-bold text-gray-900">
               {formatCurrency(result.totalSavings)}
             </p>
           </div>
 
-          <div className="glass-card p-5">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-4 w-4 text-[#C9A84C]" />
-              <span className="text-sm text-[#94A3B8]">NPV (5% Discount)</span>
+              <DollarSign className="h-4 w-4 text-amber-600" />
+              <span className="text-sm text-gray-500">NPV (5% Discount)</span>
             </div>
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-bold text-gray-900">
               {formatCurrency(result.npv)}
             </p>
           </div>
@@ -298,8 +298,8 @@ export default function TaxSavingsCalculator() {
 
       {/* Cumulative Savings Chart */}
       {result && chartData.length > 0 && (
-        <div className="glass-card p-6">
-          <h3 className="font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h3 className="font-semibold text-gray-900 mb-4">
             Cumulative Tax Savings Over Time
           </h3>
           <div className="h-[300px]">
@@ -307,34 +307,34 @@ export default function TaxSavingsCalculator() {
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="savingsGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#C9A84C" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#C9A84C" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(201,168,76,0.1)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
                 <XAxis
                   dataKey="year"
-                  stroke="#64748B"
-                  tick={{ fill: '#94A3B8', fontSize: 12 }}
+                  stroke="#9CA3AF"
+                  tick={{ fill: '#6B7280', fontSize: 12 }}
                 />
                 <YAxis
-                  stroke="#64748B"
-                  tick={{ fill: '#94A3B8', fontSize: 12 }}
+                  stroke="#9CA3AF"
+                  tick={{ fill: '#6B7280', fontSize: 12 }}
                   tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#1A2B45',
-                    border: '1px solid rgba(201,168,76,0.2)',
-                    borderRadius: '8px',
-                    color: '#F8FAFC',
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '12px',
+                    color: '#111827',
                   }}
                   formatter={(value) => [formatCurrency(value as number), 'Cumulative Savings']}
                 />
                 <Area
                   type="monotone"
                   dataKey="savings"
-                  stroke="#C9A84C"
+                  stroke="#F59E0B"
                   fill="url(#savingsGradient)"
                   strokeWidth={2}
                 />

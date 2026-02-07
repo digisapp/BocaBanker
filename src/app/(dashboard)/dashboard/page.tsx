@@ -56,7 +56,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-[#C9A84C]" />
+        <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
       </div>
     );
   }
@@ -80,10 +80,10 @@ export default function DashboardPage() {
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-serif font-bold text-gold-gradient">
+        <h1 className="text-2xl font-serif font-bold bg-gradient-to-r from-amber-500 to-yellow-500 bg-clip-text text-transparent">
           Dashboard
         </h1>
-        <p className="text-[#94A3B8] mt-1">
+        <p className="text-gray-500 mt-1">
           Overview of your cost segregation business
         </p>
       </div>
@@ -122,33 +122,34 @@ export default function DashboardPage() {
         <RecentActivity activities={stats?.recentActivity || []} />
 
         {/* Savings Chart */}
-        <div className="glass-card p-6">
-          <h3 className="font-semibold text-white mb-4">Tax Savings Trend</h3>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h3 className="font-semibold text-gray-900 mb-4">Tax Savings Trend</h3>
           <div className="h-[320px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={savingsChartData}>
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="rgba(201,168,76,0.1)"
+                  stroke="rgba(0,0,0,0.06)"
                 />
                 <XAxis
                   dataKey="month"
-                  stroke="#64748B"
-                  tick={{ fill: '#94A3B8', fontSize: 12 }}
+                  stroke="#D1D5DB"
+                  tick={{ fill: '#6B7280', fontSize: 12 }}
                 />
                 <YAxis
-                  stroke="#64748B"
-                  tick={{ fill: '#94A3B8', fontSize: 12 }}
+                  stroke="#D1D5DB"
+                  tick={{ fill: '#6B7280', fontSize: 12 }}
                   tickFormatter={(v) =>
                     v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`
                   }
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#1A2B45',
-                    border: '1px solid rgba(201,168,76,0.2)',
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #E5E7EB',
                     borderRadius: '8px',
-                    color: '#F8FAFC',
+                    color: '#111827',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                   }}
                   formatter={(value) => [
                     formatCurrency(value as number),
@@ -157,7 +158,7 @@ export default function DashboardPage() {
                 />
                 <Bar
                   dataKey="savings"
-                  fill="#C9A84C"
+                  fill="#F59E0B"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>

@@ -45,11 +45,11 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
   };
 
   return (
-    <div className="flex items-end gap-2 p-4 border-t border-gold/15">
+    <div className="flex items-end gap-2 p-4 border-t border-gray-200">
       <Textarea
         ref={textareaRef}
         placeholder="Ask Boca Banker about cost segregation, tax strategy, or real estate finance..."
-        className="min-h-[44px] max-h-[96px] resize-none bg-navy-lighter/50 border-gold/15 focus-visible:border-gold/30 focus-visible:ring-gold/20 text-sm placeholder:text-muted-foreground/60"
+        className="min-h-[44px] max-h-[96px] resize-none bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus-visible:border-amber-500 focus-visible:ring-amber-500/20 text-sm"
         rows={1}
         onKeyDown={handleKeyDown}
         onInput={handleInput}
@@ -59,7 +59,7 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
         onClick={handleSubmit}
         disabled={isLoading}
         size="icon"
-        className="h-[44px] w-[44px] flex-shrink-0 bg-gold-gradient hover:opacity-90 text-navy transition-opacity disabled:opacity-40"
+        className="h-[44px] w-[44px] flex-shrink-0 bg-gradient-to-r from-amber-500 to-yellow-500 hover:opacity-90 text-white transition-opacity disabled:opacity-40"
       >
         <SendHorizontal className="h-5 w-5" />
       </Button>

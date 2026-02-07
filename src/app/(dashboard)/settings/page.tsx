@@ -108,24 +108,24 @@ export default function SettingsPage() {
     <div className="space-y-6 animate-fade-in max-w-2xl">
       {/* Page Header */}
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-gradient text-[#0F1B2D]">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
           <Settings className="h-5 w-5" />
         </div>
         <div>
-          <h1 className="text-2xl font-serif font-bold text-gold-gradient">
+          <h1 className="text-2xl font-serif font-bold text-amber-600">
             Settings
           </h1>
-          <p className="text-sm text-[#94A3B8]">
+          <p className="text-sm text-gray-500">
             Manage your account and preferences
           </p>
         </div>
       </div>
 
       {/* Profile Section */}
-      <div className="glass-card p-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center gap-2 mb-6">
-          <User className="h-5 w-5 text-[#C9A84C]" />
-          <h2 className="text-lg font-semibold text-white">Profile</h2>
+          <User className="h-5 w-5 text-amber-600" />
+          <h2 className="text-lg font-semibold text-gray-900">Profile</h2>
         </div>
 
         <form
@@ -133,21 +133,21 @@ export default function SettingsPage() {
           className="space-y-4"
         >
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Full Name</Label>
+            <Label className="text-gray-500">Full Name</Label>
             <Input
               {...profileForm.register('fullName')}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Email</Label>
+            <Label className="text-gray-500">Email</Label>
             <Input
               {...profileForm.register('email')}
               disabled
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-[#64748B] cursor-not-allowed"
+              className="bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed"
             />
-            <p className="text-xs text-[#64748B]">
+            <p className="text-xs text-gray-400">
               Email cannot be changed here. Contact support if needed.
             </p>
           </div>
@@ -156,7 +156,7 @@ export default function SettingsPage() {
             <Button
               type="submit"
               disabled={profileSaving}
-              className="bg-gold-gradient text-[#0F1B2D] hover:opacity-90 font-semibold"
+              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
             >
               {profileSaving ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -164,7 +164,7 @@ export default function SettingsPage() {
               Save Profile
             </Button>
             {profileSaved && (
-              <span className="flex items-center gap-1 text-sm text-emerald-400">
+              <span className="flex items-center gap-1 text-sm text-emerald-500">
                 <CheckCircle className="h-4 w-4" />
                 Saved
               </span>
@@ -174,10 +174,10 @@ export default function SettingsPage() {
       </div>
 
       {/* Password Section */}
-      <div className="glass-card p-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center gap-2 mb-6">
-          <Lock className="h-5 w-5 text-[#C9A84C]" />
-          <h2 className="text-lg font-semibold text-white">Change Password</h2>
+          <Lock className="h-5 w-5 text-amber-600" />
+          <h2 className="text-lg font-semibold text-gray-900">Change Password</h2>
         </div>
 
         <form
@@ -185,41 +185,41 @@ export default function SettingsPage() {
           className="space-y-4"
         >
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Current Password</Label>
+            <Label className="text-gray-500">Current Password</Label>
             <Input
               type="password"
               {...passwordForm.register('currentPassword')}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">New Password</Label>
+            <Label className="text-gray-500">New Password</Label>
             <Input
               type="password"
               {...passwordForm.register('newPassword')}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Confirm New Password</Label>
+            <Label className="text-gray-500">Confirm New Password</Label>
             <Input
               type="password"
               {...passwordForm.register('confirmPassword')}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
 
           {passwordError && (
-            <p className="text-sm text-red-400">{passwordError}</p>
+            <p className="text-sm text-red-500">{passwordError}</p>
           )}
 
           <div className="flex items-center gap-3 pt-2">
             <Button
               type="submit"
               disabled={passwordSaving}
-              className="bg-gold-gradient text-[#0F1B2D] hover:opacity-90 font-semibold"
+              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
             >
               {passwordSaving ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -227,7 +227,7 @@ export default function SettingsPage() {
               Update Password
             </Button>
             {passwordSaved && (
-              <span className="flex items-center gap-1 text-sm text-emerald-400">
+              <span className="flex items-center gap-1 text-sm text-emerald-500">
                 <CheckCircle className="h-4 w-4" />
                 Updated
               </span>
@@ -237,17 +237,17 @@ export default function SettingsPage() {
       </div>
 
       {/* Preferences Section */}
-      <div className="glass-card p-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center gap-2 mb-6">
-          <Bell className="h-5 w-5 text-[#C9A84C]" />
-          <h2 className="text-lg font-semibold text-white">Preferences</h2>
+          <Bell className="h-5 w-5 text-amber-600" />
+          <h2 className="text-lg font-semibold text-gray-900">Preferences</h2>
         </div>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-white">Email Notifications</p>
-              <p className="text-xs text-[#64748B]">
+              <p className="text-sm text-gray-900">Email Notifications</p>
+              <p className="text-xs text-gray-400">
                 Receive email updates about your account activity
               </p>
             </div>
@@ -257,12 +257,12 @@ export default function SettingsPage() {
             />
           </div>
 
-          <Separator className="bg-[rgba(201,168,76,0.1)]" />
+          <Separator className="bg-gray-200" />
 
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-white">Study Completion Alerts</p>
-              <p className="text-xs text-[#64748B]">
+              <p className="text-sm text-gray-900">Study Completion Alerts</p>
+              <p className="text-xs text-gray-400">
                 Get notified when a cost seg study is completed
               </p>
             </div>

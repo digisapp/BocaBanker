@@ -125,11 +125,11 @@ export default function StudyReportPage() {
   if (!study || !study.results) {
     return (
       <div className="max-w-4xl mx-auto text-center py-20">
-        <p className="text-[#64748B]">No report data available. Run the calculation first.</p>
+        <p className="text-gray-500">No report data available. Run the calculation first.</p>
         <Button
           variant="outline"
           onClick={() => router.push(`/studies/${id}`)}
-          className="mt-4 border-[rgba(201,168,76,0.15)] text-[#94A3B8]"
+          className="mt-4 border-gray-200 text-gray-500"
         >
           Back to Study
         </Button>
@@ -146,14 +146,14 @@ export default function StudyReportPage() {
         <Button
           variant="ghost"
           onClick={() => router.push(`/studies/${id}`)}
-          className="text-[#94A3B8] hover:text-[#C9A84C]"
+          className="text-gray-500 hover:text-amber-600"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Study
         </Button>
         <Button
           onClick={() => window.print()}
-          className="bg-gold-gradient text-[#0F1B2D] font-semibold hover:opacity-90"
+          className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
         >
           <Printer className="h-4 w-4 mr-2" />
           Print Report
@@ -163,114 +163,114 @@ export default function StudyReportPage() {
       {/* Report Content */}
       <div className="space-y-8">
         {/* Report Header */}
-        <div className="glass-card p-8 text-center">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
           <div className="flex justify-center mb-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gold-gradient">
-              <Building2 className="h-7 w-7 text-[#0F1B2D]" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500">
+              <Building2 className="h-7 w-7 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gold-gradient font-serif mb-2">
+          <h1 className="text-3xl font-bold text-amber-600 font-serif mb-2">
             Cost Segregation Study Report
           </h1>
-          <p className="text-[#94A3B8] text-lg">{study.studyName}</p>
-          <div className="flex items-center justify-center gap-4 mt-4 text-sm text-[#64748B]">
+          <p className="text-gray-500 text-lg">{study.studyName}</p>
+          <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-400">
             <span>Prepared: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-            <span className="text-[rgba(201,168,76,0.3)]">|</span>
+            <span className="text-gray-300">|</span>
             <span>Study Year: {study.studyYear}</span>
           </div>
         </div>
 
         {/* Property Information */}
-        <div className="glass-card p-6">
-          <h2 className="text-lg font-semibold text-[#C9A84C] border-b border-[rgba(201,168,76,0.15)] pb-2 mb-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Property Information
           </h2>
           <div className="grid grid-cols-2 gap-x-8 gap-y-4">
             <div>
-              <span className="text-xs text-[#64748B] uppercase tracking-wide">Address</span>
-              <p className="text-sm font-medium text-[#F8FAFC] mt-1">{study.propertyName || study.propertyAddress || '-'}</p>
+              <span className="text-xs text-gray-400 uppercase tracking-wide">Address</span>
+              <p className="text-sm font-medium text-gray-900 mt-1">{study.propertyName || study.propertyAddress || '-'}</p>
             </div>
             <div>
-              <span className="text-xs text-[#64748B] uppercase tracking-wide">Property Type</span>
-              <p className="text-sm font-medium text-[#F8FAFC] mt-1 capitalize">
+              <span className="text-xs text-gray-400 uppercase tracking-wide">Property Type</span>
+              <p className="text-sm font-medium text-gray-900 mt-1 capitalize">
                 {study.propertyType?.replace('_', ' ') || '-'}
               </p>
             </div>
             <div>
-              <span className="text-xs text-[#64748B] uppercase tracking-wide">Purchase Price</span>
-              <p className="text-sm font-medium text-[#F8FAFC] mt-1">{formatCurrency(study.purchasePrice)}</p>
+              <span className="text-xs text-gray-400 uppercase tracking-wide">Purchase Price</span>
+              <p className="text-sm font-medium text-gray-900 mt-1">{formatCurrency(study.purchasePrice)}</p>
             </div>
             <div>
-              <span className="text-xs text-[#64748B] uppercase tracking-wide">Client</span>
-              <p className="text-sm font-medium text-[#F8FAFC] mt-1">
+              <span className="text-xs text-gray-400 uppercase tracking-wide">Client</span>
+              <p className="text-sm font-medium text-gray-900 mt-1">
                 {study.clientName || '-'}
                 {study.clientCompany ? ` (${study.clientCompany})` : ''}
               </p>
             </div>
             <div>
-              <span className="text-xs text-[#64748B] uppercase tracking-wide">Building Value</span>
-              <p className="text-sm font-medium text-[#F8FAFC] mt-1">{formatCurrency(study.buildingValue)}</p>
+              <span className="text-xs text-gray-400 uppercase tracking-wide">Building Value</span>
+              <p className="text-sm font-medium text-gray-900 mt-1">{formatCurrency(study.buildingValue)}</p>
             </div>
             <div>
-              <span className="text-xs text-[#64748B] uppercase tracking-wide">Land Value</span>
-              <p className="text-sm font-medium text-[#F8FAFC] mt-1">{formatCurrency(study.landValue)}</p>
+              <span className="text-xs text-gray-400 uppercase tracking-wide">Land Value</span>
+              <p className="text-sm font-medium text-gray-900 mt-1">{formatCurrency(study.landValue)}</p>
             </div>
           </div>
         </div>
 
         {/* Tax Parameters */}
-        <div className="glass-card p-6">
-          <h2 className="text-lg font-semibold text-[#C9A84C] border-b border-[rgba(201,168,76,0.15)] pb-2 mb-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Tax Parameters
           </h2>
           <div className="grid grid-cols-3 gap-6">
             <div>
-              <span className="text-xs text-[#64748B] uppercase tracking-wide">Marginal Tax Rate</span>
-              <p className="text-xl font-bold text-[#F8FAFC] mt-1">{study.taxRate}%</p>
+              <span className="text-xs text-gray-400 uppercase tracking-wide">Marginal Tax Rate</span>
+              <p className="text-xl font-bold text-gray-900 mt-1">{study.taxRate}%</p>
             </div>
             <div>
-              <span className="text-xs text-[#64748B] uppercase tracking-wide">Discount Rate</span>
-              <p className="text-xl font-bold text-[#F8FAFC] mt-1">{study.discountRate || '5'}%</p>
+              <span className="text-xs text-gray-400 uppercase tracking-wide">Discount Rate</span>
+              <p className="text-xl font-bold text-gray-900 mt-1">{study.discountRate || '5'}%</p>
             </div>
             <div>
-              <span className="text-xs text-[#64748B] uppercase tracking-wide">Bonus Depreciation</span>
-              <p className="text-xl font-bold text-[#F8FAFC] mt-1">{study.bonusDepreciationRate || '100'}%</p>
+              <span className="text-xs text-gray-400 uppercase tracking-wide">Bonus Depreciation</span>
+              <p className="text-xl font-bold text-gray-900 mt-1">{study.bonusDepreciationRate || '100'}%</p>
             </div>
           </div>
         </div>
 
         {/* Executive Summary */}
-        <div className="glass-card p-6">
-          <h2 className="text-lg font-semibold text-[#C9A84C] border-b border-[rgba(201,168,76,0.15)] pb-2 mb-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Executive Summary
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="text-center p-4 rounded-lg bg-[rgba(201,168,76,0.05)] border border-[rgba(201,168,76,0.1)]">
-              <p className="text-xs text-[#64748B] uppercase tracking-wide mb-2">
+            <div className="text-center p-4 rounded-lg bg-amber-50 border border-amber-100">
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">
                 First Year Deduction
               </p>
-              <p className="text-2xl font-bold text-[#C9A84C]">
+              <p className="text-2xl font-bold text-amber-600">
                 {formatCurrency(results.summary.totalFirstYearDeduction)}
               </p>
             </div>
-            <div className="text-center p-4 rounded-lg bg-[rgba(16,185,129,0.05)] border border-[rgba(16,185,129,0.1)]">
-              <p className="text-xs text-[#64748B] uppercase tracking-wide mb-2">
+            <div className="text-center p-4 rounded-lg bg-emerald-50 border border-emerald-100">
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">
                 Total Tax Savings
               </p>
               <p className="text-2xl font-bold text-[#10B981]">
                 {formatCurrency(results.summary.totalTaxSavings)}
               </p>
             </div>
-            <div className="text-center p-4 rounded-lg bg-[rgba(59,130,246,0.05)] border border-[rgba(59,130,246,0.1)]">
-              <p className="text-xs text-[#64748B] uppercase tracking-wide mb-2">
+            <div className="text-center p-4 rounded-lg bg-blue-50 border border-blue-100">
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">
                 NPV of Savings
               </p>
               <p className="text-2xl font-bold text-[#3B82F6]">
                 {formatCurrency(results.summary.npvTaxSavings)}
               </p>
             </div>
-            <div className="text-center p-4 rounded-lg bg-[rgba(139,92,246,0.05)] border border-[rgba(139,92,246,0.1)]">
-              <p className="text-xs text-[#64748B] uppercase tracking-wide mb-2">
+            <div className="text-center p-4 rounded-lg bg-purple-50 border border-purple-100">
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">
                 Effective Rate
               </p>
               <p className="text-2xl font-bold text-[#8B5CF6]">
@@ -281,31 +281,31 @@ export default function StudyReportPage() {
         </div>
 
         {/* First Year Analysis */}
-        <div className="glass-card p-6">
-          <h2 className="text-lg font-semibold text-[#C9A84C] border-b border-[rgba(201,168,76,0.15)] pb-2 mb-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             First Year Depreciation Analysis
           </h2>
           <div className="grid grid-cols-4 gap-6">
             <div>
-              <span className="text-xs text-[#64748B]">Bonus Depreciation</span>
-              <p className="text-lg font-semibold text-[#F8FAFC] mt-1">
+              <span className="text-xs text-gray-400">Bonus Depreciation</span>
+              <p className="text-lg font-semibold text-gray-900 mt-1">
                 {formatCurrency(results.firstYearAnalysis.bonusDepreciation)}
               </p>
             </div>
             <div>
-              <span className="text-xs text-[#64748B]">Regular MACRS (Year 1)</span>
-              <p className="text-lg font-semibold text-[#F8FAFC] mt-1">
+              <span className="text-xs text-gray-400">Regular MACRS (Year 1)</span>
+              <p className="text-lg font-semibold text-gray-900 mt-1">
                 {formatCurrency(results.firstYearAnalysis.regularFirstYear)}
               </p>
             </div>
             <div>
-              <span className="text-xs text-[#64748B]">Total First Year</span>
-              <p className="text-lg font-semibold text-[#C9A84C] mt-1">
+              <span className="text-xs text-gray-400">Total First Year</span>
+              <p className="text-lg font-semibold text-amber-600 mt-1">
                 {formatCurrency(results.firstYearAnalysis.totalFirstYear)}
               </p>
             </div>
             <div>
-              <span className="text-xs text-[#64748B]">First Year Tax Savings</span>
+              <span className="text-xs text-gray-400">First Year Tax Savings</span>
               <p className="text-lg font-semibold text-[#10B981] mt-1">
                 {formatCurrency(results.firstYearAnalysis.taxSavings)}
               </p>
@@ -314,88 +314,88 @@ export default function StudyReportPage() {
         </div>
 
         {/* Asset Breakdown Table */}
-        <div className="glass-card p-6">
-          <h2 className="text-lg font-semibold text-[#C9A84C] border-b border-[rgba(201,168,76,0.15)] pb-2 mb-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Asset Classification Breakdown
           </h2>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[rgba(201,168,76,0.15)]">
-                <th className="text-left py-3 text-[#64748B] font-medium">Asset Category</th>
-                <th className="text-right py-3 text-[#64748B] font-medium">Recovery Period</th>
-                <th className="text-right py-3 text-[#64748B] font-medium">Cost Basis</th>
-                <th className="text-right py-3 text-[#64748B] font-medium">% of Total</th>
+              <tr className="border-b border-gray-200">
+                <th className="text-left py-3 text-gray-400 font-medium">Asset Category</th>
+                <th className="text-right py-3 text-gray-400 font-medium">Recovery Period</th>
+                <th className="text-right py-3 text-gray-400 font-medium">Cost Basis</th>
+                <th className="text-right py-3 text-gray-400 font-medium">% of Total</th>
               </tr>
             </thead>
             <tbody>
               {results.assetBreakdown.map((asset, i) => (
-                <tr key={i} className="border-b border-[rgba(201,168,76,0.05)]">
-                  <td className="py-3 text-[#F8FAFC]">
+                <tr key={i} className="border-b border-gray-100">
+                  <td className="py-3 text-gray-900">
                     {CATEGORY_LABELS[asset.category] || asset.category}
                   </td>
-                  <td className="py-3 text-[#94A3B8] text-right">
+                  <td className="py-3 text-gray-500 text-right">
                     {asset.recoveryPeriod === 0 ? 'N/A' : `${asset.recoveryPeriod} years`}
                   </td>
-                  <td className="py-3 text-[#F8FAFC] text-right font-medium">
+                  <td className="py-3 text-gray-900 text-right font-medium">
                     {formatCurrency(asset.amount)}
                   </td>
-                  <td className="py-3 text-[#94A3B8] text-right">{asset.percentage.toFixed(1)}%</td>
+                  <td className="py-3 text-gray-500 text-right">{asset.percentage.toFixed(1)}%</td>
                 </tr>
               ))}
-              <tr className="border-t-2 border-[rgba(201,168,76,0.2)]">
-                <td className="py-3 text-[#C9A84C] font-semibold" colSpan={2}>Total</td>
-                <td className="py-3 text-[#C9A84C] text-right font-bold">
+              <tr className="border-t-2 border-gray-300">
+                <td className="py-3 text-amber-600 font-semibold" colSpan={2}>Total</td>
+                <td className="py-3 text-amber-600 text-right font-bold">
                   {formatCurrency(results.assetBreakdown.reduce((sum, a) => sum + a.amount, 0))}
                 </td>
-                <td className="py-3 text-[#C9A84C] text-right font-medium">100.0%</td>
+                <td className="py-3 text-amber-600 text-right font-medium">100.0%</td>
               </tr>
             </tbody>
           </table>
         </div>
 
         {/* Charts Section */}
-        <div className="glass-card p-6">
-          <h2 className="text-lg font-semibold text-[#C9A84C] border-b border-[rgba(201,168,76,0.15)] pb-2 mb-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Asset Allocation
           </h2>
           <AssetBreakdownChart data={results.assetBreakdown} />
         </div>
 
-        <div className="glass-card p-6">
-          <h2 className="text-lg font-semibold text-[#C9A84C] border-b border-[rgba(201,168,76,0.15)] pb-2 mb-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Depreciation Schedule Comparison
           </h2>
           <DepreciationChart data={results.depreciationSchedule} />
         </div>
 
-        <div className="glass-card p-6">
-          <h2 className="text-lg font-semibold text-[#C9A84C] border-b border-[rgba(201,168,76,0.15)] pb-2 mb-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Cumulative Tax Savings
           </h2>
           <TaxSavingsChart data={results.taxSavingsSchedule} />
         </div>
 
         {/* Depreciation Schedule Table */}
-        <div className="glass-card p-6">
-          <h2 className="text-lg font-semibold text-[#C9A84C] border-b border-[rgba(201,168,76,0.15)] pb-2 mb-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Year-by-Year Depreciation Schedule
           </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[rgba(201,168,76,0.15)]">
-                  <th className="text-left py-2 text-[#64748B] font-medium">Year</th>
-                  <th className="text-right py-2 text-[#64748B] font-medium">With Cost Seg</th>
-                  <th className="text-right py-2 text-[#64748B] font-medium">Without Cost Seg</th>
-                  <th className="text-right py-2 text-[#64748B] font-medium">Difference</th>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-2 text-gray-400 font-medium">Year</th>
+                  <th className="text-right py-2 text-gray-400 font-medium">With Cost Seg</th>
+                  <th className="text-right py-2 text-gray-400 font-medium">Without Cost Seg</th>
+                  <th className="text-right py-2 text-gray-400 font-medium">Difference</th>
                 </tr>
               </thead>
               <tbody>
                 {results.depreciationSchedule.slice(0, 20).map((row) => (
-                  <tr key={row.year} className="border-b border-[rgba(201,168,76,0.03)]">
-                    <td className="py-2 text-[#F8FAFC]">{row.year}</td>
-                    <td className="py-2 text-[#C9A84C] text-right">{formatCurrency(row.accelerated)}</td>
-                    <td className="py-2 text-[#94A3B8] text-right">{formatCurrency(row.straightLine)}</td>
+                  <tr key={row.year} className="border-b border-gray-100">
+                    <td className="py-2 text-gray-900">{row.year}</td>
+                    <td className="py-2 text-amber-600 text-right">{formatCurrency(row.accelerated)}</td>
+                    <td className="py-2 text-gray-500 text-right">{formatCurrency(row.straightLine)}</td>
                     <td className={`py-2 text-right font-medium ${row.difference >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
                       {formatCurrency(row.difference)}
                     </td>
@@ -404,7 +404,7 @@ export default function StudyReportPage() {
               </tbody>
             </table>
             {results.depreciationSchedule.length > 20 && (
-              <p className="text-xs text-[#64748B] mt-2 text-center">
+              <p className="text-xs text-gray-400 mt-2 text-center">
                 Showing first 20 of {results.depreciationSchedule.length} years
               </p>
             )}
@@ -412,31 +412,31 @@ export default function StudyReportPage() {
         </div>
 
         {/* Tax Savings Schedule */}
-        <div className="glass-card p-6">
-          <h2 className="text-lg font-semibold text-[#C9A84C] border-b border-[rgba(201,168,76,0.15)] pb-2 mb-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Tax Savings Schedule
           </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[rgba(201,168,76,0.15)]">
-                  <th className="text-left py-2 text-[#64748B] font-medium">Year</th>
-                  <th className="text-right py-2 text-[#64748B] font-medium">With Cost Seg</th>
-                  <th className="text-right py-2 text-[#64748B] font-medium">Without Cost Seg</th>
-                  <th className="text-right py-2 text-[#64748B] font-medium">Annual Savings</th>
-                  <th className="text-right py-2 text-[#64748B] font-medium">Cumulative Savings</th>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-2 text-gray-400 font-medium">Year</th>
+                  <th className="text-right py-2 text-gray-400 font-medium">With Cost Seg</th>
+                  <th className="text-right py-2 text-gray-400 font-medium">Without Cost Seg</th>
+                  <th className="text-right py-2 text-gray-400 font-medium">Annual Savings</th>
+                  <th className="text-right py-2 text-gray-400 font-medium">Cumulative Savings</th>
                 </tr>
               </thead>
               <tbody>
                 {results.taxSavingsSchedule.slice(0, 20).map((row) => (
-                  <tr key={row.year} className="border-b border-[rgba(201,168,76,0.03)]">
-                    <td className="py-2 text-[#F8FAFC]">{row.year}</td>
-                    <td className="py-2 text-[#C9A84C] text-right">{formatCurrency(row.withCostSeg)}</td>
-                    <td className="py-2 text-[#94A3B8] text-right">{formatCurrency(row.withoutCostSeg)}</td>
+                  <tr key={row.year} className="border-b border-gray-100">
+                    <td className="py-2 text-gray-900">{row.year}</td>
+                    <td className="py-2 text-amber-600 text-right">{formatCurrency(row.withCostSeg)}</td>
+                    <td className="py-2 text-gray-500 text-right">{formatCurrency(row.withoutCostSeg)}</td>
                     <td className={`py-2 text-right ${row.savings >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
                       {formatCurrency(row.savings)}
                     </td>
-                    <td className="py-2 text-[#C9A84C] text-right font-medium">
+                    <td className="py-2 text-amber-600 text-right font-medium">
                       {formatCurrency(row.cumulativeSavings)}
                     </td>
                   </tr>
@@ -444,7 +444,7 @@ export default function StudyReportPage() {
               </tbody>
             </table>
             {results.taxSavingsSchedule.length > 20 && (
-              <p className="text-xs text-[#64748B] mt-2 text-center">
+              <p className="text-xs text-gray-400 mt-2 text-center">
                 Showing first 20 of {results.taxSavingsSchedule.length} years
               </p>
             )}
@@ -452,9 +452,9 @@ export default function StudyReportPage() {
         </div>
 
         {/* Disclaimer */}
-        <div className="glass-card p-6">
-          <h2 className="text-sm font-semibold text-[#64748B] mb-2">Disclaimer</h2>
-          <p className="text-xs text-[#475569] leading-relaxed">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-sm font-semibold text-gray-400 mb-2">Disclaimer</h2>
+          <p className="text-xs text-gray-400 leading-relaxed">
             This cost segregation study report is generated for informational purposes only and
             does not constitute tax advice. The calculations are based on the data provided and
             standard IRS MACRS depreciation tables. Actual tax benefits may vary based on individual
@@ -465,8 +465,8 @@ export default function StudyReportPage() {
         </div>
 
         {/* Footer */}
-        <div className="text-center py-4 text-xs text-[#475569]">
-          <p className="text-gold-gradient font-serif font-bold text-sm mb-1">Boca Banker</p>
+        <div className="text-center py-4 text-xs text-gray-400">
+          <p className="text-amber-600 font-serif font-bold text-sm mb-1">Boca Banker</p>
           <p>Cost Segregation & Banking Intelligence</p>
           <p className="mt-1">Report generated on {new Date().toLocaleDateString('en-US', {
             year: 'numeric',

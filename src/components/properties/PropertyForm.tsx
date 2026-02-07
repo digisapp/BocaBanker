@@ -88,12 +88,12 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         {/* Location Section */}
-        <div className="glass-card p-6 space-y-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[rgba(201,168,76,0.15)]">
-              <MapPin className="h-4 w-4 text-[#C9A84C]" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50">
+              <MapPin className="h-4 w-4 text-amber-600" />
             </div>
-            <h3 className="text-lg font-semibold text-[#F8FAFC]">Location</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Location</h3>
           </div>
 
           <FormField
@@ -101,11 +101,11 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
             name="address"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-[#94A3B8]">Address</FormLabel>
+                <FormLabel className="text-gray-500">Address</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="123 Main Street"
-                    className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-[#F8FAFC] placeholder:text-[#475569]"
+                    className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
                     {...field}
                   />
                 </FormControl>
@@ -120,11 +120,11 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
               name="city"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[#94A3B8]">City</FormLabel>
+                  <FormLabel className="text-gray-500">City</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Boca Raton"
-                      className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-[#F8FAFC] placeholder:text-[#475569]"
+                      className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
                       {...field}
                     />
                   </FormControl>
@@ -138,12 +138,12 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
               name="state"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[#94A3B8]">State</FormLabel>
+                  <FormLabel className="text-gray-500">State</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="FL"
                       maxLength={2}
-                      className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-[#F8FAFC] placeholder:text-[#475569] uppercase"
+                      className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20 uppercase"
                       {...field}
                     />
                   </FormControl>
@@ -157,11 +157,11 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
               name="zip"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[#94A3B8]">ZIP Code</FormLabel>
+                  <FormLabel className="text-gray-500">ZIP Code</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="33432"
-                      className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-[#F8FAFC] placeholder:text-[#475569]"
+                      className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
                       {...field}
                     />
                   </FormControl>
@@ -173,12 +173,12 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
         </div>
 
         {/* Financial Details Section */}
-        <div className="glass-card p-6 space-y-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[rgba(201,168,76,0.15)]">
-              <DollarSign className="h-4 w-4 text-[#C9A84C]" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50">
+              <DollarSign className="h-4 w-4 text-amber-600" />
             </div>
-            <h3 className="text-lg font-semibold text-[#F8FAFC]">Financial Details</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Financial Details</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -187,14 +187,14 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
               name="purchase_price"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[#94A3B8]">Purchase Price</FormLabel>
+                  <FormLabel className="text-gray-500">Purchase Price</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#C9A84C]">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-600">$</span>
                       <Input
                         type="number"
                         placeholder="1,000,000"
-                        className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-[#F8FAFC] placeholder:text-[#475569] pl-7"
+                        className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20 pl-7"
                         {...field}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                         value={field.value ?? ''}
@@ -211,11 +211,11 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
               name="purchase_date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[#94A3B8]">Purchase Date</FormLabel>
+                  <FormLabel className="text-gray-500">Purchase Date</FormLabel>
                   <FormControl>
                     <Input
                       type="date"
-                      className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-[#F8FAFC]"
+                      className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
                       {...field}
                     />
                   </FormControl>
@@ -231,14 +231,14 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
               name="building_value"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[#94A3B8]">Building Value</FormLabel>
+                  <FormLabel className="text-gray-500">Building Value</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#C9A84C]">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-600">$</span>
                       <Input
                         type="number"
                         placeholder="800,000"
-                        className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-[#F8FAFC] placeholder:text-[#475569] pl-7"
+                        className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20 pl-7"
                         {...field}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                         value={field.value ?? ''}
@@ -255,14 +255,14 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
               name="land_value"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[#94A3B8]">Land Value</FormLabel>
+                  <FormLabel className="text-gray-500">Land Value</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#C9A84C]">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-600">$</span>
                       <Input
                         type="number"
                         placeholder="200,000"
-                        className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-[#F8FAFC] placeholder:text-[#475569] pl-7"
+                        className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20 pl-7"
                         {...field}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                         value={field.value ?? ''}
@@ -277,12 +277,12 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
         </div>
 
         {/* Property Details Section */}
-        <div className="glass-card p-6 space-y-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[rgba(201,168,76,0.15)]">
-              <Building2 className="h-4 w-4 text-[#C9A84C]" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50">
+              <Building2 className="h-4 w-4 text-amber-600" />
             </div>
-            <h3 className="text-lg font-semibold text-[#F8FAFC]">Property Details</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Property Details</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -291,16 +291,16 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
               name="property_type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[#94A3B8]">Property Type</FormLabel>
+                  <FormLabel className="text-gray-500">Property Type</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger className="w-full bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-[#F8FAFC]">
+                      <SelectTrigger className="w-full bg-gray-50 border-gray-200 text-gray-900">
                         <SelectValue placeholder="Select property type" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-[#1A2B45] border-[rgba(201,168,76,0.15)]">
+                    <SelectContent className="bg-white border-gray-200">
                       {PROPERTY_TYPES.map((type) => (
-                        <SelectItem key={type.value} value={type.value} className="text-[#F8FAFC] focus:bg-[rgba(201,168,76,0.1)] focus:text-[#C9A84C]">
+                        <SelectItem key={type.value} value={type.value} className="text-gray-900 focus:bg-amber-50 focus:text-amber-600">
                           {type.label}
                         </SelectItem>
                       ))}
@@ -316,16 +316,16 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
               name="client_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[#94A3B8]">Client</FormLabel>
+                  <FormLabel className="text-gray-500">Client</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value || ''}>
                     <FormControl>
-                      <SelectTrigger className="w-full bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-[#F8FAFC]">
+                      <SelectTrigger className="w-full bg-gray-50 border-gray-200 text-gray-900">
                         <SelectValue placeholder="Select client (optional)" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-[#1A2B45] border-[rgba(201,168,76,0.15)]">
+                    <SelectContent className="bg-white border-gray-200">
                       {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id} className="text-[#F8FAFC] focus:bg-[rgba(201,168,76,0.1)] focus:text-[#C9A84C]">
+                        <SelectItem key={client.id} value={client.id} className="text-gray-900 focus:bg-amber-50 focus:text-amber-600">
                           {client.firstName} {client.lastName}
                           {client.company ? ` - ${client.company}` : ''}
                         </SelectItem>
@@ -344,12 +344,12 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
               name="square_footage"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[#94A3B8]">Square Footage</FormLabel>
+                  <FormLabel className="text-gray-500">Square Footage</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
                       placeholder="10,000"
-                      className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-[#F8FAFC] placeholder:text-[#475569]"
+                      className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
                       {...field}
                       onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       value={field.value ?? ''}
@@ -365,12 +365,12 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
               name="year_built"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[#94A3B8]">Year Built</FormLabel>
+                  <FormLabel className="text-gray-500">Year Built</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
                       placeholder="2005"
-                      className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-[#F8FAFC] placeholder:text-[#475569]"
+                      className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
                       {...field}
                       onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       value={field.value ?? ''}
@@ -387,11 +387,11 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-[#94A3B8]">Description</FormLabel>
+                <FormLabel className="text-gray-500">Description</FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder="Additional details about the property..."
-                    className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-[#F8FAFC] placeholder:text-[#475569] min-h-24"
+                    className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20 min-h-24"
                     {...field}
                   />
                 </FormControl>
@@ -406,7 +406,7 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-gold-gradient text-[#0F1B2D] font-semibold hover:opacity-90 px-8"
+            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90 px-8"
           >
             {isSubmitting ? (
               <>

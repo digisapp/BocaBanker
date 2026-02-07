@@ -49,9 +49,9 @@ interface Property {
 }
 
 const statusColorMap: Record<string, string> = {
-  active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  prospect: 'bg-gold/20 text-gold border-gold/30',
-  inactive: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+  active: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+  prospect: 'bg-amber-50 text-amber-600 border-amber-200',
+  inactive: 'bg-gray-100 text-gray-500 border-gray-200',
 }
 
 export default function ClientDetailPage() {
@@ -110,7 +110,7 @@ export default function ClientDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-gold" />
+        <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
       </div>
     )
   }
@@ -130,16 +130,16 @@ export default function ClientDetailPage() {
             variant="ghost"
             size="icon"
             onClick={() => router.push('/clients')}
-            className="text-muted-foreground hover:text-gold"
+            className="text-gray-500 hover:text-amber-600"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center">
-              <User className="h-6 w-6 text-gold" />
+            <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center">
+              <User className="h-6 w-6 text-amber-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">
+              <h1 className="text-2xl font-bold text-gray-900">
                 {client.firstName} {client.lastName}
               </h1>
               <div className="flex items-center gap-2 mt-1">
@@ -153,7 +153,7 @@ export default function ClientDetailPage() {
                   {client.status}
                 </Badge>
                 {client.source && (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-gray-500">
                     via {client.source}
                   </span>
                 )}
@@ -166,7 +166,7 @@ export default function ClientDetailPage() {
           <Button
             variant="outline"
             onClick={() => router.push(`/clients/${params.id}/edit`)}
-            className="border-gold/20 text-foreground hover:bg-navy-light/50 hover:text-gold"
+            className="border-gray-200 text-gray-700 hover:bg-gray-50"
           >
             <Pencil className="h-4 w-4 mr-2" />
             Edit
@@ -174,7 +174,7 @@ export default function ClientDetailPage() {
           <Button
             variant="outline"
             onClick={handleDelete}
-            className="border-destructive/30 text-destructive hover:bg-destructive/10"
+            className="border-red-200 text-red-500 hover:bg-red-50"
           >
             <Trash2 className="h-4 w-4 mr-2" />
             Delete
@@ -183,8 +183,8 @@ export default function ClientDetailPage() {
       </div>
 
       {/* Contact Information */}
-      <div className="glass-card p-6">
-        <h2 className="text-lg font-semibold text-gold mb-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-lg font-semibold text-amber-600 mb-4">
           Contact Information
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -213,8 +213,8 @@ export default function ClientDetailPage() {
 
       {/* Tags */}
       {client.tags && client.tags.length > 0 && (
-        <div className="glass-card p-6">
-          <h2 className="text-lg font-semibold text-gold mb-4 flex items-center gap-2">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
             <Tag className="h-4 w-4" />
             Tags
           </h2>
@@ -223,7 +223,7 @@ export default function ClientDetailPage() {
               <Badge
                 key={tag}
                 variant="secondary"
-                className="bg-navy-lighter text-foreground/80 border border-gold/10"
+                className="bg-gray-100 text-gray-700 border border-gray-200"
               >
                 {tag}
               </Badge>
@@ -234,21 +234,21 @@ export default function ClientDetailPage() {
 
       {/* Notes */}
       {client.notes && (
-        <div className="glass-card p-6">
-          <h2 className="text-lg font-semibold text-gold mb-4 flex items-center gap-2">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
             <StickyNote className="h-4 w-4" />
             Notes
           </h2>
-          <p className="text-foreground/80 whitespace-pre-wrap leading-relaxed">
+          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
             {client.notes}
           </p>
         </div>
       )}
 
       {/* Related Properties */}
-      <div className="glass-card p-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gold flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-amber-600 flex items-center gap-2">
             <Home className="h-4 w-4" />
             Properties
           </h2>
@@ -256,13 +256,13 @@ export default function ClientDetailPage() {
             variant="outline"
             size="sm"
             onClick={() => router.push(`/properties/new?clientId=${params.id}`)}
-            className="border-gold/20 text-foreground hover:bg-navy-light/50 hover:text-gold"
+            className="border-gray-200 text-gray-700 hover:bg-gray-50"
           >
             Add Property
           </Button>
         </div>
         {properties.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-4 text-center">
+          <p className="text-sm text-gray-500 py-4 text-center">
             No properties associated with this client yet.
           </p>
         ) : (
@@ -271,18 +271,18 @@ export default function ClientDetailPage() {
               <div
                 key={property.id}
                 onClick={() => router.push(`/properties/${property.id}`)}
-                className="flex items-center justify-between p-3 rounded-lg bg-navy/50 border border-gold/10 cursor-pointer hover:border-gold/30 transition-colors"
+                className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-200 cursor-pointer hover:border-amber-300 transition-colors"
               >
                 <div>
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-sm font-medium text-gray-900">
                     {property.address}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-gray-500">
                     {property.city}, {property.state} &middot;{' '}
                     {property.propertyType}
                   </p>
                 </div>
-                <span className="text-sm text-gold font-medium">
+                <span className="text-sm text-amber-600 font-medium">
                   ${Number(property.purchasePrice).toLocaleString()}
                 </span>
               </div>
@@ -292,7 +292,7 @@ export default function ClientDetailPage() {
       </div>
 
       {/* Metadata */}
-      <div className="flex items-center gap-4 text-xs text-muted-foreground px-1">
+      <div className="flex items-center gap-4 text-xs text-gray-500 px-1">
         {client.createdAt && (
           <span>
             Created{' '}
@@ -305,7 +305,7 @@ export default function ClientDetailPage() {
         )}
         {client.updatedAt && (
           <>
-            <Separator orientation="vertical" className="h-3 bg-gold/20" />
+            <Separator orientation="vertical" className="h-3 bg-gray-200" />
             <span>
               Updated{' '}
               {new Date(client.updatedAt).toLocaleDateString('en-US', {
@@ -332,12 +332,12 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="text-gold/70 mt-0.5">{icon}</div>
+      <div className="text-amber-500 mt-0.5">{icon}</div>
       <div>
-        <p className="text-xs text-muted-foreground uppercase tracking-wider">
+        <p className="text-xs text-gray-500 uppercase tracking-wider">
           {label}
         </p>
-        <p className="text-sm text-foreground/90 mt-0.5">
+        <p className="text-sm text-gray-700 mt-0.5">
           {value || '--'}
         </p>
       </div>

@@ -42,9 +42,9 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-[rgba(100,116,139,0.15)] text-[#94A3B8]',
-  in_progress: 'bg-[rgba(59,130,246,0.15)] text-[#3B82F6]',
-  completed: 'bg-[rgba(16,185,129,0.15)] text-[#10B981]',
+  draft: 'bg-gray-100 text-gray-600',
+  in_progress: 'bg-blue-50 text-blue-600',
+  completed: 'bg-emerald-50 text-emerald-600',
 }
 
 const STATUS_OPTIONS = [
@@ -114,14 +114,14 @@ export default function StudiesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#F8FAFC]">Studies</h1>
-          <p className="text-sm text-[#64748B] mt-1">
+          <h1 className="text-2xl font-bold text-gray-900">Studies</h1>
+          <p className="text-sm text-gray-500 mt-1">
             {pagination.total} cost segregation {pagination.total === 1 ? 'study' : 'studies'}
           </p>
         </div>
         <Button
           onClick={() => router.push('/studies/new')}
-          className="bg-gold-gradient text-[#0F1B2D] font-semibold hover:opacity-90"
+          className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
         >
           <Plus className="h-4 w-4 mr-2" />
           New Study
@@ -129,7 +129,7 @@ export default function StudiesPage() {
       </div>
 
       {/* Filters */}
-      <div className="glass-card p-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <Select
             value={statusFilter}
@@ -138,15 +138,15 @@ export default function StudiesPage() {
               setPagination((p) => ({ ...p, page: 1 }))
             }}
           >
-            <SelectTrigger className="w-full sm:w-[200px] bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-[#F8FAFC]">
+            <SelectTrigger className="w-full sm:w-[200px] bg-gray-50 border-gray-200 text-gray-900">
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
-            <SelectContent className="bg-[#1A2B45] border-[rgba(201,168,76,0.15)]">
+            <SelectContent className="bg-white border-gray-200">
               {STATUS_OPTIONS.map((opt) => (
                 <SelectItem
                   key={opt.value}
                   value={opt.value || '_all'}
-                  className="text-[#F8FAFC] focus:bg-[rgba(201,168,76,0.1)] focus:text-[#C9A84C]"
+                  className="text-gray-900 focus:bg-amber-50 focus:text-amber-700"
                 >
                   {opt.label}
                 </SelectItem>
@@ -158,7 +158,7 @@ export default function StudiesPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="glass-card overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="space-y-2 p-4">
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-14 rounded-lg" />
@@ -166,10 +166,10 @@ export default function StudiesPage() {
           </div>
         </div>
       ) : studies.length === 0 ? (
-        <div className="glass-card p-12 text-center">
-          <FileBarChart className="h-12 w-12 text-[#64748B] mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-[#F8FAFC] mb-2">No studies found</h3>
-          <p className="text-[#64748B] mb-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+          <FileBarChart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No studies found</h3>
+          <p className="text-gray-500 mb-6">
             {statusFilter
               ? 'Try adjusting your filter.'
               : 'Create your first cost segregation study.'}
@@ -177,7 +177,7 @@ export default function StudiesPage() {
           {!statusFilter && (
             <Button
               onClick={() => router.push('/studies/new')}
-              className="bg-gold-gradient text-[#0F1B2D] font-semibold"
+              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold"
             >
               <Plus className="h-4 w-4 mr-2" />
               New Study
@@ -185,33 +185,33 @@ export default function StudiesPage() {
           )}
         </div>
       ) : (
-        <div className="glass-card overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="border-[rgba(201,168,76,0.08)]">
-                <TableHead className="text-[#C9A84C]">Study Name</TableHead>
-                <TableHead className="text-[#C9A84C]">Property</TableHead>
-                <TableHead className="text-[#C9A84C]">Client</TableHead>
-                <TableHead className="text-[#C9A84C] text-center">Status</TableHead>
-                <TableHead className="text-[#C9A84C] text-right">First Year Deduction</TableHead>
-                <TableHead className="text-[#C9A84C] text-right">Total Savings</TableHead>
-                <TableHead className="text-[#C9A84C]">Created</TableHead>
+              <TableRow className="border-gray-100">
+                <TableHead className="text-amber-600">Study Name</TableHead>
+                <TableHead className="text-amber-600">Property</TableHead>
+                <TableHead className="text-amber-600">Client</TableHead>
+                <TableHead className="text-amber-600 text-center">Status</TableHead>
+                <TableHead className="text-amber-600 text-right">First Year Deduction</TableHead>
+                <TableHead className="text-amber-600 text-right">Total Savings</TableHead>
+                <TableHead className="text-amber-600">Created</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {studies.map((study) => (
                 <TableRow
                   key={study.id}
-                  className="border-[rgba(201,168,76,0.08)] cursor-pointer hover:bg-[rgba(201,168,76,0.05)]"
+                  className="border-gray-100 cursor-pointer hover:bg-amber-50/50"
                   onClick={() => router.push(`/studies/${study.id}`)}
                 >
                   <TableCell>
-                    <p className="text-sm font-medium text-[#F8FAFC]">{study.studyName}</p>
+                    <p className="text-sm font-medium text-gray-900">{study.studyName}</p>
                   </TableCell>
-                  <TableCell className="text-sm text-[#94A3B8] max-w-[200px] truncate">
+                  <TableCell className="text-sm text-gray-500 max-w-[200px] truncate">
                     {study.propertyName || '-'}
                   </TableCell>
-                  <TableCell className="text-sm text-[#94A3B8]">
+                  <TableCell className="text-sm text-gray-500">
                     {study.clientName || '-'}
                   </TableCell>
                   <TableCell className="text-center">
@@ -219,13 +219,13 @@ export default function StudiesPage() {
                       {STATUS_LABELS[study.status] || study.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right text-sm font-medium text-[#F8FAFC]">
+                  <TableCell className="text-right text-sm font-medium text-gray-900">
                     {formatCurrency(study.totalFirstYearDeduction)}
                   </TableCell>
                   <TableCell className="text-right text-sm font-medium text-[#10B981]">
                     {formatCurrency(study.totalTaxSavings)}
                   </TableCell>
-                  <TableCell className="text-sm text-[#64748B]">
+                  <TableCell className="text-sm text-gray-400">
                     {new Date(study.createdAt).toLocaleDateString()}
                   </TableCell>
                 </TableRow>
@@ -243,11 +243,11 @@ export default function StudiesPage() {
             size="sm"
             disabled={pagination.page <= 1}
             onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
-            className="border-[rgba(201,168,76,0.15)] text-[#94A3B8] hover:text-[#C9A84C]"
+            className="border-gray-200 text-gray-500 hover:text-amber-600"
           >
             Previous
           </Button>
-          <span className="text-sm text-[#64748B] px-3">
+          <span className="text-sm text-gray-400 px-3">
             Page {pagination.page} of {pagination.totalPages}
           </span>
           <Button
@@ -255,7 +255,7 @@ export default function StudiesPage() {
             size="sm"
             disabled={pagination.page >= pagination.totalPages}
             onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
-            className="border-[rgba(201,168,76,0.15)] text-[#94A3B8] hover:text-[#C9A84C]"
+            className="border-gray-200 text-gray-500 hover:text-amber-600"
           >
             Next
           </Button>

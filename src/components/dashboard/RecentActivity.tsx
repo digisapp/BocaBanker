@@ -47,12 +47,12 @@ function timeAgo(dateStr: string): string {
 export default function RecentActivity({ activities }: RecentActivityProps) {
   if (activities.length === 0) {
     return (
-      <div className="glass-card p-6">
-        <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-          <Clock className="h-4 w-4 text-[#C9A84C]" />
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Clock className="h-4 w-4 text-amber-600" />
           Recent Activity
         </h3>
-        <p className="text-sm text-[#64748B] text-center py-8">
+        <p className="text-sm text-gray-500 text-center py-8">
           No recent activity
         </p>
       </div>
@@ -60,9 +60,9 @@ export default function RecentActivity({ activities }: RecentActivityProps) {
   }
 
   return (
-    <div className="glass-card p-6">
-      <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-        <Clock className="h-4 w-4 text-[#C9A84C]" />
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <Clock className="h-4 w-4 text-amber-600" />
         Recent Activity
       </h3>
       <ScrollArea className="h-[320px] pr-3">
@@ -72,16 +72,16 @@ export default function RecentActivity({ activities }: RecentActivityProps) {
             return (
               <div
                 key={activity.id}
-                className="flex items-start gap-3 p-3 rounded-lg hover:bg-[#243654]/30 transition-colors"
+                className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#0F1B2D]">
-                  <Icon className="h-4 w-4 text-[#C9A84C]" />
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-amber-50">
+                  <Icon className="h-4 w-4 text-amber-600" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm text-white truncate">
+                  <p className="text-sm text-gray-900 truncate">
                     {activity.description}
                   </p>
-                  <p className="text-xs text-[#64748B] mt-0.5">
+                  <p className="text-xs text-gray-500 mt-0.5">
                     {timeAgo(activity.timestamp)}
                   </p>
                 </div>

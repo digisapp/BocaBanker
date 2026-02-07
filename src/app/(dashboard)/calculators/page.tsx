@@ -11,10 +11,10 @@ export default function CalculatorsPage() {
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-serif font-bold text-gold-gradient">
+        <h1 className="text-2xl font-serif font-bold text-amber-600">
           Cost Segregation Calculators
         </h1>
-        <p className="text-[#94A3B8] mt-1">
+        <p className="text-gray-500 mt-1">
           Model depreciation schedules, estimate tax savings, and analyze bonus
           depreciation opportunities
         </p>
@@ -22,24 +22,24 @@ export default function CalculatorsPage() {
 
       {/* Calculator Tabs */}
       <Tabs defaultValue="depreciation" className="w-full">
-        <TabsList className="bg-[#1A2B45] border border-[rgba(201,168,76,0.15)] p-1 h-auto flex-wrap">
+        <TabsList className="bg-gray-100 border border-gray-200 p-1 h-auto flex-wrap">
           <TabsTrigger
             value="depreciation"
-            className="data-[state=active]:bg-[#C9A84C] data-[state=active]:text-[#0F1B2D] text-[#94A3B8] gap-2 px-4 py-2"
+            className="data-[state=active]:bg-amber-500 data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
           >
             <Calculator className="h-4 w-4" />
             Depreciation
           </TabsTrigger>
           <TabsTrigger
             value="tax-savings"
-            className="data-[state=active]:bg-[#C9A84C] data-[state=active]:text-[#0F1B2D] text-[#94A3B8] gap-2 px-4 py-2"
+            className="data-[state=active]:bg-amber-500 data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
           >
             <DollarSign className="h-4 w-4" />
             Tax Savings
           </TabsTrigger>
           <TabsTrigger
             value="bonus"
-            className="data-[state=active]:bg-[#C9A84C] data-[state=active]:text-[#0F1B2D] text-[#94A3B8] gap-2 px-4 py-2"
+            className="data-[state=active]:bg-amber-500 data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
           >
             <Zap className="h-4 w-4" />
             Bonus Depreciation

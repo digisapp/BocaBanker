@@ -162,10 +162,10 @@ export default function DocumentsPage() {
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-serif font-bold text-gold-gradient">
+        <h1 className="text-2xl font-serif font-bold text-amber-600">
           Documents
         </h1>
-        <p className="text-[#94A3B8] mt-1">
+        <p className="text-gray-500 mt-1">
           Upload and manage documents for your clients and studies
         </p>
       </div>
@@ -175,31 +175,31 @@ export default function DocumentsPage() {
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`glass-card border-2 border-dashed transition-all duration-200 ${
+        className={`bg-white rounded-2xl border-2 border-dashed transition-all duration-200 ${
           dragOver
-            ? 'border-[#C9A84C] bg-[#C9A84C]/5'
-            : 'border-[rgba(201,168,76,0.2)]'
+            ? 'border-amber-500 bg-amber-50/50'
+            : 'border-gray-200'
         }`}
       >
         <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
           {uploading ? (
             <>
-              <Loader2 className="h-10 w-10 animate-spin text-[#C9A84C] mb-3" />
-              <p className="text-white font-medium">Uploading...</p>
+              <Loader2 className="h-10 w-10 animate-spin text-amber-500 mb-3" />
+              <p className="text-gray-900 font-medium">Uploading...</p>
             </>
           ) : (
             <>
-              <CloudUpload className="h-10 w-10 text-[#C9A84C] mb-3" />
-              <p className="text-white font-medium mb-1">
+              <CloudUpload className="h-10 w-10 text-amber-500 mb-3" />
+              <p className="text-gray-900 font-medium mb-1">
                 Drag and drop files here
               </p>
-              <p className="text-sm text-[#64748B] mb-4">
+              <p className="text-sm text-gray-400 mb-4">
                 or click to browse
               </p>
               <label>
                 <Button
                   asChild
-                  className="bg-gold-gradient text-[#0F1B2D] hover:opacity-90 font-semibold cursor-pointer"
+                  className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold cursor-pointer"
                 >
                   <span>
                     <Upload className="h-4 w-4 mr-2" />
@@ -228,15 +228,15 @@ export default function DocumentsPage() {
           description="Upload your first document to get started. You can store reports, tax documents, and property files."
         />
       ) : (
-        <div className="glass-card overflow-x-auto">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="border-[rgba(201,168,76,0.15)] hover:bg-transparent">
-                <TableHead className="text-[#C9A84C]">Name</TableHead>
-                <TableHead className="text-[#C9A84C]">Type</TableHead>
-                <TableHead className="text-[#C9A84C]">Size</TableHead>
-                <TableHead className="text-[#C9A84C]">Date</TableHead>
-                <TableHead className="text-[#C9A84C] text-right">
+              <TableRow className="border-gray-200 hover:bg-transparent">
+                <TableHead className="text-amber-600">Name</TableHead>
+                <TableHead className="text-amber-600">Type</TableHead>
+                <TableHead className="text-amber-600">Size</TableHead>
+                <TableHead className="text-amber-600">Date</TableHead>
+                <TableHead className="text-amber-600 text-right">
                   Actions
                 </TableHead>
               </TableRow>
@@ -245,23 +245,23 @@ export default function DocumentsPage() {
               {documents.map((doc) => (
                 <TableRow
                   key={doc.id}
-                  className="border-[rgba(201,168,76,0.08)] hover:bg-[#243654]/30"
+                  className="border-gray-100 hover:bg-amber-50/50"
                 >
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <File className="h-4 w-4 text-[#C9A84C] flex-shrink-0" />
-                      <span className="text-white text-sm truncate max-w-[200px]">
+                      <File className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                      <span className="text-gray-900 text-sm truncate max-w-[200px]">
                         {doc.fileName}
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-[#94A3B8] text-sm">
+                  <TableCell className="text-gray-500 text-sm">
                     {doc.fileType || '--'}
                   </TableCell>
-                  <TableCell className="text-[#94A3B8] text-sm">
+                  <TableCell className="text-gray-500 text-sm">
                     {formatFileSize(doc.fileSize)}
                   </TableCell>
-                  <TableCell className="text-[#94A3B8] text-sm whitespace-nowrap">
+                  <TableCell className="text-gray-500 text-sm whitespace-nowrap">
                     {new Date(doc.createdAt).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
@@ -273,7 +273,7 @@ export default function DocumentsPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDownload(doc)}
-                      className="text-[#C9A84C] hover:text-white hover:bg-[#243654]"
+                      className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                     >
                       <Download className="h-4 w-4" />
                     </Button>

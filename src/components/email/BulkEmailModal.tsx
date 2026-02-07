@@ -109,17 +109,17 @@ export default function BulkEmailModal({ trigger }: BulkEmailModalProps) {
         {trigger || (
           <Button
             variant="outline"
-            className="border-[rgba(201,168,76,0.3)] text-[#C9A84C] hover:bg-[#243654]"
+            className="border-gray-200 text-amber-600 hover:bg-amber-50"
           >
             <Users className="h-4 w-4 mr-2" />
             Bulk Email
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="bg-[#1A2B45] border-[rgba(201,168,76,0.15)] text-white max-w-lg sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-lg sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-[#C9A84C] text-lg">Send Bulk Email</DialogTitle>
-          <DialogDescription className="text-[#94A3B8]">
+          <DialogTitle className="text-amber-600 text-lg">Send Bulk Email</DialogTitle>
+          <DialogDescription className="text-gray-500">
             Send emails to multiple clients at once using a template.
           </DialogDescription>
         </DialogHeader>
@@ -127,17 +127,17 @@ export default function BulkEmailModal({ trigger }: BulkEmailModalProps) {
         <div className="space-y-5 mt-4">
           {/* Recipient Filter */}
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Recipients</Label>
+            <Label className="text-gray-500">Recipients</Label>
             <Select value={filter} onValueChange={handleFilterChange}>
-              <SelectTrigger className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]">
+              <SelectTrigger className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#1A2B45] border-[rgba(201,168,76,0.15)]">
+              <SelectContent className="bg-white border-gray-200">
                 {FILTER_OPTIONS.map((opt) => (
                   <SelectItem
                     key={opt.value}
                     value={opt.value}
-                    className="text-white hover:bg-[#243654] focus:bg-[#243654]"
+                    className="text-gray-900 focus:bg-amber-50 focus:text-amber-700"
                   >
                     {opt.label}
                   </SelectItem>
@@ -145,7 +145,7 @@ export default function BulkEmailModal({ trigger }: BulkEmailModalProps) {
               </SelectContent>
             </Select>
             {recipientCount !== null && (
-              <p className="text-sm text-[#C9A84C]">
+              <p className="text-sm text-amber-600">
                 Sending to {recipientCount} recipient{recipientCount !== 1 ? 's' : ''}
               </p>
             )}
@@ -153,30 +153,30 @@ export default function BulkEmailModal({ trigger }: BulkEmailModalProps) {
 
           {/* Template */}
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Template</Label>
+            <Label className="text-gray-500">Template</Label>
             <TemplateSelector onSelect={setTemplate} selected={template} />
           </div>
 
           {/* Custom Message */}
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Custom Message (optional)</Label>
+            <Label className="text-gray-500">Custom Message (optional)</Label>
             <Input
               placeholder="Add a personal note..."
               value={customMessage}
               onChange={(e) => setCustomMessage(e.target.value)}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white placeholder:text-[#64748B] focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
 
           {/* Status */}
           {status === 'success' && (
-            <div className="flex items-center gap-2 text-emerald-400 text-sm">
+            <div className="flex items-center gap-2 text-emerald-500 text-sm">
               <CheckCircle className="h-4 w-4" />
               Bulk emails queued successfully!
             </div>
           )}
           {status === 'error' && (
-            <div className="flex items-center gap-2 text-red-400 text-sm">
+            <div className="flex items-center gap-2 text-red-500 text-sm">
               <AlertCircle className="h-4 w-4" />
               {errorMessage}
             </div>
@@ -187,14 +187,14 @@ export default function BulkEmailModal({ trigger }: BulkEmailModalProps) {
             <Button
               variant="outline"
               onClick={() => setOpen(false)}
-              className="border-[rgba(201,168,76,0.15)] text-[#94A3B8] hover:bg-[#243654]"
+              className="border-gray-200 text-gray-500 hover:bg-gray-50"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSend}
               disabled={!template || status === 'sending'}
-              className="bg-gold-gradient text-[#0F1B2D] hover:opacity-90 font-semibold"
+              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
             >
               {status === 'sending' ? (
                 <>

@@ -148,7 +148,7 @@ export function CsvImporter() {
               {i > 0 && (
                 <div
                   className={`h-px w-8 ${
-                    isComplete ? 'bg-gold' : 'bg-gold/20'
+                    isComplete ? 'bg-amber-500' : 'bg-gray-200'
                   }`}
                 />
               )}
@@ -156,10 +156,10 @@ export function CsvImporter() {
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                     isActive
-                      ? 'bg-gold text-navy'
+                      ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white'
                       : isComplete
-                      ? 'bg-gold/20 text-gold border border-gold/50'
-                      : 'bg-navy-lighter text-muted-foreground border border-gold/10'
+                      ? 'bg-amber-50 text-amber-600 border border-amber-200'
+                      : 'bg-gray-100 text-gray-500 border border-gray-200'
                   }`}
                 >
                   {isComplete ? (
@@ -171,10 +171,10 @@ export function CsvImporter() {
                 <span
                   className={`text-sm hidden sm:inline ${
                     isActive
-                      ? 'text-gold font-medium'
+                      ? 'text-amber-600 font-medium'
                       : isComplete
-                      ? 'text-gold/70'
-                      : 'text-muted-foreground'
+                      ? 'text-amber-600/70'
+                      : 'text-gray-500'
                   }`}
                 >
                   {label}
@@ -187,7 +187,7 @@ export function CsvImporter() {
 
       {/* Error Display */}
       {error && (
-        <div className="flex items-center gap-2 p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive">
+        <div className="flex items-center gap-2 p-4 rounded-lg bg-red-50 border border-red-200 text-red-600">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span className="text-sm">{error}</span>
         </div>
@@ -199,20 +199,20 @@ export function CsvImporter() {
           onDrop={onDrop}
           onDragOver={(e) => e.preventDefault()}
           onClick={() => fileInputRef.current?.click()}
-          className="glass-card border-2 border-dashed border-gold/30 hover:border-gold/60 transition-colors rounded-xl p-12 flex flex-col items-center justify-center gap-4 cursor-pointer"
+          className="bg-white rounded-2xl border-2 border-dashed border-gray-300 hover:border-amber-400 transition-colors rounded-xl p-12 flex flex-col items-center justify-center gap-4 cursor-pointer"
         >
-          <div className="w-16 h-16 rounded-full bg-gold/10 flex items-center justify-center">
-            <Upload className="h-8 w-8 text-gold" />
+          <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center">
+            <Upload className="h-8 w-8 text-amber-600" />
           </div>
           <div className="text-center">
-            <p className="text-lg font-medium text-foreground">
+            <p className="text-lg font-medium text-gray-900">
               Drop your CSV file here
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-gray-500 mt-1">
               or click to browse files
             </p>
           </div>
-          <Badge variant="outline" className="border-gold/20 text-muted-foreground">
+          <Badge variant="outline" className="border-gray-200 text-gray-500">
             .csv files only
           </Badge>
           <input
@@ -229,8 +229,8 @@ export function CsvImporter() {
       {step === 2 && (
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <FileSpreadsheet className="h-5 w-5 text-gold" />
-            <span className="text-sm text-muted-foreground">
+            <FileSpreadsheet className="h-5 w-5 text-amber-600" />
+            <span className="text-sm text-gray-500">
               {file?.name} &mdash; {csvRows.length} rows found
             </span>
           </div>
@@ -244,26 +244,26 @@ export function CsvImporter() {
       {/* Step 3: Review */}
       {step === 3 && (
         <div className="space-y-6">
-          <div className="glass-card p-6">
-            <h3 className="text-lg font-semibold text-gold mb-2">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-amber-600 mb-2">
               Review Import
             </h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-gray-500 mb-4">
               Preview of first 5 rows with your column mapping applied.{' '}
-              <strong className="text-foreground">
+              <strong className="text-gray-900">
                 {csvRows.length} total rows
               </strong>{' '}
               will be imported.
             </p>
 
-            <div className="rounded-lg border border-gold/15 overflow-auto">
+            <div className="rounded-lg border border-gray-200 overflow-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-b border-gold/15 hover:bg-transparent">
+                  <TableRow className="border-b border-gray-200 hover:bg-transparent">
                     {mappedFieldNames.map((field) => (
                       <TableHead
                         key={field}
-                        className="bg-navy-lighter text-gold font-semibold text-xs uppercase tracking-wider"
+                        className="bg-gray-50 text-amber-600 font-semibold text-xs uppercase tracking-wider"
                       >
                         {field.replace(/_/g, ' ')}
                       </TableHead>
@@ -274,12 +274,12 @@ export function CsvImporter() {
                   {mappedPreview.map((row, i) => (
                     <TableRow
                       key={i}
-                      className="border-b border-gold/10 hover:bg-navy-light/50"
+                      className="border-b border-gray-100 hover:bg-gray-50"
                     >
                       {mappedFieldNames.map((field) => (
                         <TableCell
                           key={field}
-                          className="text-foreground/90 text-sm"
+                          className="text-gray-700 text-sm"
                         >
                           {row[field] || '--'}
                         </TableCell>
@@ -295,14 +295,14 @@ export function CsvImporter() {
             <Button
               variant="outline"
               onClick={() => setStep(2)}
-              className="border-gold/20 text-foreground hover:bg-navy-light/50 hover:text-gold"
+              className="border-gray-200 text-gray-700 hover:bg-gray-50"
             >
               Back to Mapping
             </Button>
             <Button
               onClick={handleImport}
               disabled={importing}
-              className="bg-gold-gradient text-navy font-semibold hover:opacity-90 px-8"
+              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90 px-8"
             >
               {importing && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -318,34 +318,34 @@ export function CsvImporter() {
       {/* Step 4: Results */}
       {step === 4 && result && (
         <div className="space-y-6">
-          <div className="glass-card p-8 text-center">
-            <CheckCircle2 className="h-12 w-12 text-emerald-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+            <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
               Import Complete
             </h3>
-            <p className="text-muted-foreground">
+            <p className="text-gray-500">
               Successfully imported{' '}
-              <strong className="text-gold">{result.imported}</strong> clients.
+              <strong className="text-amber-600">{result.imported}</strong> clients.
             </p>
             {result.errors.length > 0 && (
-              <p className="text-sm text-destructive mt-2">
+              <p className="text-sm text-red-500 mt-2">
                 {result.errors.length} row(s) had errors and were skipped.
               </p>
             )}
           </div>
 
           {result.errors.length > 0 && (
-            <div className="glass-card p-6">
-              <h4 className="text-sm font-semibold text-destructive mb-3">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <h4 className="text-sm font-semibold text-red-500 mb-3">
                 Import Errors
               </h4>
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {result.errors.map((err, i) => (
                   <div
                     key={i}
-                    className="flex items-start gap-2 text-sm text-muted-foreground"
+                    className="flex items-start gap-2 text-sm text-gray-500"
                   >
-                    <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                    <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
                     <span>
                       Row {err.row}: {err.message}
                     </span>
@@ -358,7 +358,7 @@ export function CsvImporter() {
           <div className="flex justify-center">
             <Button
               onClick={() => router.push('/clients')}
-              className="bg-gold-gradient text-navy font-semibold hover:opacity-90 px-8"
+              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90 px-8"
             >
               Go to Clients
             </Button>

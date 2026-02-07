@@ -88,24 +88,24 @@ export function DataTable<TData, TValue>({
             onChange={(event) =>
               table.getColumn(searchKey)?.setFilterValue(event.target.value)
             }
-            className="max-w-sm bg-navy-light/50 border-gold/20 text-foreground placeholder:text-muted-foreground focus-visible:border-gold/50 focus-visible:ring-gold/30"
+            className="max-w-sm bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
           />
         </div>
       )}
 
       {/* Table */}
-      <div className="rounded-lg border border-gold/15 overflow-hidden">
+      <div className="rounded-lg border border-gray-200 overflow-hidden">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
-                className="border-b border-gold/15 hover:bg-transparent"
+                className="border-b border-gray-200 hover:bg-transparent"
               >
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="bg-navy-lighter text-gold font-semibold text-xs uppercase tracking-wider"
+                    className="bg-gray-50 text-amber-600 font-semibold text-xs uppercase tracking-wider"
                   >
                     {header.isPlaceholder ? null : (
                       <div
@@ -121,7 +121,7 @@ export function DataTable<TData, TValue>({
                           header.getContext()
                         )}
                         {header.column.getCanSort() && (
-                          <ArrowUpDown className="h-3 w-3 text-gold/50" />
+                          <ArrowUpDown className="h-3 w-3 text-gray-400" />
                         )}
                       </div>
                     )}
@@ -136,15 +136,15 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
-                  className={`border-b border-gold/10 transition-colors ${
+                  className={`border-b border-gray-100 transition-colors ${
                     onRowClick
-                      ? 'cursor-pointer hover:bg-navy-light/50'
-                      : 'hover:bg-navy-light/50'
+                      ? 'cursor-pointer hover:bg-gray-50'
+                      : 'hover:bg-gray-50'
                   }`}
                   onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="text-foreground/90">
+                    <TableCell key={cell.id} className="text-gray-700">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -157,7 +157,7 @@ export function DataTable<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center text-muted-foreground"
+                  className="h-24 text-center text-gray-500"
                 >
                   No results found.
                 </TableCell>
@@ -169,16 +169,16 @@ export function DataTable<TData, TValue>({
 
       {/* Pagination Controls */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-sm text-gray-500">
           <span>Rows per page</span>
           <Select
             value={String(pageSize)}
             onValueChange={handlePageSizeChange}
           >
-            <SelectTrigger className="h-8 w-[70px] bg-navy-light/50 border-gold/20 text-foreground">
+            <SelectTrigger className="h-8 w-[70px] bg-gray-50 border-gray-200 text-gray-900">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-navy-light border-gold/20">
+            <SelectContent className="bg-white border-gray-200">
               <SelectItem value="10">10</SelectItem>
               <SelectItem value="25">25</SelectItem>
               <SelectItem value="50">50</SelectItem>
@@ -195,7 +195,7 @@ export function DataTable<TData, TValue>({
             size="sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="border-gold/20 text-foreground hover:bg-navy-light/50 hover:text-gold disabled:opacity-30"
+            className="border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-30"
           >
             Previous
           </Button>
@@ -204,7 +204,7 @@ export function DataTable<TData, TValue>({
             size="sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="border-gold/20 text-foreground hover:bg-navy-light/50 hover:text-gold disabled:opacity-30"
+            className="border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-30"
           >
             Next
           </Button>

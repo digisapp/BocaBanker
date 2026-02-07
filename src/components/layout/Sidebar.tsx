@@ -23,6 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
 
 interface SidebarProps {
   collapsed: boolean
@@ -48,18 +49,16 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     <TooltipProvider delayDuration={0}>
       <aside
         className={cn(
-          'hidden md:flex flex-col h-screen bg-[#0A1220] border-r border-[rgba(201,168,76,0.15)] transition-all duration-300 relative z-40',
+          'hidden md:flex flex-col h-screen bg-white border-r border-gray-200 transition-all duration-300 relative z-40',
           collapsed ? 'w-[68px]' : 'w-[240px]'
         )}
       >
         {/* Logo */}
-        <div className="flex items-center h-16 px-4 border-b border-[rgba(201,168,76,0.15)]">
+        <div className="flex items-center h-16 px-4 border-b border-gray-200">
           <Link href="/dashboard" className="flex items-center gap-2 overflow-hidden">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gold-gradient">
-              <Building2 className="h-4 w-4 text-[#0F1B2D]" />
-            </div>
+            <BocaBankerAvatar size={32} />
             {!collapsed && (
-              <span className="text-gold-gradient font-serif text-xl font-bold whitespace-nowrap">
+              <span className="font-serif text-xl font-bold text-gray-900 whitespace-nowrap">
                 Boca Banker
               </span>
             )}
@@ -79,12 +78,12 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                   isActive
-                    ? 'bg-[rgba(201,168,76,0.1)] text-[#C9A84C] border-l-2 border-[#C9A84C]'
-                    : 'text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[rgba(255,255,255,0.05)] border-l-2 border-transparent',
+                    ? 'bg-amber-50 text-amber-700 border-l-2 border-amber-500'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 border-l-2 border-transparent',
                   collapsed && 'justify-center px-2'
                 )}
               >
-                <item.icon className={cn('h-5 w-5 shrink-0', isActive && 'text-[#C9A84C]')} />
+                <item.icon className={cn('h-5 w-5 shrink-0', isActive && 'text-amber-600')} />
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             )
@@ -93,7 +92,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               return (
                 <Tooltip key={item.href}>
                   <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-                  <TooltipContent side="right" className="bg-[#1A2B45] text-[#F8FAFC] border-[rgba(201,168,76,0.15)]">
+                  <TooltipContent side="right" className="bg-white text-gray-900 border-gray-200">
                     {item.label}
                   </TooltipContent>
                 </Tooltip>
@@ -105,13 +104,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </nav>
 
         {/* Collapse Toggle */}
-        <div className="border-t border-[rgba(201,168,76,0.15)] p-2">
+        <div className="border-t border-gray-200 p-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={onToggle}
             className={cn(
-              'w-full text-[#94A3B8] hover:text-[#C9A84C] hover:bg-[rgba(201,168,76,0.1)]',
+              'w-full text-gray-500 hover:text-amber-600 hover:bg-amber-50',
               collapsed && 'justify-center'
             )}
           >

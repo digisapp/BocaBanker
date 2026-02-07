@@ -79,13 +79,13 @@ export default function NewPropertyPage() {
           variant="ghost"
           size="icon"
           onClick={() => router.back()}
-          className="text-[#94A3B8] hover:text-[#C9A84C] hover:bg-[rgba(201,168,76,0.1)]"
+          className="text-gray-500 hover:text-amber-600 hover:bg-amber-50"
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-[#F8FAFC]">New Property</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">Add a new property to your portfolio</p>
+          <h1 className="text-2xl font-bold text-gray-900">New Property</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Add a new property to your portfolio</p>
         </div>
       </div>
 

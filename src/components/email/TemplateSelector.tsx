@@ -51,16 +51,16 @@ export default function TemplateSelector({ onSelect, selected }: TemplateSelecto
             onClick={() => onSelect(template.name)}
             className={`text-left p-4 rounded-xl transition-all duration-200 ${
               isSelected
-                ? 'bg-[#243654] border border-[#C9A84C]/40 shadow-[0_0_12px_rgba(201,168,76,0.1)]'
-                : 'glass-card-hover'
+                ? 'bg-amber-50 border border-amber-300 shadow-sm'
+                : 'bg-white rounded-2xl border border-gray-100 hover:shadow-md hover:border-amber-200'
             }`}
           >
             <div className="flex items-start gap-3">
               <div
                 className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${
                   isSelected
-                    ? 'bg-gold-gradient text-[#0F1B2D]'
-                    : 'bg-[#0F1B2D] text-[#C9A84C]'
+                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white'
+                    : 'bg-gray-50 text-amber-600'
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -68,13 +68,13 @@ export default function TemplateSelector({ onSelect, selected }: TemplateSelecto
               <div className="min-w-0">
                 <p
                   className={`text-sm font-medium ${
-                    isSelected ? 'text-[#C9A84C]' : 'text-white'
+                    isSelected ? 'text-amber-600' : 'text-gray-900'
                   }`}
                 >
                   {template.label}
                 </p>
-                <p className="text-xs text-[#94A3B8] mt-0.5">{template.description}</p>
-                <p className="text-xs text-[#64748B] mt-1 truncate">{template.preview}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{template.description}</p>
+                <p className="text-xs text-gray-400 mt-1 truncate">{template.preview}</p>
               </div>
             </div>
           </button>

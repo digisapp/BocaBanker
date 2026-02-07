@@ -18,15 +18,15 @@ export default function EmptyState({
   actionHref,
 }: EmptyStateProps) {
   return (
-    <div className="glass-card flex flex-col items-center justify-center py-16 px-6 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#C9A84C]/10 mb-4">
-        <Icon className="h-7 w-7 text-[#C9A84C]" />
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center py-16 px-6 text-center">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 mb-4">
+        <Icon className="h-7 w-7 text-amber-600" />
       </div>
-      <h3 className="text-lg font-semibold text-white mb-1">{title}</h3>
-      <p className="text-sm text-[#94A3B8] max-w-sm">{description}</p>
+      <h3 className="text-lg font-semibold text-gray-900 mb-1">{title}</h3>
+      <p className="text-sm text-gray-500 max-w-sm">{description}</p>
       {actionLabel && actionHref && (
         <Link href={actionHref} className="mt-6">
-          <Button className="bg-gold-gradient text-[#0F1B2D] hover:opacity-90 font-semibold">
+          <Button className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold">
             {actionLabel}
           </Button>
         </Link>

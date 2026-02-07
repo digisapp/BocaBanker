@@ -84,14 +84,14 @@ export default function DepreciationCalculator() {
   return (
     <div className="space-y-6">
       {/* Input Section */}
-      <div className="glass-card p-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-gradient text-[#0F1B2D]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
             <Calculator className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="font-semibold text-white">MACRS Depreciation Schedule</h3>
-            <p className="text-sm text-[#94A3B8]">
+            <h3 className="font-semibold text-gray-900">MACRS Depreciation Schedule</h3>
+            <p className="text-sm text-gray-500">
               Calculate year-by-year depreciation with bonus depreciation
             </p>
           </div>
@@ -99,28 +99,28 @@ export default function DepreciationCalculator() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Asset Value ($)</Label>
+            <Label className="text-gray-500">Asset Value ($)</Label>
             <Input
               type="number"
               placeholder="e.g. 500000"
               value={assetValue}
               onChange={(e) => setAssetValue(e.target.value)}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white placeholder:text-[#64748B] focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Asset Class (Recovery Period)</Label>
+            <Label className="text-gray-500">Asset Class (Recovery Period)</Label>
             <Select value={recoveryPeriod} onValueChange={setRecoveryPeriod}>
-              <SelectTrigger className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]">
+              <SelectTrigger className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#1A2B45] border-[rgba(201,168,76,0.15)]">
+              <SelectContent className="bg-white border-gray-200">
                 {RECOVERY_PERIODS.map((p) => (
                   <SelectItem
                     key={p.value}
                     value={p.value}
-                    className="text-white hover:bg-[#243654] focus:bg-[#243654]"
+                    className="text-gray-900 focus:bg-amber-50 focus:text-amber-700"
                   >
                     {p.label}
                   </SelectItem>
@@ -130,7 +130,7 @@ export default function DepreciationCalculator() {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">
+            <Label className="text-gray-500">
               Bonus Depreciation: {bonusRate}%
             </Label>
             <input
@@ -140,9 +140,9 @@ export default function DepreciationCalculator() {
               step={1}
               value={bonusRate}
               onChange={(e) => setBonusRate(parseInt(e.target.value))}
-              className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[#C9A84C] bg-[#243654]"
+              className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-amber-500 bg-gray-200"
             />
-            <div className="flex justify-between text-xs text-[#64748B]">
+            <div className="flex justify-between text-xs text-gray-400">
               <span>0%</span>
               <span>50%</span>
               <span>100%</span>
@@ -153,7 +153,7 @@ export default function DepreciationCalculator() {
         <div className="flex gap-3 mt-6">
           <Button
             onClick={handleCalculate}
-            className="bg-gold-gradient text-[#0F1B2D] hover:opacity-90 font-semibold"
+            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
           >
             Calculate Depreciation
           </Button>
@@ -161,7 +161,7 @@ export default function DepreciationCalculator() {
             <Button
               onClick={handleReset}
               variant="outline"
-              className="border-[rgba(201,168,76,0.3)] text-[#C9A84C] hover:bg-[#243654]"
+              className="border-gray-200 text-amber-600 hover:bg-amber-50"
             >
               Reset
             </Button>
@@ -173,38 +173,38 @@ export default function DepreciationCalculator() {
       {calculated && schedule.length > 0 && (
         <>
           {/* Chart */}
-          <div className="glass-card p-6">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <div className="flex items-center gap-2 mb-4">
-              <TrendingDown className="h-5 w-5 text-[#C9A84C]" />
-              <h3 className="font-semibold text-white">Depreciation Schedule</h3>
+              <TrendingDown className="h-5 w-5 text-amber-600" />
+              <h3 className="font-semibold text-gray-900">Depreciation Schedule</h3>
             </div>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(201,168,76,0.1)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
                   <XAxis
                     dataKey="year"
-                    stroke="#64748B"
-                    tick={{ fill: '#94A3B8', fontSize: 12 }}
+                    stroke="#9CA3AF"
+                    tick={{ fill: '#6B7280', fontSize: 12 }}
                   />
                   <YAxis
-                    stroke="#64748B"
-                    tick={{ fill: '#94A3B8', fontSize: 12 }}
+                    stroke="#9CA3AF"
+                    tick={{ fill: '#6B7280', fontSize: 12 }}
                     tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#1A2B45',
-                      border: '1px solid rgba(201,168,76,0.2)',
-                      borderRadius: '8px',
-                      color: '#F8FAFC',
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid #E5E7EB',
+                      borderRadius: '12px',
+                      color: '#111827',
                     }}
                     formatter={(value) => [formatCurrency(value as number), '']}
                   />
                   <Bar
                     dataKey="depreciation"
                     name="Annual Depreciation"
-                    fill="#C9A84C"
+                    fill="#F59E0B"
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
@@ -213,19 +213,19 @@ export default function DepreciationCalculator() {
           </div>
 
           {/* Table */}
-          <div className="glass-card p-6 overflow-x-auto">
-            <h3 className="font-semibold text-white mb-4">Year-by-Year Schedule</h3>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 overflow-x-auto">
+            <h3 className="font-semibold text-gray-900 mb-4">Year-by-Year Schedule</h3>
             <Table>
               <TableHeader>
-                <TableRow className="border-[rgba(201,168,76,0.15)] hover:bg-transparent">
-                  <TableHead className="text-[#C9A84C]">Year</TableHead>
-                  <TableHead className="text-[#C9A84C] text-right">
+                <TableRow className="border-gray-200 hover:bg-transparent">
+                  <TableHead className="text-amber-600">Year</TableHead>
+                  <TableHead className="text-amber-600 text-right">
                     Annual Depreciation
                   </TableHead>
-                  <TableHead className="text-[#C9A84C] text-right">
+                  <TableHead className="text-amber-600 text-right">
                     Cumulative
                   </TableHead>
-                  <TableHead className="text-[#C9A84C] text-right">
+                  <TableHead className="text-amber-600 text-right">
                     Remaining Basis
                   </TableHead>
                 </TableRow>
@@ -234,18 +234,18 @@ export default function DepreciationCalculator() {
                 {schedule.map((item) => (
                   <TableRow
                     key={item.year}
-                    className="border-[rgba(201,168,76,0.08)] hover:bg-[#243654]/30"
+                    className="border-gray-100 hover:bg-amber-50/50"
                   >
-                    <TableCell className="text-white font-medium">
+                    <TableCell className="text-gray-900 font-medium">
                       {item.year}
                     </TableCell>
-                    <TableCell className="text-white text-right">
+                    <TableCell className="text-gray-900 text-right">
                       {formatCurrency(item.depreciation)}
                     </TableCell>
-                    <TableCell className="text-[#94A3B8] text-right">
+                    <TableCell className="text-gray-500 text-right">
                       {formatCurrency(item.cumulativeDepreciation)}
                     </TableCell>
-                    <TableCell className="text-[#94A3B8] text-right">
+                    <TableCell className="text-gray-500 text-right">
                       {formatCurrency(item.remainingBasis)}
                     </TableCell>
                   </TableRow>

@@ -127,13 +127,13 @@ export default function EditPropertyPage() {
 
   if (error && !form.formState.isDirty) {
     return (
-      <div className="glass-card p-8 text-center max-w-md mx-auto">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center max-w-md mx-auto">
         <AlertCircle className="h-10 w-10 text-red-400 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-white mb-2">{error}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">{error}</h3>
         <Link href="/properties">
           <Button
             variant="outline"
-            className="border-[rgba(201,168,76,0.3)] text-[#C9A84C] hover:bg-[#243654] mt-4"
+            className="border-gray-200 text-gray-700 hover:bg-gray-50 mt-4"
           >
             Back to Properties
           </Button>
@@ -150,20 +150,20 @@ export default function EditPropertyPage() {
           <Button
             variant="ghost"
             size="icon"
-            className="text-[#94A3B8] hover:text-white hover:bg-[#243654]"
+            className="text-gray-500 hover:text-amber-600 hover:bg-amber-50"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-gradient text-[#0F1B2D]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
             <Building2 className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-serif font-bold text-gold-gradient">
+            <h1 className="text-2xl font-serif font-bold text-amber-600">
               Edit Property
             </h1>
-            <p className="text-sm text-[#94A3B8]">Update property details</p>
+            <p className="text-sm text-gray-500">Update property details</p>
           </div>
         </div>
       </div>
@@ -171,57 +171,57 @@ export default function EditPropertyPage() {
       {/* Form */}
       <form
         onSubmit={form.handleSubmit(handleSave)}
-        className="glass-card p-6 space-y-5"
+        className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5"
       >
         {/* Address */}
         <div className="space-y-2">
-          <Label className="text-[#94A3B8]">Address *</Label>
+          <Label className="text-gray-500">Address *</Label>
           <Input
             {...form.register('address', { required: true })}
-            className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]"
+            className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">City</Label>
+            <Label className="text-gray-500">City</Label>
             <Input
               {...form.register('city')}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">State</Label>
+            <Label className="text-gray-500">State</Label>
             <Input
               {...form.register('state')}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">ZIP</Label>
+            <Label className="text-gray-500">ZIP</Label>
             <Input
               {...form.register('zip')}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
         </div>
 
         {/* Property Type */}
         <div className="space-y-2">
-          <Label className="text-[#94A3B8]">Property Type *</Label>
+          <Label className="text-gray-500">Property Type *</Label>
           <Select
             value={form.watch('propertyType')}
             onValueChange={(v) => form.setValue('propertyType', v)}
           >
-            <SelectTrigger className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]">
+            <SelectTrigger className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-[#1A2B45] border-[rgba(201,168,76,0.15)]">
+            <SelectContent className="bg-white border-gray-200">
               {PROPERTY_TYPES.map((t) => (
                 <SelectItem
                   key={t.value}
                   value={t.value}
-                  className="text-white hover:bg-[#243654] focus:bg-[#243654]"
+                  className="text-gray-900 hover:bg-gray-50 focus:bg-gray-50"
                 >
                   {t.label}
                 </SelectItem>
@@ -233,68 +233,68 @@ export default function EditPropertyPage() {
         {/* Financial Details */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Purchase Price ($) *</Label>
+            <Label className="text-gray-500">Purchase Price ($) *</Label>
             <Input
               type="number"
               {...form.register('purchasePrice', { required: true })}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Purchase Date</Label>
+            <Label className="text-gray-500">Purchase Date</Label>
             <Input
               type="date"
               {...form.register('purchaseDate')}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Building Value ($)</Label>
+            <Label className="text-gray-500">Building Value ($)</Label>
             <Input
               type="number"
               {...form.register('buildingValue')}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Land Value ($)</Label>
+            <Label className="text-gray-500">Land Value ($)</Label>
             <Input
               type="number"
               {...form.register('landValue')}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Square Footage</Label>
+            <Label className="text-gray-500">Square Footage</Label>
             <Input
               type="number"
               {...form.register('squareFootage')}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[#94A3B8]">Year Built</Label>
+            <Label className="text-gray-500">Year Built</Label>
             <Input
               type="number"
               {...form.register('yearBuilt')}
-              className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C]"
+              className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
         </div>
 
         {/* Description */}
         <div className="space-y-2">
-          <Label className="text-[#94A3B8]">Description</Label>
+          <Label className="text-gray-500">Description</Label>
           <Textarea
             {...form.register('description')}
             rows={3}
-            className="bg-[#0F1B2D] border-[rgba(201,168,76,0.15)] text-white focus:border-[#C9A84C] resize-none"
+            className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20 resize-none"
           />
         </div>
 
@@ -317,7 +317,7 @@ export default function EditPropertyPage() {
           <Button
             type="submit"
             disabled={saving}
-            className="bg-gold-gradient text-[#0F1B2D] hover:opacity-90 font-semibold"
+            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
           >
             {saving ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -328,7 +328,7 @@ export default function EditPropertyPage() {
             <Button
               type="button"
               variant="outline"
-              className="border-[rgba(201,168,76,0.3)] text-[#94A3B8] hover:bg-[#243654]"
+              className="border-gray-200 text-gray-700 hover:bg-gray-50"
             >
               Cancel
             </Button>

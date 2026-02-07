@@ -44,7 +44,7 @@ export default function DashboardLayout({
 
   return (
     <AuthProvider>
-      <div className="flex h-screen overflow-hidden bg-[#0F1B2D]">
+      <div className="flex h-screen overflow-hidden bg-[#FAFAF8]">
         {/* Desktop Sidebar */}
         <Sidebar
           collapsed={sidebarCollapsed}

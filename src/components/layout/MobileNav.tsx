@@ -24,6 +24,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
+import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -48,7 +49,7 @@ export default function MobileNav() {
           <Button
             variant="ghost"
             size="icon"
-            className="text-[#94A3B8] hover:text-[#C9A84C] hover:bg-[rgba(201,168,76,0.1)]"
+            className="text-gray-500 hover:text-amber-600 hover:bg-amber-50"
           >
             <Menu className="h-6 w-6" />
             <span className="sr-only">Toggle navigation menu</span>
@@ -56,14 +57,12 @@ export default function MobileNav() {
         </SheetTrigger>
         <SheetContent
           side="left"
-          className="w-[280px] p-0 bg-[#0A1220] border-r border-[rgba(201,168,76,0.15)]"
+          className="w-[280px] p-0 bg-white border-r border-gray-200"
         >
-          <SheetHeader className="h-16 flex flex-row items-center px-4 border-b border-[rgba(201,168,76,0.15)]">
+          <SheetHeader className="h-16 flex flex-row items-center px-4 border-b border-gray-200">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gold-gradient">
-                <Building2 className="h-4 w-4 text-[#0F1B2D]" />
-              </div>
-              <SheetTitle className="text-gold-gradient font-serif text-xl font-bold">
+              <BocaBankerAvatar size={32} />
+              <SheetTitle className="font-serif text-xl font-bold text-gray-900">
                 Boca Banker
               </SheetTitle>
             </div>
@@ -82,11 +81,11 @@ export default function MobileNav() {
                   className={cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                     isActive
-                      ? 'bg-[rgba(201,168,76,0.1)] text-[#C9A84C] border-l-2 border-[#C9A84C]'
-                      : 'text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[rgba(255,255,255,0.05)] border-l-2 border-transparent'
+                      ? 'bg-amber-50 text-amber-700 border-l-2 border-amber-500'
+                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 border-l-2 border-transparent'
                   )}
                 >
-                  <item.icon className={cn('h-5 w-5 shrink-0', isActive && 'text-[#C9A84C]')} />
+                  <item.icon className={cn('h-5 w-5 shrink-0', isActive && 'text-amber-600')} />
                   <span>{item.label}</span>
                 </Link>
               )

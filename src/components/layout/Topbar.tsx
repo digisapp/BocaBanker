@@ -38,9 +38,9 @@ export default function Topbar({ title }: TopbarProps) {
     user?.user_metadata?.full_name || user?.email || 'User'
 
   return (
-    <header className="sticky top-0 z-30 glass-card flex items-center justify-between h-16 px-4 md:px-6 border-b border-[rgba(201,168,76,0.12)]">
+    <header className="sticky top-0 z-30 bg-white border-b border-gray-200 flex items-center justify-between h-16 px-4 md:px-6">
       {/* Page Title */}
-      <h1 className="text-xl font-serif font-semibold text-[#F8FAFC] truncate">
+      <h1 className="text-xl font-serif font-semibold text-gray-900 truncate">
         {title}
       </h1>
 
@@ -48,13 +48,13 @@ export default function Topbar({ title }: TopbarProps) {
       <div className="flex items-center gap-3">
         {/* Search */}
         <div className="relative hidden sm:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94A3B8]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             type="text"
             placeholder="Search..."
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
-            className="pl-9 w-[200px] lg:w-[280px] bg-[rgba(255,255,255,0.05)] border-[rgba(201,168,76,0.15)] text-[#F8FAFC] placeholder:text-[#64748B] focus:border-[#C9A84C] focus:ring-[#C9A84C]/20"
+            className="pl-9 w-[200px] lg:w-[280px] bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
           />
         </div>
 
@@ -62,10 +62,10 @@ export default function Topbar({ title }: TopbarProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="relative text-[#94A3B8] hover:text-[#C9A84C] hover:bg-[rgba(201,168,76,0.1)]"
+          className="relative text-gray-400 hover:text-amber-600 hover:bg-amber-50"
         >
           <Bell className="h-5 w-5" />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#C9A84C] animate-pulse-gold" />
+          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-amber-500 animate-pulse-gold" />
         </Button>
 
         {/* User Avatar Dropdown */}
@@ -73,10 +73,10 @@ export default function Topbar({ title }: TopbarProps) {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="relative h-9 w-9 rounded-full ring-2 ring-[rgba(201,168,76,0.2)] hover:ring-[#C9A84C]/50 transition-all"
+              className="relative h-9 w-9 rounded-full ring-2 ring-gray-200 hover:ring-amber-300 transition-all"
             >
               <Avatar className="h-9 w-9">
-                <AvatarFallback className="bg-gold-gradient text-[#0F1B2D] font-semibold text-sm">
+                <AvatarFallback className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold text-sm">
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
@@ -84,33 +84,33 @@ export default function Topbar({ title }: TopbarProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="w-56 bg-[#1A2B45] border-[rgba(201,168,76,0.15)] text-[#F8FAFC]"
+            className="w-56 bg-white border-gray-200 text-gray-900"
           >
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium text-[#F8FAFC]">{displayName}</p>
-                <p className="text-xs text-[#94A3B8] truncate">{user?.email}</p>
+                <p className="text-sm font-medium text-gray-900">{displayName}</p>
+                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-[rgba(201,168,76,0.12)]" />
+            <DropdownMenuSeparator className="bg-gray-100" />
             <DropdownMenuItem
               onClick={() => router.push('/settings')}
-              className="text-[#94A3B8] hover:text-[#C9A84C] focus:text-[#C9A84C] focus:bg-[rgba(201,168,76,0.1)] cursor-pointer"
+              className="text-gray-600 hover:text-amber-700 focus:text-amber-700 focus:bg-amber-50 cursor-pointer"
             >
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => router.push('/settings')}
-              className="text-[#94A3B8] hover:text-[#C9A84C] focus:text-[#C9A84C] focus:bg-[rgba(201,168,76,0.1)] cursor-pointer"
+              className="text-gray-600 hover:text-amber-700 focus:text-amber-700 focus:bg-amber-50 cursor-pointer"
             >
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-[rgba(201,168,76,0.12)]" />
+            <DropdownMenuSeparator className="bg-gray-100" />
             <DropdownMenuItem
               onClick={handleSignOut}
-              className="text-red-400 hover:text-red-300 focus:text-red-300 focus:bg-red-500/10 cursor-pointer"
+              className="text-red-500 hover:text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
             >
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out

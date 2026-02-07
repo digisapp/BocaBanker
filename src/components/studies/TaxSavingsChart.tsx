@@ -56,20 +56,20 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   const item = payload[0].payload
 
   return (
-    <div className="glass-card p-3 shadow-lg">
-      <p className="text-sm font-medium text-[#F8FAFC] mb-1">Year {label}</p>
+    <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-lg">
+      <p className="text-sm font-medium text-gray-900 mb-1">Year {label}</p>
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <div className="h-2.5 w-2.5 rounded-full bg-[#C9A84C]" />
-          <span className="text-xs text-[#94A3B8]">Cumulative:</span>
-          <span className="text-xs font-medium text-[#C9A84C]">
+          <div className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+          <span className="text-xs text-gray-500">Cumulative:</span>
+          <span className="text-xs font-medium text-amber-600">
             {formatCurrencyFull(item.cumulativeSavings)}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="h-2.5 w-2.5 rounded-full bg-[#D4B962]" />
-          <span className="text-xs text-[#94A3B8]">Annual:</span>
-          <span className="text-xs font-medium text-[#F8FAFC]">
+          <div className="h-2.5 w-2.5 rounded-full bg-yellow-500" />
+          <span className="text-xs text-gray-500">Annual:</span>
+          <span className="text-xs font-medium text-gray-900">
             {formatCurrencyFull(item.savings)}
           </span>
         </div>
@@ -81,22 +81,16 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 export default function TaxSavingsChart({ data, maxYears = 20 }: TaxSavingsChartProps) {
   const displayData = data.slice(0, maxYears)
 
-  // Find key milestone points
   const milestones: { year: number; savings: number }[] = []
   if (displayData.length > 0) {
-    // Year 1 milestone
     milestones.push({
       year: displayData[0].year,
       savings: displayData[0].cumulativeSavings,
     })
-
-    // Year 5 milestone (if available)
     const year5 = displayData.find((d) => d.year === 5)
     if (year5) {
       milestones.push({ year: 5, savings: year5.cumulativeSavings })
     }
-
-    // Final year milestone
     const last = displayData[displayData.length - 1]
     if (last.year !== 1 && last.year !== 5) {
       milestones.push({ year: last.year, savings: last.cumulativeSavings })
@@ -109,24 +103,24 @@ export default function TaxSavingsChart({ data, maxYears = 20 }: TaxSavingsChart
         <AreaChart data={displayData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
           <defs>
             <linearGradient id="goldGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#C9A84C" stopOpacity={0.35} />
-              <stop offset="100%" stopColor="#C9A84C" stopOpacity={0.02} />
+              <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="#F59E0B" stopOpacity={0.02} />
             </linearGradient>
           </defs>
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke="rgba(201, 168, 76, 0.08)"
+            stroke="rgba(0,0,0,0.06)"
             vertical={false}
           />
           <XAxis
             dataKey="year"
-            tick={{ fill: '#64748B', fontSize: 11 }}
-            axisLine={{ stroke: 'rgba(201, 168, 76, 0.15)' }}
+            tick={{ fill: '#6B7280', fontSize: 11 }}
+            axisLine={{ stroke: 'rgba(0,0,0,0.1)' }}
             tickLine={false}
           />
           <YAxis
             tickFormatter={formatCurrency}
-            tick={{ fill: '#64748B', fontSize: 11 }}
+            tick={{ fill: '#6B7280', fontSize: 11 }}
             axisLine={false}
             tickLine={false}
           />
@@ -134,7 +128,7 @@ export default function TaxSavingsChart({ data, maxYears = 20 }: TaxSavingsChart
           <Area
             type="monotone"
             dataKey="cumulativeSavings"
-            stroke="#C9A84C"
+            stroke="#F59E0B"
             strokeWidth={2}
             fill="url(#goldGradient)"
             name="Cumulative Tax Savings"
@@ -145,8 +139,8 @@ export default function TaxSavingsChart({ data, maxYears = 20 }: TaxSavingsChart
               x={m.year}
               y={m.savings}
               r={4}
-              fill="#C9A84C"
-              stroke="#0F1B2D"
+              fill="#F59E0B"
+              stroke="#FFFFFF"
               strokeWidth={2}
             />
           ))}
