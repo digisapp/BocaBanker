@@ -31,41 +31,44 @@ export default function BocaBankerAvatar({ className, size = 200 }: AvatarProps)
       <circle cx="100" cy="160" r="1.5" fill="#7DD3FC" opacity="0.6" />
 
       {/* Neck */}
-      <path d="M86 122 L86 147 Q100 154 114 147 L114 122Z" fill="#D4A574" />
+      <path d="M86 122 L86 147 Q100 154 114 147 L114 122Z" fill="#F0C9A8" />
 
       {/* Head */}
-      <ellipse cx="100" cy="85" rx="42" ry="46" fill="#DEAC7B" />
+      <ellipse cx="100" cy="85" rx="42" ry="46" fill="#F5D6B8" />
 
       {/* Ears */}
-      <ellipse cx="58" cy="88" rx="6" ry="10" fill="#D4A574" />
-      <path d="M56 85 Q58 88 56 91" stroke="#C89B68" strokeWidth="1" fill="none" />
-      <ellipse cx="142" cy="88" rx="6" ry="10" fill="#D4A574" />
-      <path d="M144 85 Q142 88 144 91" stroke="#C89B68" strokeWidth="1" fill="none" />
+      <ellipse cx="58" cy="88" rx="6" ry="10" fill="#F0C9A8" />
+      <path d="M56 85 Q58 88 56 91" stroke="#E4B894" strokeWidth="1" fill="none" />
+      <ellipse cx="142" cy="88" rx="6" ry="10" fill="#F0C9A8" />
+      <path d="M144 85 Q142 88 144 91" stroke="#E4B894" strokeWidth="1" fill="none" />
 
       {/* Hair */}
       <path
         d="M58 78 C56 50 72 34 100 34 C128 34 144 50 142 78
            C142 65 130 44 100 44 C70 44 58 65 58 78Z"
-        fill="#1A0E06"
+        fill="#B8A88A"
       />
       {/* Hair volume/side */}
-      <path d="M56 80 C54 68 58 56 66 50 C60 62 59 74 62 84Z" fill="#1A0E06" />
-      <path d="M144 80 C146 68 142 56 134 50 C140 62 141 74 138 84Z" fill="#1A0E06" />
+      <path d="M56 80 C54 68 58 56 66 50 C60 62 59 74 62 84Z" fill="#B0A080" />
+      <path d="M144 80 C146 68 142 56 134 50 C140 62 141 74 138 84Z" fill="#B0A080" />
       {/* Hair highlight */}
-      <path d="M80 40 Q90 36 100 38" stroke="#2A1A0E" strokeWidth="2" fill="none" opacity="0.4" />
+      <path d="M80 40 Q90 36 100 38" stroke="#C8B898" strokeWidth="2" fill="none" opacity="0.5" />
+      {/* Silver streaks */}
+      <path d="M72 48 Q80 42 88 46" stroke="#D0C8B8" strokeWidth="1.5" fill="none" opacity="0.4" />
+      <path d="M112 46 Q120 42 128 48" stroke="#D0C8B8" strokeWidth="1.5" fill="none" opacity="0.4" />
 
       {/* Eyebrows */}
       <path
         d="M70 66 Q80 59 92 66"
-        stroke="#1A0E06"
-        strokeWidth="3"
+        stroke="#9E8E72"
+        strokeWidth="2.5"
         strokeLinecap="round"
         fill="none"
       />
       <path
         d="M108 66 Q120 59 130 66"
-        stroke="#1A0E06"
-        strokeWidth="3"
+        stroke="#9E8E72"
+        strokeWidth="2.5"
         strokeLinecap="round"
         fill="none"
       />
@@ -93,12 +96,12 @@ export default function BocaBankerAvatar({ className, size = 200 }: AvatarProps)
       <path d="M108 74 L116 74" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.35" />
 
       {/* Nose */}
-      <path d="M100 86 L96 99 Q100 102 104 99Z" fill="#C89B68" />
+      <path d="M100 86 L96 99 Q100 102 104 99Z" fill="#E4B894" />
 
       {/* Smile */}
       <path
         d="M83 108 Q90 118 100 118 Q110 118 117 108"
-        stroke="#A07850"
+        stroke="#C4967A"
         strokeWidth="2.5"
         strokeLinecap="round"
         fill="none"
@@ -106,16 +109,16 @@ export default function BocaBankerAvatar({ className, size = 200 }: AvatarProps)
       {/* Teeth */}
       <path d="M88 110 Q100 120 112 110" fill="white" fillOpacity="0.85" />
       {/* Lip highlight */}
-      <path d="M90 110 Q100 106 110 110" stroke="#C89B68" strokeWidth="0.8" fill="none" opacity="0.3" />
+      <path d="M90 110 Q100 106 110 110" stroke="#E4B894" strokeWidth="0.8" fill="none" opacity="0.3" />
 
       {/* Chin shadow */}
-      <path d="M82 125 Q100 130 118 125" stroke="#C89B68" strokeWidth="1" opacity="0.3" fill="none" />
+      <path d="M82 125 Q100 130 118 125" stroke="#E4B894" strokeWidth="1" opacity="0.3" fill="none" />
 
       {/* Stubble hints */}
-      <circle cx="88" cy="114" r="0.5" fill="#1A0E06" opacity="0.08" />
-      <circle cx="92" cy="116" r="0.5" fill="#1A0E06" opacity="0.08" />
-      <circle cx="108" cy="116" r="0.5" fill="#1A0E06" opacity="0.08" />
-      <circle cx="112" cy="114" r="0.5" fill="#1A0E06" opacity="0.08" />
+      <circle cx="88" cy="114" r="0.5" fill="#A09080" opacity="0.08" />
+      <circle cx="92" cy="116" r="0.5" fill="#A09080" opacity="0.08" />
+      <circle cx="108" cy="116" r="0.5" fill="#A09080" opacity="0.08" />
+      <circle cx="112" cy="114" r="0.5" fill="#A09080" opacity="0.08" />
 
       {/* Gradients */}
       <defs>
