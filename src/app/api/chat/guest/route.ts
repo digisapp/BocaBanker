@@ -1,21 +1,14 @@
 import { streamText } from 'ai';
 import { xai } from '@ai-sdk/xai';
 import { getGuestCount, createGuestCountCookie } from '@/lib/guest-chat/cookie';
-import { GUEST_SYSTEM_PROMPT } from '@/lib/ai/guest-system-prompt';
+import { GUEST_SYSTEM_PROMPT, GUEST_SYSTEM_PROMPT_LEAD_CAPTURE } from '@/lib/ai/guest-system-prompt';
 
-const MAX_GUEST_MESSAGES = 3;
-const MAX_MESSAGE_ENTRIES = 7;
+const LEAD_CAPTURE_THRESHOLD = 3;
+const MAX_MESSAGE_ENTRIES = 50;
 
 export async function POST(request: Request) {
   try {
     const count = getGuestCount(request);
-
-    if (count >= MAX_GUEST_MESSAGES) {
-      return new Response(
-        JSON.stringify({ error: 'Guest message limit reached' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
 
     const { messages } = await request.json();
 
@@ -34,9 +27,14 @@ export async function POST(request: Request) {
         : msg.content || '',
     }));
 
+    // Use lead capture prompt on the 3rd message only, then revert to normal
+    const systemPrompt = count === LEAD_CAPTURE_THRESHOLD - 1
+      ? GUEST_SYSTEM_PROMPT_LEAD_CAPTURE
+      : GUEST_SYSTEM_PROMPT;
+
     const result = streamText({
       model: xai('grok-3'),
-      system: GUEST_SYSTEM_PROMPT,
+      system: systemPrompt,
       messages: coreMessages,
     });
 

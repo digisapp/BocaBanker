@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 const signupSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }).max(100),
   email: z.string().email({ message: 'Invalid email address' }),
+  propertyLocation: z.string().max(200).optional(),
 });
 
 export async function POST(request: Request) {
@@ -18,13 +19,16 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, email } = parsed.data;
+    const { name, email, propertyLocation } = parsed.data;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
     const { error } = await supabaseAdmin.auth.signInWithOtp({
       email,
       options: {
-        data: { full_name: name },
+        data: {
+          full_name: name,
+          ...(propertyLocation && { property_location: propertyLocation }),
+        },
         emailRedirectTo: `${appUrl}/api/auth/callback?next=${encodeURIComponent('/chat?from=guest')}`,
       },
     });

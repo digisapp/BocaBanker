@@ -7,11 +7,13 @@ import type { UIMessage } from 'ai';
 import { Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import BocaBankerAvatar from './BocaBankerAvatar';
-import LeadCaptureOverlay from './LeadCaptureOverlay';
+import InlineLeadCaptureCard from './InlineLeadCaptureCard';
 
-const MAX_GUEST_MESSAGES = 3;
 const LS_COUNT_KEY = 'bb_guest_msg_count';
 const LS_HISTORY_KEY = 'bb_guest_chat_history';
+const LS_LEAD_CAPTURED_KEY = 'bb_lead_captured';
+const LS_LEAD_DISMISSED_KEY = 'bb_lead_dismissed';
+const LEAD_CARD_THRESHOLD = 3;
 
 const GREETING_MESSAGE: UIMessage = {
   id: 'greeting',
@@ -33,20 +35,25 @@ function getTextContent(message: UIMessage): string {
 
 export default function GuestChatWidget() {
   const [userMsgCount, setUserMsgCount] = useState(0);
-  const [showOverlay, setShowOverlay] = useState(false);
+  const [showLeadCard, setShowLeadCard] = useState(false);
+  const [leadCaptured, setLeadCaptured] = useState(false);
+  const [leadDismissed, setLeadDismissed] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load count from localStorage on mount
+  // Load persisted state on mount
   useEffect(() => {
     const stored = localStorage.getItem(LS_COUNT_KEY);
     if (stored) {
       const count = parseInt(stored, 10);
-      if (!isNaN(count)) {
-        setUserMsgCount(count);
-        if (count >= MAX_GUEST_MESSAGES) setShowOverlay(true);
-      }
+      if (!isNaN(count)) setUserMsgCount(count);
+    }
+    if (localStorage.getItem(LS_LEAD_CAPTURED_KEY) === 'true') {
+      setLeadCaptured(true);
+    }
+    if (localStorage.getItem(LS_LEAD_DISMISSED_KEY) === 'true') {
+      setLeadDismissed(true);
     }
   }, []);
 
@@ -57,11 +64,6 @@ export default function GuestChatWidget() {
 
   const { messages, sendMessage, status, setMessages } = useChat({
     transport,
-    onError: (error) => {
-      if (error.message?.includes('403')) {
-        setShowOverlay(true);
-      }
-    },
   });
 
   // Set greeting message on mount
@@ -77,7 +79,7 @@ export default function GuestChatWidget() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, scrollToBottom]);
+  }, [messages, showLeadCard, scrollToBottom]);
 
   // Persist messages to localStorage for handoff
   useEffect(() => {
@@ -86,10 +88,25 @@ export default function GuestChatWidget() {
     }
   }, [messages]);
 
+  // Show lead card after 3rd user message when AI finishes responding
+  useEffect(() => {
+    if (
+      status === 'ready' &&
+      userMsgCount >= LEAD_CARD_THRESHOLD &&
+      !leadCaptured &&
+      !leadDismissed &&
+      !showLeadCard &&
+      messages.length > 1 &&
+      messages[messages.length - 1]?.role === 'assistant'
+    ) {
+      setShowLeadCard(true);
+    }
+  }, [status, userMsgCount, leadCaptured, leadDismissed, showLeadCard, messages]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const text = inputValue.trim();
-    if (!text || isLoading || userMsgCount >= MAX_GUEST_MESSAGES) return;
+    if (!text || isLoading) return;
 
     const newCount = userMsgCount + 1;
     setUserMsgCount(newCount);
@@ -97,22 +114,21 @@ export default function GuestChatWidget() {
     setInputValue('');
 
     sendMessage({ text });
-
-    if (newCount >= MAX_GUEST_MESSAGES) {
-      // Show overlay after a short delay so user sees the response start
-      setTimeout(() => setShowOverlay(true), 3000);
-    }
   };
 
-  const remaining = MAX_GUEST_MESSAGES - userMsgCount;
+  const handleLeadDismiss = () => {
+    setShowLeadCard(false);
+    setLeadDismissed(true);
+    localStorage.setItem(LS_LEAD_DISMISSED_KEY, 'true');
+  };
+
+  const handleLeadSuccess = () => {
+    setLeadCaptured(true);
+    localStorage.setItem(LS_LEAD_CAPTURED_KEY, 'true');
+  };
 
   return (
     <div className="mx-auto max-w-2xl bg-white rounded-3xl shadow-xl shadow-black/5 border border-gray-100 overflow-hidden relative">
-      {/* Lead capture overlay */}
-      {showOverlay && (
-        <LeadCaptureOverlay onDismiss={() => setShowOverlay(false)} />
-      )}
-
       {/* Chat header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
         <div className="flex items-center gap-3">
@@ -125,11 +141,6 @@ export default function GuestChatWidget() {
             </p>
           </div>
         </div>
-        {remaining > 0 && (
-          <span className="text-xs font-medium text-gray-400 bg-gray-100 rounded-full px-3 py-1">
-            {remaining} free message{remaining !== 1 ? 's' : ''}
-          </span>
-        )}
       </div>
 
       {/* Messages */}
@@ -177,6 +188,15 @@ export default function GuestChatWidget() {
             </div>
           </div>
         )}
+
+        {/* Inline lead capture card */}
+        {showLeadCard && !leadCaptured && (
+          <InlineLeadCaptureCard
+            onDismiss={handleLeadDismiss}
+            onSuccess={handleLeadSuccess}
+          />
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -188,17 +208,12 @@ export default function GuestChatWidget() {
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder={
-              userMsgCount >= MAX_GUEST_MESSAGES
-                ? 'Sign up to keep chatting...'
-                : 'Ask Boca Banker anything...'
-            }
-            disabled={userMsgCount >= MAX_GUEST_MESSAGES}
-            className="flex-1 bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 disabled:opacity-50"
+            placeholder="Ask Boca Banker anything..."
+            className="flex-1 bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
           />
           <button
             type="submit"
-            disabled={!inputValue.trim() || isLoading || userMsgCount >= MAX_GUEST_MESSAGES}
+            disabled={!inputValue.trim() || isLoading}
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-white disabled:opacity-50 transition-opacity hover:opacity-90"
           >
             <Send className="h-4 w-4" />

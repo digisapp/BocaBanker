@@ -5,14 +5,12 @@ import Link from 'next/link'
 import {
   Brain,
   Calculator,
-  Users,
-  Mail,
   ArrowRight,
-  Zap,
-  TrendingUp,
-  BarChart3,
-  FileText,
   MessageCircle,
+  Building2,
+  DollarSign,
+  Landmark,
+  Search,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -99,7 +97,6 @@ const features = [
     desc: 'Ask him anything about cost segregation, tax strategy, or property analysis. He responds in seconds with 40 years of banking wisdom.',
     color: 'bg-sky-100 text-sky-600',
     border: 'border-sky-200',
-    big: true,
   },
   {
     icon: Calculator,
@@ -107,39 +104,34 @@ const features = [
     desc: 'Plug in a property, get MACRS depreciation schedules, bonus dep, and NPV-optimized tax savings. IRS-compliant, always.',
     color: 'bg-amber-100 text-amber-600',
     border: 'border-amber-200',
-    big: false,
   },
   {
-    icon: Users,
-    title: 'Client CRM',
-    desc: 'Import your entire client database via CSV. Tag, search, filter — finally organize 40 years of contacts.',
+    icon: Building2,
+    title: 'Real Estate Guidance',
+    desc: 'From commercial acquisitions to multifamily strategies — get expert-level guidance on structuring your next deal.',
     color: 'bg-teal-100 text-teal-600',
     border: 'border-teal-200',
-    big: false,
   },
   {
-    icon: Mail,
-    title: 'Email Outreach',
-    desc: 'Send branded emails to property owners with personalized cost seg opportunity reports. Powered by Resend.',
-    color: 'bg-rose-100 text-rose-600',
-    border: 'border-rose-200',
-    big: false,
-  },
-  {
-    icon: BarChart3,
-    title: 'Visual Reports',
-    desc: 'Beautiful charts showing asset breakdowns, depreciation over time, and tax savings comparisons. Print-ready PDFs.',
+    icon: Landmark,
+    title: 'Mortgage Intelligence',
+    desc: 'Navigate rates, terms, and refinancing options with AI that understands South Florida lending inside and out.',
     color: 'bg-violet-100 text-violet-600',
     border: 'border-violet-200',
-    big: false,
   },
   {
-    icon: FileText,
-    title: 'Document Vault',
-    desc: 'Upload appraisals, tax returns, and study docs. Everything organized by client and property.',
+    icon: DollarSign,
+    title: 'Tax Savings Strategy',
+    desc: 'Discover exactly how much you could save through accelerated depreciation, bonus dep, and smart tax planning.',
     color: 'bg-emerald-100 text-emerald-600',
     border: 'border-emerald-200',
-    big: false,
+  },
+  {
+    icon: Search,
+    title: 'Property Analysis',
+    desc: 'Get a quick assessment of any property\'s cost segregation potential — residential, commercial, or mixed-use.',
+    color: 'bg-rose-100 text-rose-600',
+    border: 'border-rose-200',
   },
 ]
 
@@ -298,7 +290,7 @@ export default function Home() {
                 </span>
               </h2>
               <p className="mt-4 text-gray-500 max-w-lg mx-auto">
-                AI chat, cost seg engine, CRM, email outreach, visual reports, and secure document storage — all in one platform.
+                AI chat, cost seg calculations, real estate guidance, mortgage intelligence, and tax strategy — all at your fingertips.
               </p>
             </div>
           </Reveal>
@@ -308,7 +300,6 @@ export default function Home() {
               <Reveal
                 key={f.title}
                 delay={i * 70}
-                className={f.big ? 'sm:col-span-2 lg:col-span-1' : ''}
               >
                 <div className={cn(
                   'group h-full rounded-2xl border bg-white p-7 transition-all duration-300 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-1',
@@ -354,9 +345,9 @@ export default function Home() {
             <div className="hidden md:block absolute top-14 left-[18%] right-[18%] h-0.5 bg-gradient-to-r from-sky-200 via-amber-200 to-teal-200 rounded-full" />
 
             {[
-              { num: '01', icon: Users, title: 'Import Your Clients', desc: 'Upload a CSV with your client data. Boca Banker auto-maps columns and organizes everything.', color: 'bg-sky-100 text-sky-600' },
-              { num: '02', icon: Zap, title: 'Run AI Analysis', desc: 'Our engine scans properties and identifies cost segregation opportunities across your whole portfolio.', color: 'bg-amber-100 text-amber-600' },
-              { num: '03', icon: TrendingUp, title: 'Deliver Savings', desc: 'Generate IRS-compliant reports with depreciation schedules and tax savings your clients will love.', color: 'bg-teal-100 text-teal-600' },
+              { num: '01', icon: MessageCircle, title: 'Ask Boca Banker', desc: 'Start a conversation about your property, mortgage, or tax situation. No signup required — just start chatting.', color: 'bg-sky-100 text-sky-600' },
+              { num: '02', icon: Search, title: 'Get Expert Analysis', desc: 'Boca Banker analyzes your property and identifies cost segregation opportunities, tax savings, and strategy options.', color: 'bg-amber-100 text-amber-600' },
+              { num: '03', icon: DollarSign, title: 'See Your Savings', desc: 'Get a personalized breakdown of how much you could save through accelerated depreciation and smart tax planning.', color: 'bg-teal-100 text-teal-600' },
             ].map((step, i) => (
               <Reveal key={step.num} delay={i * 120}>
                 <div className="relative text-center flex flex-col items-center">
