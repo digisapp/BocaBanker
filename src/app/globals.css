@@ -1,0 +1,216 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-playfair);
+  --font-mono: var(--font-geist-mono);
+
+  /* Navy/Gold Boca Banker palette */
+  --color-navy: #0F1B2D;
+  --color-navy-light: #1A2B45;
+  --color-navy-lighter: #243654;
+  --color-gold: #C9A84C;
+  --color-gold-light: #D4B962;
+  --color-gold-dark: #B08E32;
+  --color-cream: #FAF7F0;
+  --color-slate-blue: #64748B;
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: #0F1B2D;
+  --foreground: #F8FAFC;
+  --card: #1A2B45;
+  --card-foreground: #F8FAFC;
+  --popover: #1A2B45;
+  --popover-foreground: #F8FAFC;
+  --primary: #C9A84C;
+  --primary-foreground: #0F1B2D;
+  --secondary: #243654;
+  --secondary-foreground: #F8FAFC;
+  --muted: #1A2B45;
+  --muted-foreground: #94A3B8;
+  --accent: #243654;
+  --accent-foreground: #C9A84C;
+  --destructive: #EF4444;
+  --border: rgba(201, 168, 76, 0.15);
+  --input: rgba(201, 168, 76, 0.15);
+  --ring: #C9A84C;
+  --chart-1: #C9A84C;
+  --chart-2: #3B82F6;
+  --chart-3: #10B981;
+  --chart-4: #8B5CF6;
+  --chart-5: #F59E0B;
+  --sidebar: #0A1220;
+  --sidebar-foreground: #F8FAFC;
+  --sidebar-primary: #C9A84C;
+  --sidebar-primary-foreground: #0F1B2D;
+  --sidebar-accent: #1A2B45;
+  --sidebar-accent-foreground: #C9A84C;
+  --sidebar-border: rgba(201, 168, 76, 0.15);
+  --sidebar-ring: #C9A84C;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Glass card utility */
+.glass-card {
+  background: rgba(26, 43, 69, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(201, 168, 76, 0.12);
+  border-radius: 0.75rem;
+}
+
+.glass-card-hover {
+  background: rgba(26, 43, 69, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(201, 168, 76, 0.12);
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.glass-card-hover:hover {
+  background: rgba(26, 43, 69, 0.8);
+  border-color: rgba(201, 168, 76, 0.3);
+  box-shadow: 0 0 20px rgba(201, 168, 76, 0.08);
+}
+
+/* Gold gradient text */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #C9A84C, #E8D48B, #C9A84C);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Gold gradient background */
+.bg-gold-gradient {
+  background: linear-gradient(135deg, #C9A84C, #D4B962);
+}
+
+/* Subtle gold glow */
+.gold-glow {
+  box-shadow: 0 0 20px rgba(201, 168, 76, 0.15), 0 0 40px rgba(201, 168, 76, 0.05);
+}
+
+/* Navy gradient background */
+.bg-navy-gradient {
+  background: linear-gradient(180deg, #0F1B2D 0%, #0A1220 100%);
+}
+
+/* Palm tree background pattern */
+.palm-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5c-2 8-8 14-15 16 8 1 14 7 16 15-2-8 8-14 16-16-8-1-14-7-16-15z' fill='rgba(201,168,76,0.03)' /%3E%3C/svg%3E");
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0F1B2D;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(201, 168, 76, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 168, 76, 0.5);
+}
+
+/* Animation utilities */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(201, 168, 76, 0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+.animate-slide-in {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+.animate-pulse-gold {
+  animation: pulse-gold 2s ease-in-out infinite;
+}
+
+/* Print styles for reports */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .glass-card {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    backdrop-filter: none !important;
+  }
+}
