@@ -15,14 +15,14 @@ import {
   BarChart3,
   FileText,
   Sparkles,
-  ChevronDown,
+  MessageCircle,
+  Send,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
 
-/* ─────────────────────────────────────────────
-   SCROLL REVEAL — animates children on scroll
-   ───────────────────────────────────────────── */
+/* ─── Scroll Reveal ─── */
 function Reveal({
   children,
   className,
@@ -38,17 +38,12 @@ function Reveal({
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true)
-          observer.unobserve(el)
-        }
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.unobserve(el) } },
+      { threshold: 0.12, rootMargin: '0px 0px -30px 0px' }
     )
-    observer.observe(el)
-    return () => observer.disconnect()
+    obs.observe(el)
+    return () => obs.disconnect()
   }, [])
 
   return (
@@ -66,20 +61,8 @@ function Reveal({
   )
 }
 
-/* ─────────────────────────────────────────────
-   COUNT-UP — animates a number from 0 to target
-   ───────────────────────────────────────────── */
-function CountUp({
-  target,
-  suffix = '',
-  prefix = '',
-  duration = 2000,
-}: {
-  target: number
-  suffix?: string
-  prefix?: string
-  duration?: number
-}) {
+/* ─── Count Up ─── */
+function CountUp({ target, suffix = '', prefix = '' }: { target: number; suffix?: string; prefix?: string }) {
   const ref = useRef<HTMLSpanElement>(null)
   const [count, setCount] = useState(0)
   const started = useRef(false)
@@ -87,181 +70,130 @@ function CountUp({
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting && !started.current) {
           started.current = true
-          const startTime = performance.now()
-          const animate = (now: number) => {
-            const elapsed = now - startTime
-            const progress = Math.min(elapsed / duration, 1)
-            // ease-out cubic
-            const eased = 1 - Math.pow(1 - progress, 3)
+          const t0 = performance.now()
+          const tick = (now: number) => {
+            const p = Math.min((now - t0) / 2000, 1)
+            const eased = 1 - Math.pow(1 - p, 3)
             setCount(Math.floor(eased * target))
-            if (progress < 1) requestAnimationFrame(animate)
+            if (p < 1) requestAnimationFrame(tick)
           }
-          requestAnimationFrame(animate)
+          requestAnimationFrame(tick)
         }
       },
       { threshold: 0.5 }
     )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [target, duration])
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [target])
 
-  return (
-    <span ref={ref}>
-      {prefix}
-      {count.toLocaleString()}
-      {suffix}
-    </span>
-  )
+  return <span ref={ref}>{prefix}{count.toLocaleString()}{suffix}</span>
 }
 
-/* ─────────────────────────────────────────────
-   DATA
-   ───────────────────────────────────────────── */
+/* ─── Data ─── */
 
 const features = [
   {
     icon: Brain,
-    title: 'AI Banking Assistant',
-    description:
-      'Chat with Boca Banker — an AI powered by xAI Grok with 40 years of banking intelligence built in. Get instant answers on cost segregation, tax strategy, and property analysis.',
-    accent: 'from-sky-deep/20 to-sky/10',
-    iconBg: 'bg-sky-deep/15',
-    iconColor: 'text-sky',
-    span: 'bento-span-2',
+    title: 'AI Chat Assistant',
+    desc: 'Ask him anything about cost segregation, tax strategy, or property analysis. He responds in seconds with 40 years of banking wisdom.',
+    color: 'bg-sky-100 text-sky-600',
+    border: 'border-sky-200',
+    big: true,
   },
   {
     icon: Calculator,
-    title: 'Cost Segregation Engine',
-    description:
-      'MACRS-compliant depreciation calculations with bonus depreciation, NPV analysis, and IRS-ready reports. Turn a 39-year asset into a first-year tax deduction.',
-    accent: 'from-gold/20 to-gold-light/10',
-    iconBg: 'bg-gold/15',
-    iconColor: 'text-gold',
-    span: 'bento-row-2',
+    title: 'Cost Seg Calculator',
+    desc: 'Plug in a property, get MACRS depreciation schedules, bonus dep, and NPV-optimized tax savings. IRS-compliant, always.',
+    color: 'bg-amber-100 text-amber-600',
+    border: 'border-amber-200',
+    big: false,
   },
   {
     icon: Users,
     title: 'Client CRM',
-    description:
-      'Purpose-built for banking professionals. Import 40 years of client data via CSV, tag, filter, and track every relationship.',
-    accent: 'from-teal/20 to-teal/10',
-    iconBg: 'bg-teal/15',
-    iconColor: 'text-teal',
-    span: '',
+    desc: 'Import your entire client database via CSV. Tag, search, filter — finally organize 40 years of contacts.',
+    color: 'bg-teal-100 text-teal-600',
+    border: 'border-teal-200',
+    big: false,
   },
   {
     icon: Mail,
     title: 'Email Outreach',
-    description:
-      'Branded email campaigns powered by Resend. Reach property owners with personalized cost segregation opportunity reports.',
-    accent: 'from-coral/20 to-coral/10',
-    iconBg: 'bg-coral/15',
-    iconColor: 'text-coral',
-    span: '',
+    desc: 'Send branded emails to property owners with personalized cost seg opportunity reports. Powered by Resend.',
+    color: 'bg-rose-100 text-rose-600',
+    border: 'border-rose-200',
+    big: false,
   },
   {
     icon: BarChart3,
     title: 'Visual Reports',
-    description:
-      'Interactive charts showing asset breakdowns, depreciation schedules, and tax savings over time. Print-ready PDF generation.',
-    accent: 'from-sky/20 to-teal/10',
-    iconBg: 'bg-sky/15',
-    iconColor: 'text-sky',
-    span: '',
+    desc: 'Beautiful charts showing asset breakdowns, depreciation over time, and tax savings comparisons. Print-ready PDFs.',
+    color: 'bg-violet-100 text-violet-600',
+    border: 'border-violet-200',
+    big: false,
   },
   {
     icon: FileText,
     title: 'Document Vault',
-    description:
-      'Secure document storage tied to clients, properties, and studies. Upload appraisals, tax returns, and study deliverables.',
-    accent: 'from-gold-light/20 to-sand/10',
-    iconBg: 'bg-gold-light/15',
-    iconColor: 'text-gold-light',
-    span: '',
+    desc: 'Upload appraisals, tax returns, and study docs. Everything organized by client and property.',
+    color: 'bg-emerald-100 text-emerald-600',
+    border: 'border-emerald-200',
+    big: false,
   },
+]
+
+const chatMessages = [
+  { from: 'user', text: 'What kind of tax savings can I expect on a $2M commercial property?' },
+  { from: 'bot', text: 'Great question! On a $2M commercial property, a cost segregation study typically reclassifies 20-40% of the building cost into shorter-lived assets. That could mean $150K-$300K in first-year bonus depreciation deductions. Want me to run the numbers for a specific property?' },
+  { from: 'user', text: 'Yes! It\'s an office building in Boca, purchased last month.' },
+  { from: 'bot', text: 'Perfect — a Boca Raton office building is my specialty! Let me pull up the calculator. At a 37% tax rate with 100% bonus depreciation, you\'re looking at roughly $185K in first-year tax savings. Want me to generate the full study?' },
 ]
 
 const stats = [
-  { value: 40, suffix: '+', label: 'Years of Experience', prefix: '' },
-  { value: 2, suffix: 'B+', label: 'Property Value Analyzed', prefix: '$' },
-  { value: 500, suffix: '+', label: 'Studies Completed', prefix: '' },
-  { value: 85, suffix: '%', label: 'Average Time Saved', prefix: '' },
+  { value: 40, suffix: '+', label: 'Years of Experience', prefix: '', emoji: '🌴' },
+  { value: 2, suffix: 'B+', label: 'Property Value Analyzed', prefix: '$', emoji: '🏢' },
+  { value: 500, suffix: '+', label: 'Studies Completed', prefix: '', emoji: '📊' },
+  { value: 85, suffix: '%', label: 'Time Saved', prefix: '', emoji: '⚡' },
 ]
 
-const steps = [
-  {
-    num: '01',
-    icon: Users,
-    title: 'Import Your Clients',
-    description:
-      'Upload your existing client database via CSV. Boca Banker maps columns automatically and organizes your 40 years of relationships.',
-  },
-  {
-    num: '02',
-    icon: Zap,
-    title: 'Run AI Analysis',
-    description:
-      'Our AI engine identifies cost segregation opportunities across your portfolio. Get property-specific recommendations in minutes.',
-  },
-  {
-    num: '03',
-    icon: TrendingUp,
-    title: 'Deliver Tax Savings',
-    description:
-      'Generate IRS-compliant reports with MACRS depreciation schedules, bonus depreciation, and NPV-optimized tax savings projections.',
-  },
-]
-
-/* ─────────────────────────────────────────────
-   PAGE COMPONENT
-   ───────────────────────────────────────────── */
+/* ─── Page ─── */
 
 export default function Home() {
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 40)
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
+    const fn = () => setScrolled(window.scrollY > 40)
+    window.addEventListener('scroll', fn, { passive: true })
+    return () => window.removeEventListener('scroll', fn)
   }, [])
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden">
-      {/* ── FLOATING NAV ── */}
+    <div className="min-h-screen bg-[#FAFAF8]">
+      {/* ── NAV ── */}
       <nav
         className={cn(
           'fixed top-0 left-0 right-0 z-50 transition-all duration-500',
           scrolled
-            ? 'bg-navy/80 backdrop-blur-xl border-b border-gold/10 shadow-lg shadow-black/20'
+            ? 'bg-white/90 backdrop-blur-xl shadow-sm border-b border-gray-100'
             : 'bg-transparent'
         )}
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gold-gradient shadow-lg">
-              <Building2 className="h-5 w-5 text-navy" />
-            </div>
-            <span className="text-gold-gradient font-serif text-xl font-bold hidden sm:block">
+            <BocaBankerAvatar size={36} />
+            <span className="font-serif text-xl font-bold text-gray-900 hidden sm:block">
               Boca Banker
             </span>
           </Link>
-
           <div className="flex items-center gap-3">
-            <Button
-              asChild
-              variant="ghost"
-              className="text-cream/70 hover:text-gold hover:bg-gold/5 text-sm"
-            >
+            <Button asChild variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm">
               <Link href="/login">Login</Link>
             </Button>
-            <Button
-              asChild
-              className="bg-gold-gradient text-navy font-semibold hover:opacity-90 text-sm px-5"
-            >
+            <Button asChild className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90 text-sm px-5 shadow-lg shadow-amber-500/20">
               <Link href="/signup">
                 Get Started
                 <ArrowRight className="ml-1.5 h-4 w-4" />
@@ -272,211 +204,245 @@ export default function Home() {
       </nav>
 
       {/* ══════════════════════════════════════
-         HERO SECTION
+         HERO — Light, fun, avatar-forward
          ══════════════════════════════════════ */}
-      <section className="relative flex min-h-screen flex-col items-center justify-center px-6 text-center mesh-gradient-bg grain-overlay">
-        {/* Floating Orbs */}
+      <section className="relative pt-24 pb-16 sm:pt-32 sm:pb-24 px-6 overflow-hidden">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-sky-50 via-white to-[#FAFAF8]" />
+        {/* Decorative blobs */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          {/* Large gold orb */}
-          <div className="absolute top-[15%] left-[10%] h-[350px] w-[350px] rounded-full bg-gold/[0.04] blur-[100px] animate-float-slow" />
-          {/* Medium sky orb */}
-          <div className="absolute top-[60%] right-[8%] h-[280px] w-[280px] rounded-full bg-sky-deep/[0.06] blur-[90px] animate-float-medium" />
-          {/* Small teal orb */}
-          <div className="absolute top-[30%] right-[25%] h-[200px] w-[200px] rounded-full bg-teal/[0.04] blur-[80px] animate-float-fast" />
-          {/* Bottom gold accent */}
-          <div className="absolute bottom-[10%] left-[30%] h-[250px] w-[400px] rounded-full bg-gold/[0.03] blur-[120px] animate-float-medium" />
-          {/* Decorative ring */}
-          <div className="absolute top-[20%] right-[15%] h-[300px] w-[300px] rounded-full border border-gold/[0.04] animate-spin-slow" />
-          <div className="absolute top-[20%] right-[15%] h-[200px] w-[200px] mt-[50px] ml-[50px] rounded-full border border-sky/[0.03] animate-spin-slow" style={{ animationDirection: 'reverse', animationDuration: '45s' }} />
+          <div className="absolute -top-20 -right-20 h-[400px] w-[400px] rounded-full bg-sky-200/30 blur-[80px]" />
+          <div className="absolute top-[40%] -left-20 h-[300px] w-[300px] rounded-full bg-amber-200/20 blur-[80px]" />
+          <div className="absolute bottom-0 right-[20%] h-[200px] w-[350px] rounded-full bg-teal-200/15 blur-[60px]" />
         </div>
 
-        {/* Content */}
-        <div className="relative z-10 mx-auto max-w-5xl">
-          {/* Badge */}
-          <Reveal>
-            <div className="mb-8 inline-flex items-center gap-2.5 rounded-full border border-gold/15 bg-navy-light/40 px-5 py-2 text-sm backdrop-blur-md">
-              <Sparkles className="h-3.5 w-3.5 text-gold" />
-              <span className="text-sand-light">Boca Raton &bull; Palm Beach &bull; South Florida</span>
+        <div className="relative z-10 mx-auto max-w-6xl">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+            {/* Text side */}
+            <div className="flex-1 text-center lg:text-left">
+              <Reveal>
+                <div className="inline-flex items-center gap-2 rounded-full bg-sky-100 px-4 py-1.5 text-sm font-medium text-sky-700 mb-6">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Boca Raton &bull; Palm Beach &bull; South Florida
+                </div>
+              </Reveal>
+
+              <Reveal delay={100}>
+                <h1 className="font-serif font-bold tracking-tight text-gray-900 leading-[1.1]">
+                  <span className="block text-4xl sm:text-5xl md:text-6xl">Meet</span>
+                  <span className="block text-5xl sm:text-6xl md:text-7xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-500 bg-clip-text text-transparent mt-1">
+                    Boca Banker
+                  </span>
+                </h1>
+              </Reveal>
+
+              <Reveal delay={200}>
+                <p className="mt-6 text-lg sm:text-xl text-gray-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
+                  Your AI-powered banking wingman with{' '}
+                  <span className="font-semibold text-gray-800">40 years of South Florida smarts</span>.
+                  He knows cost segregation inside and out, never takes a coffee break,
+                  and has the best tan in fintech.
+                </p>
+              </Reveal>
+
+              <Reveal delay={300}>
+                <div className="mt-8 flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">
+                  <Button
+                    asChild
+                    size="lg"
+                    className="h-13 min-w-[200px] bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-base hover:opacity-90 shadow-lg shadow-amber-500/25 rounded-xl"
+                  >
+                    <Link href="/signup">
+                      Talk to Him Free
+                      <MessageCircle className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="lg"
+                    className="h-13 min-w-[160px] border-gray-300 text-gray-700 text-base hover:bg-gray-50 rounded-xl"
+                  >
+                    <Link href="/login">Sign In</Link>
+                  </Button>
+                </div>
+              </Reveal>
+
+              <Reveal delay={400}>
+                <div className="mt-8 flex items-center gap-5 justify-center lg:justify-start text-sm text-gray-500">
+                  <div className="flex items-center gap-1.5">
+                    <Shield className="h-4 w-4 text-teal-500" />
+                    Bank-Grade Secure
+                  </div>
+                  <div className="h-4 w-px bg-gray-200" />
+                  <div className="flex items-center gap-1.5">
+                    <Zap className="h-4 w-4 text-amber-500" />
+                    Powered by Grok AI
+                  </div>
+                </div>
+              </Reveal>
             </div>
-          </Reveal>
 
-          {/* Headline */}
-          <Reveal delay={100}>
-            <h1 className="font-serif font-bold tracking-tight leading-[1.1]">
-              <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-cream/90">
-                The Future of
-              </span>
-              <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-shimmer mt-2">
-                Banking Intelligence
-              </span>
-            </h1>
-          </Reveal>
-
-          {/* Subheadline */}
-          <Reveal delay={200}>
-            <p className="mx-auto mt-8 max-w-2xl text-lg sm:text-xl text-slate-blue leading-relaxed">
-              40 years of Boca Raton banking expertise, now powered by{' '}
-              <span className="text-sky font-medium">artificial intelligence</span>.
-              Maximize tax savings with automated cost segregation analysis.
-            </p>
-          </Reveal>
-
-          {/* CTA Buttons */}
-          <Reveal delay={300}>
-            <div className="mt-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <Button
-                asChild
-                size="lg"
-                className="h-14 min-w-[200px] bg-gold-gradient text-navy font-bold text-base hover:opacity-90 gold-glow rounded-xl"
-              >
-                <Link href="/signup">
-                  Start Free
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="h-14 min-w-[200px] border-gold/20 text-gold text-base hover:bg-gold/5 hover:text-gold-light hover:border-gold/30 rounded-xl"
-              >
-                <Link href="/login">Sign In</Link>
-              </Button>
-            </div>
-          </Reveal>
-
-          {/* Trust Signals */}
-          <Reveal delay={400}>
-            <div className="mt-16 flex items-center justify-center gap-6 text-sm text-slate-blue/70">
-              <div className="flex items-center gap-1.5">
-                <Shield className="h-4 w-4 text-teal/70" />
-                <span>Bank-Grade Security</span>
+            {/* Avatar side */}
+            <Reveal delay={200} className="flex-shrink-0">
+              <div className="relative">
+                {/* Glow behind avatar */}
+                <div className="absolute inset-0 scale-110 rounded-full bg-gradient-to-br from-sky-300/40 via-amber-200/30 to-teal-200/20 blur-[40px]" />
+                {/* Avatar */}
+                <div className="relative animate-float-slow">
+                  <BocaBankerAvatar size={280} className="drop-shadow-2xl sm:w-[320px] sm:h-[320px]" />
+                </div>
+                {/* Floating badges */}
+                <div className="absolute -top-2 -right-2 bg-white rounded-2xl px-3 py-1.5 shadow-lg shadow-black/5 border border-gray-100 text-sm font-medium text-gray-700 animate-float-fast">
+                  🌴 40 yrs exp
+                </div>
+                <div className="absolute -bottom-2 -left-4 bg-white rounded-2xl px-3 py-1.5 shadow-lg shadow-black/5 border border-gray-100 text-sm font-medium text-gray-700 animate-float-medium">
+                  🧠 AI Powered
+                </div>
               </div>
-              <div className="hidden sm:block h-4 w-px bg-gold/10" />
-              <div className="hidden sm:flex items-center gap-1.5">
-                <Zap className="h-4 w-4 text-gold/70" />
-                <span>AI-Powered</span>
-              </div>
-              <div className="hidden md:block h-4 w-px bg-gold/10" />
-              <div className="hidden md:flex items-center gap-1.5">
-                <TrendingUp className="h-4 w-4 text-sky/70" />
-                <span>IRS Compliant</span>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
-          <div className="flex flex-col items-center gap-2 text-gold/40">
-            <span className="text-xs tracking-widest uppercase">Explore</span>
-            <ChevronDown className="h-4 w-4 animate-bounce" />
+            </Reveal>
           </div>
         </div>
-
-        {/* Bottom fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-navy to-transparent" />
       </section>
 
       {/* ══════════════════════════════════════
          STATS BAR
          ══════════════════════════════════════ */}
-      <section className="relative bg-navy py-20 px-6">
-        <div className="mx-auto max-w-6xl">
-          <Reveal>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4">
-              {stats.map((stat, i) => (
-                <Reveal key={stat.label} delay={i * 100}>
-                  <div className="text-center">
-                    <div className="text-4xl sm:text-5xl font-serif font-bold text-gold-gradient">
-                      <CountUp
-                        target={stat.value}
-                        suffix={stat.suffix}
-                        prefix={stat.prefix}
-                      />
-                    </div>
-                    <p className="mt-2 text-sm text-slate-blue">{stat.label}</p>
+      <section className="relative py-16 px-6 bg-white border-y border-gray-100">
+        <div className="mx-auto max-w-5xl">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((s, i) => (
+              <Reveal key={s.label} delay={i * 80}>
+                <div className="text-center">
+                  <div className="text-2xl mb-1">{s.emoji}</div>
+                  <div className="text-3xl sm:text-4xl font-serif font-bold text-gray-900">
+                    <CountUp target={s.value} suffix={s.suffix} prefix={s.prefix} />
                   </div>
-                </Reveal>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-
-        {/* Decorative line */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-xs">
-          <div className="h-px bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
+                  <p className="mt-1 text-sm text-gray-500">{s.label}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════
-         BENTO FEATURES GRID
+         CHAT PREVIEW — Show him in action
          ══════════════════════════════════════ */}
-      <section className="relative bg-navy py-24 px-6 grain-overlay">
-        {/* Background accents */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute top-[20%] left-0 h-[400px] w-[300px] rounded-full bg-sky-deep/[0.04] blur-[120px]" />
-          <div className="absolute bottom-[10%] right-0 h-[350px] w-[350px] rounded-full bg-gold/[0.03] blur-[100px]" />
-        </div>
-
-        <div className="relative z-10 mx-auto max-w-6xl">
+      <section className="py-20 sm:py-28 px-6 bg-[#FAFAF8]">
+        <div className="mx-auto max-w-5xl">
           <Reveal>
-            <div className="text-center mb-16">
-              <p className="text-sm font-medium tracking-widest uppercase text-sky mb-4">
-                Platform
+            <div className="text-center mb-12">
+              <p className="text-sm font-semibold tracking-widest uppercase text-sky-600 mb-3">
+                See Him in Action
               </p>
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-cream">
-                Everything You Need,{' '}
-                <span className="text-gold-gradient">One Platform</span>
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">
+                Drop him a question.{' '}
+                <span className="bg-gradient-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent">
+                  He doesn&apos;t bite.
+                </span>
               </h2>
-              <p className="mx-auto mt-5 max-w-2xl text-slate-blue leading-relaxed">
-                From client onboarding to tax savings delivery — Boca Banker
-                combines AI, analytics, and automation into a single luxury
-                banking experience.
+              <p className="mt-4 text-gray-500 max-w-lg mx-auto">
+                Boca Banker has been crunching numbers since before spreadsheets were cool.
+                Here&apos;s a taste of what he can do.
               </p>
             </div>
           </Reveal>
 
-          <div className="bento-grid">
-            {features.map((feature, i) => (
+          <Reveal delay={100}>
+            <div className="mx-auto max-w-2xl bg-white rounded-3xl shadow-xl shadow-black/5 border border-gray-100 overflow-hidden">
+              {/* Chat header */}
+              <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <BocaBankerAvatar size={36} />
+                <div>
+                  <p className="font-semibold text-gray-900 text-sm">Boca Banker</p>
+                  <p className="text-xs text-green-500 flex items-center gap-1">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+                    Online &bull; Ready to chat
+                  </p>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div className="p-6 space-y-4 max-h-[400px] overflow-y-auto">
+                {chatMessages.map((msg, i) => (
+                  <Reveal key={i} delay={i * 150}>
+                    <div className={cn(
+                      'flex gap-3',
+                      msg.from === 'user' ? 'justify-end' : 'justify-start'
+                    )}>
+                      {msg.from === 'bot' && (
+                        <BocaBankerAvatar size={32} className="flex-shrink-0 mt-1" />
+                      )}
+                      <div className={cn(
+                        'max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
+                        msg.from === 'user'
+                          ? 'bg-sky-500 text-white rounded-br-md'
+                          : 'bg-gray-100 text-gray-800 rounded-bl-md'
+                      )}>
+                        {msg.text}
+                      </div>
+                    </div>
+                  </Reveal>
+                ))}
+              </div>
+
+              {/* Input mock */}
+              <div className="px-6 py-4 border-t border-gray-100">
+                <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+                  <span className="text-sm text-gray-400 flex-1">Ask Boca Banker anything...</span>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
+                    <Send className="h-4 w-4" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════
+         FEATURES — Fun cards
+         ══════════════════════════════════════ */}
+      <section className="py-20 sm:py-28 px-6 bg-white">
+        <div className="mx-auto max-w-6xl">
+          <Reveal>
+            <div className="text-center mb-14">
+              <p className="text-sm font-semibold tracking-widest uppercase text-amber-600 mb-3">
+                What He Can Do
+              </p>
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">
+                Way more than just{' '}
+                <span className="bg-gradient-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent">
+                  good looks
+                </span>
+              </h2>
+              <p className="mt-4 text-gray-500 max-w-lg mx-auto">
+                AI chat, cost seg engine, CRM, email outreach, visual reports, and secure document storage — all in one platform.
+              </p>
+            </div>
+          </Reveal>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {features.map((f, i) => (
               <Reveal
-                key={feature.title}
-                delay={i * 80}
-                className={feature.span}
+                key={f.title}
+                delay={i * 70}
+                className={f.big ? 'sm:col-span-2 lg:col-span-1' : ''}
               >
-                <div
-                  className={cn(
-                    'glass-card-premium p-7 sm:p-8 h-full flex flex-col gap-5 group',
-                    feature.span === 'bento-row-2' && 'justify-between'
-                  )}
-                >
-                  {/* Icon */}
-                  <div
-                    className={cn(
-                      'flex h-12 w-12 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110',
-                      feature.iconBg
-                    )}
-                  >
-                    <feature.icon className={cn('h-6 w-6', feature.iconColor)} />
+                <div className={cn(
+                  'group h-full rounded-2xl border bg-white p-7 transition-all duration-300 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-1',
+                  f.border
+                )}>
+                  <div className={cn('inline-flex h-12 w-12 items-center justify-center rounded-xl mb-5 transition-transform duration-300 group-hover:scale-110', f.color)}>
+                    <f.icon className="h-6 w-6" />
                   </div>
-
-                  {/* Text */}
-                  <div className="flex-1">
-                    <h3 className="font-serif text-xl font-semibold text-cream mb-3">
-                      {feature.title}
-                    </h3>
-                    <p className="text-sm leading-relaxed text-slate-blue">
-                      {feature.description}
-                    </p>
-                  </div>
-
-                  {/* Subtle gradient accent at bottom */}
-                  <div
-                    className={cn(
-                      'h-0.5 w-12 rounded-full bg-gradient-to-r opacity-50 group-hover:w-20 group-hover:opacity-80 transition-all duration-500',
-                      feature.accent
-                    )}
-                  />
+                  <h3 className="font-serif text-xl font-semibold text-gray-900 mb-2">
+                    {f.title}
+                  </h3>
+                  <p className="text-sm leading-relaxed text-gray-500">
+                    {f.desc}
+                  </p>
                 </div>
               </Reveal>
             ))}
@@ -487,46 +453,43 @@ export default function Home() {
       {/* ══════════════════════════════════════
          HOW IT WORKS
          ══════════════════════════════════════ */}
-      <section className="relative bg-navy py-24 px-6">
-        {/* Gradient divider at top */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/15 to-transparent" />
-
-        <div className="mx-auto max-w-5xl">
+      <section className="py-20 sm:py-28 px-6 bg-gradient-to-b from-sky-50 to-white">
+        <div className="mx-auto max-w-4xl">
           <Reveal>
-            <div className="text-center mb-20">
-              <p className="text-sm font-medium tracking-widest uppercase text-teal mb-4">
+            <div className="text-center mb-16">
+              <p className="text-sm font-semibold tracking-widest uppercase text-teal-600 mb-3">
                 How It Works
               </p>
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-cream">
-                Three Steps to{' '}
-                <span className="text-gold-gradient">Tax Savings</span>
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">
+                Three steps.{' '}
+                <span className="bg-gradient-to-r from-teal-500 to-sky-500 bg-clip-text text-transparent">
+                  Seriously.
+                </span>
               </h2>
             </div>
           </Reveal>
 
-          <div className="relative grid md:grid-cols-3 gap-12 md:gap-8">
-            {/* Connecting line (desktop) */}
-            <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-px bg-gradient-to-r from-sky/20 via-gold/20 to-teal/20" />
+          <div className="relative grid md:grid-cols-3 gap-10 md:gap-6">
+            {/* Connecting line */}
+            <div className="hidden md:block absolute top-14 left-[18%] right-[18%] h-0.5 bg-gradient-to-r from-sky-200 via-amber-200 to-teal-200 rounded-full" />
 
-            {steps.map((step, i) => (
-              <Reveal key={step.num} delay={i * 150}>
+            {[
+              { num: '01', icon: Users, title: 'Import Your Clients', desc: 'Upload a CSV with your client data. Boca Banker auto-maps columns and organizes everything.', color: 'bg-sky-100 text-sky-600' },
+              { num: '02', icon: Zap, title: 'Run AI Analysis', desc: 'Our engine scans properties and identifies cost segregation opportunities across your whole portfolio.', color: 'bg-amber-100 text-amber-600' },
+              { num: '03', icon: TrendingUp, title: 'Deliver Savings', desc: 'Generate IRS-compliant reports with depreciation schedules and tax savings your clients will love.', color: 'bg-teal-100 text-teal-600' },
+            ].map((step, i) => (
+              <Reveal key={step.num} delay={i * 120}>
                 <div className="relative text-center flex flex-col items-center">
-                  {/* Step number badge */}
-                  <div className="relative mb-6">
-                    <div className="flex h-24 w-24 items-center justify-center rounded-2xl glass-card-premium animate-border-glow">
-                      <step.icon className="h-10 w-10 text-gold" />
+                  <div className="relative mb-5">
+                    <div className={cn('flex h-28 w-28 items-center justify-center rounded-3xl shadow-lg shadow-black/5 bg-white border border-gray-100')}>
+                      <step.icon className="h-10 w-10 text-gray-700" />
                     </div>
-                    <div className="absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-lg bg-gold-gradient text-xs font-bold text-navy">
+                    <div className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-xs font-bold text-white shadow-md">
                       {step.num}
                     </div>
                   </div>
-
-                  <h3 className="font-serif text-xl font-semibold text-cream mb-3">
-                    {step.title}
-                  </h3>
-                  <p className="text-sm leading-relaxed text-slate-blue max-w-xs">
-                    {step.description}
-                  </p>
+                  <h3 className="font-serif text-xl font-semibold text-gray-900 mb-2">{step.title}</h3>
+                  <p className="text-sm leading-relaxed text-gray-500 max-w-xs">{step.desc}</p>
                 </div>
               </Reveal>
             ))}
@@ -535,34 +498,32 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════
-         CTA SECTION
+         CTA
          ══════════════════════════════════════ */}
-      <section className="relative py-32 px-6 overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 mesh-gradient-bg" />
+      <section className="py-24 sm:py-32 px-6 bg-gradient-to-br from-sky-500 via-sky-400 to-teal-400 relative overflow-hidden">
+        {/* Decorative */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[700px] rounded-full bg-gold/[0.04] blur-[150px]" />
+          <div className="absolute -top-20 -right-20 h-[300px] w-[300px] rounded-full bg-white/10 blur-[60px]" />
+          <div className="absolute bottom-0 -left-20 h-[250px] w-[250px] rounded-full bg-amber-300/15 blur-[60px]" />
         </div>
-
-        {/* Top divider */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/15 to-transparent" />
 
         <Reveal>
           <div className="relative z-10 mx-auto max-w-3xl text-center">
-            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-cream leading-tight">
-              Ready to Transform{' '}
-              <span className="text-shimmer">Your Practice?</span>
+            <div className="flex justify-center mb-6">
+              <BocaBankerAvatar size={80} className="drop-shadow-xl" />
+            </div>
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight">
+              Ready to put him to work?
             </h2>
-            <p className="mt-6 text-lg text-slate-blue max-w-xl mx-auto leading-relaxed">
-              Join banking professionals across South Florida who trust Boca
-              Banker to identify millions in tax savings for their clients.
+            <p className="mt-5 text-lg text-white/80 max-w-xl mx-auto">
+              Join banking pros across South Florida who use Boca Banker to find millions in tax savings.
+              Free to start. Zero vacation days required.
             </p>
-
-            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+            <div className="mt-10 flex flex-col sm:flex-row items-center gap-4 justify-center">
               <Button
                 asChild
                 size="lg"
-                className="h-14 min-w-[220px] bg-gold-gradient text-navy font-bold text-base hover:opacity-90 gold-glow rounded-xl"
+                className="h-14 min-w-[220px] bg-white text-sky-700 font-bold text-base hover:bg-white/90 shadow-xl shadow-black/10 rounded-xl"
               >
                 <Link href="/signup">
                   Create Free Account
@@ -573,7 +534,7 @@ export default function Home() {
                 asChild
                 variant="outline"
                 size="lg"
-                className="h-14 min-w-[180px] border-gold/20 text-gold text-base hover:bg-gold/5 hover:border-gold/30 rounded-xl"
+                className="h-14 min-w-[160px] border-white/30 text-white text-base hover:bg-white/10 rounded-xl"
               >
                 <Link href="/login">Sign In</Link>
               </Button>
@@ -585,53 +546,27 @@ export default function Home() {
       {/* ══════════════════════════════════════
          FOOTER
          ══════════════════════════════════════ */}
-      <footer className="relative bg-navy border-t border-gold/8 py-12 px-6">
+      <footer className="bg-white border-t border-gray-100 py-10 px-6">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            {/* Logo */}
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold-gradient">
-                <Building2 className="h-4 w-4 text-navy" />
-              </div>
-              <span className="text-gold-gradient font-serif text-lg font-bold">
+              <BocaBankerAvatar size={32} />
+              <span className="font-serif text-lg font-bold text-gray-900">
                 Boca Banker
               </span>
             </div>
-
-            {/* Links */}
-            <div className="flex items-center gap-8 text-sm text-slate-blue">
-              <Link
-                href="/login"
-                className="hover:text-gold transition-colors"
-              >
-                Login
-              </Link>
-              <Link
-                href="/signup"
-                className="hover:text-gold transition-colors"
-              >
-                Sign Up
-              </Link>
-              <Link
-                href="/dashboard"
-                className="hover:text-gold transition-colors"
-              >
-                Dashboard
-              </Link>
+            <div className="flex items-center gap-8 text-sm text-gray-500">
+              <Link href="/login" className="hover:text-gray-900 transition-colors">Login</Link>
+              <Link href="/signup" className="hover:text-gray-900 transition-colors">Sign Up</Link>
+              <Link href="/dashboard" className="hover:text-gray-900 transition-colors">Dashboard</Link>
             </div>
-
-            {/* Copyright */}
-            <p className="text-xs text-slate-blue/60">
-              &copy; {new Date().getFullYear()} Boca Banker. All rights
-              reserved.
+            <p className="text-xs text-gray-400">
+              &copy; {new Date().getFullYear()} Boca Banker. All rights reserved.
             </p>
           </div>
-
-          {/* Bottom accent */}
-          <div className="mt-8 h-px bg-gradient-to-r from-transparent via-gold/10 to-transparent" />
-          <p className="mt-4 text-center text-xs text-slate-blue/40">
-            Boca Raton &bull; Palm Beach &bull; South Florida
-          </p>
+          <div className="mt-6 text-center text-xs text-gray-300">
+            Boca Raton &bull; Palm Beach &bull; South Florida 🌴
+          </div>
         </div>
       </footer>
     </div>
