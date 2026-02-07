@@ -78,6 +78,29 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
     },
   });
 
+  // Capture conversationId from response headers via a fetch wrapper
+  useEffect(() => {
+    if (activeConversationId) return;
+
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+      const response = await originalFetch(...args);
+      const url = typeof args[0] === 'string' ? args[0] : (args[0] as Request)?.url;
+      if (url?.includes('/api/chat') && !url?.includes('/history') && !url?.includes('/guest')) {
+        const convId = response.headers.get('X-Conversation-Id');
+        if (convId) {
+          setActiveConversationId(convId);
+          window.fetch = originalFetch; // restore after capture
+        }
+      }
+      return response;
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, [activeConversationId]);
+
   const isLoading = status === 'submitted' || status === 'streaming';
 
   // Guest handoff: load guest chat history from localStorage and bootstrap
@@ -270,7 +293,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
                 Boca Banker
               </h2>
               <p className="text-[10px] text-gray-500">
-                Cost Segregation & Tax Strategy Advisor
+                Banking, Mortgage & Cost Segregation Advisor
               </p>
             </div>
           </div>
@@ -291,17 +314,15 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
                 Welcome to Boca Banker
               </h3>
               <p className="text-sm text-gray-500 max-w-md leading-relaxed">
-                I have over 40 years of experience in commercial banking, real
-                estate finance, and cost segregation analysis. Ask me anything
-                about accelerating depreciation, tax strategy, or maximizing
-                your property investment returns.
+                Ask me anything about banking, mortgages, cost segregation,
+                tax strategy, or maximizing your property investment returns.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-6 w-full max-w-lg">
                 {[
                   'What is a cost segregation study?',
+                  'How do I evaluate a mortgage rate?',
                   'How does bonus depreciation work?',
-                  'Explain MACRS depreciation schedules',
-                  'Who benefits from cost segregation?',
+                  'What should I know before buying commercial property?',
                 ].map((suggestion) => (
                   <button
                     key={suggestion}

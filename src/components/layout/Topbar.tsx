@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, Search, LogOut, User, Settings } from 'lucide-react'
+import { Bell, Search, LogOut, Settings } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -65,7 +65,6 @@ export default function Topbar({ title }: TopbarProps) {
           className="relative text-gray-400 hover:text-amber-600 hover:bg-amber-50"
         >
           <Bell className="h-5 w-5" />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-amber-500 animate-pulse-gold" />
         </Button>
 
         {/* User Avatar Dropdown */}
@@ -99,13 +98,6 @@ export default function Topbar({ title }: TopbarProps) {
             >
               <Settings className="mr-2 h-4 w-4" />
               Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => router.push('/settings')}
-              className="text-gray-600 hover:text-amber-700 focus:text-amber-700 focus:bg-amber-50 cursor-pointer"
-            >
-              <User className="mr-2 h-4 w-4" />
-              Profile
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-gray-100" />
             <DropdownMenuItem

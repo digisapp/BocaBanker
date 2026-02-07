@@ -25,7 +25,7 @@ export default function ChatPage() {
             Chat with Boca Banker
           </h1>
           <p className="text-xs text-gray-500">
-            Your AI-powered cost segregation and tax strategy advisor
+            Your AI-powered banking, mortgage, and cost segregation advisor
           </p>
         </div>
       </div>
