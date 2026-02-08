@@ -16,27 +16,6 @@ export default function BocaBankerAvatar({ className, size = 200 }: AvatarProps)
       {/* Sunset background */}
       <circle cx="100" cy="100" r="100" fill="url(#sunsetBg)" />
 
-      {/* Sun glow — warm white center */}
-      <circle cx="100" cy="185" r="50" fill="white" opacity="0.15" />
-      <circle cx="100" cy="185" r="30" fill="white" opacity="0.1" />
-
-      {/* Palm tree silhouette — left */}
-      <path d="M28 200 L32 140" stroke="#92400E" strokeWidth="3" opacity="0.25" />
-      <path d="M32 140 Q20 128 8 132" stroke="#92400E" strokeWidth="2.5" fill="none" opacity="0.25" />
-      <path d="M32 140 Q22 122 12 118" stroke="#92400E" strokeWidth="2.5" fill="none" opacity="0.2" />
-      <path d="M32 140 Q38 124 44 118" stroke="#92400E" strokeWidth="2.5" fill="none" opacity="0.2" />
-      <path d="M32 140 Q42 130 50 132" stroke="#92400E" strokeWidth="2.5" fill="none" opacity="0.25" />
-      {/* Palm frond fills */}
-      <path d="M32 140 Q20 128 8 132 Q18 126 32 140Z" fill="#92400E" opacity="0.15" />
-      <path d="M32 140 Q42 130 50 132 Q40 128 32 140Z" fill="#92400E" opacity="0.15" />
-
-      {/* Palm tree silhouette — right */}
-      <path d="M172 200 L168 148" stroke="#92400E" strokeWidth="2.5" opacity="0.2" />
-      <path d="M168 148 Q178 136 188 138" stroke="#92400E" strokeWidth="2" fill="none" opacity="0.2" />
-      <path d="M168 148 Q160 134 152 132" stroke="#92400E" strokeWidth="2" fill="none" opacity="0.2" />
-      <path d="M168 148 Q176 132 184 126" stroke="#92400E" strokeWidth="2" fill="none" opacity="0.15" />
-      <path d="M168 148 Q158 138 150 140" stroke="#92400E" strokeWidth="2" fill="none" opacity="0.2" />
-
       {/* Body / Shoulders — navy blazer */}
       <path
         d="M30 200 C30 162 58 145 100 145 C142 145 170 162 170 200Z"
