@@ -213,7 +213,9 @@ export default function Home() {
 
             {/* Live chat widget */}
             <Reveal delay={200} className="flex-1 min-w-0 w-full lg:max-w-lg">
-              <GuestChatWidget />
+              <div className="bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-500 rounded-[28px] p-3 shadow-2xl shadow-blue-500/25">
+                <GuestChatWidget />
+              </div>
             </Reveal>
           </div>
         </div>
