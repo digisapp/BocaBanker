@@ -195,7 +195,7 @@ export default function Home() {
             <div className="flex-1 text-center lg:text-left">
               <Reveal>
                 <h1 className="font-serif font-bold tracking-tight text-gray-900 leading-[1.1]">
-                  <span className="block text-5xl sm:text-6xl md:text-7xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-500 bg-clip-text text-transparent">
+                  <span className="block text-4xl sm:text-5xl md:text-6xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-500 bg-clip-text text-transparent">
                     Boca Banker
                   </span>
                 </h1>
