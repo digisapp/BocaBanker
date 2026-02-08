@@ -16,26 +16,26 @@ export default function BocaBankerAvatar({ className, size = 200 }: AvatarProps)
       {/* Sunset background */}
       <circle cx="100" cy="100" r="100" fill="url(#sunsetBg)" />
 
-      {/* Sun glow — low on horizon */}
-      <circle cx="100" cy="185" r="50" fill="#FCD34D" opacity="0.25" />
-      <circle cx="100" cy="185" r="30" fill="#FBBF24" opacity="0.15" />
+      {/* Sun glow — warm white center */}
+      <circle cx="100" cy="185" r="50" fill="white" opacity="0.15" />
+      <circle cx="100" cy="185" r="30" fill="white" opacity="0.1" />
 
       {/* Palm tree silhouette — left */}
-      <path d="M28 200 L32 140" stroke="#1E3A5F" strokeWidth="3" opacity="0.3" />
-      <path d="M32 140 Q20 128 8 132" stroke="#1E3A5F" strokeWidth="2.5" fill="none" opacity="0.3" />
-      <path d="M32 140 Q22 122 12 118" stroke="#1E3A5F" strokeWidth="2.5" fill="none" opacity="0.25" />
-      <path d="M32 140 Q38 124 44 118" stroke="#1E3A5F" strokeWidth="2.5" fill="none" opacity="0.25" />
-      <path d="M32 140 Q42 130 50 132" stroke="#1E3A5F" strokeWidth="2.5" fill="none" opacity="0.3" />
+      <path d="M28 200 L32 140" stroke="#92400E" strokeWidth="3" opacity="0.25" />
+      <path d="M32 140 Q20 128 8 132" stroke="#92400E" strokeWidth="2.5" fill="none" opacity="0.25" />
+      <path d="M32 140 Q22 122 12 118" stroke="#92400E" strokeWidth="2.5" fill="none" opacity="0.2" />
+      <path d="M32 140 Q38 124 44 118" stroke="#92400E" strokeWidth="2.5" fill="none" opacity="0.2" />
+      <path d="M32 140 Q42 130 50 132" stroke="#92400E" strokeWidth="2.5" fill="none" opacity="0.25" />
       {/* Palm frond fills */}
-      <path d="M32 140 Q20 128 8 132 Q18 126 32 140Z" fill="#1E3A5F" opacity="0.2" />
-      <path d="M32 140 Q42 130 50 132 Q40 128 32 140Z" fill="#1E3A5F" opacity="0.2" />
+      <path d="M32 140 Q20 128 8 132 Q18 126 32 140Z" fill="#92400E" opacity="0.15" />
+      <path d="M32 140 Q42 130 50 132 Q40 128 32 140Z" fill="#92400E" opacity="0.15" />
 
       {/* Palm tree silhouette — right */}
-      <path d="M172 200 L168 148" stroke="#1E3A5F" strokeWidth="2.5" opacity="0.25" />
-      <path d="M168 148 Q178 136 188 138" stroke="#1E3A5F" strokeWidth="2" fill="none" opacity="0.25" />
-      <path d="M168 148 Q160 134 152 132" stroke="#1E3A5F" strokeWidth="2" fill="none" opacity="0.25" />
-      <path d="M168 148 Q176 132 184 126" stroke="#1E3A5F" strokeWidth="2" fill="none" opacity="0.2" />
-      <path d="M168 148 Q158 138 150 140" stroke="#1E3A5F" strokeWidth="2" fill="none" opacity="0.25" />
+      <path d="M172 200 L168 148" stroke="#92400E" strokeWidth="2.5" opacity="0.2" />
+      <path d="M168 148 Q178 136 188 138" stroke="#92400E" strokeWidth="2" fill="none" opacity="0.2" />
+      <path d="M168 148 Q160 134 152 132" stroke="#92400E" strokeWidth="2" fill="none" opacity="0.2" />
+      <path d="M168 148 Q176 132 184 126" stroke="#92400E" strokeWidth="2" fill="none" opacity="0.15" />
+      <path d="M168 148 Q158 138 150 140" stroke="#92400E" strokeWidth="2" fill="none" opacity="0.2" />
 
       {/* Body / Shoulders — navy blazer */}
       <path
@@ -199,13 +199,12 @@ export default function BocaBankerAvatar({ className, size = 200 }: AvatarProps)
 
       {/* Gradients */}
       <defs>
-        {/* Sunset background — warm Boca Raton evening */}
+        {/* Warm gold/amber background */}
         <linearGradient id="sunsetBg" x1="100" y1="0" x2="100" y2="200">
-          <stop offset="0%" stopColor="#1E3A5F" />
-          <stop offset="35%" stopColor="#2D5A88" />
-          <stop offset="60%" stopColor="#E88D4F" />
-          <stop offset="80%" stopColor="#F5A623" />
-          <stop offset="100%" stopColor="#FCD34D" />
+          <stop offset="0%" stopColor="#FCD34D" />
+          <stop offset="40%" stopColor="#FBBF24" />
+          <stop offset="70%" stopColor="#F59E0B" />
+          <stop offset="100%" stopColor="#D97706" />
         </linearGradient>
         {/* Aviator lens — dark with warm tint */}
         <linearGradient id="aviatorLens" x1="0" y1="0" x2="0.5" y2="1">
