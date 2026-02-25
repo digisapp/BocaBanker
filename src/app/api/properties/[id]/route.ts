@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { properties, clients, costSegStudies } from '@/db/schema'
+import { logger } from '@/lib/logger'
 import { eq, and } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 import { propertySchema } from '@/lib/validation/schemas'
@@ -73,7 +74,7 @@ export async function GET(
       studies,
     })
   } catch (error) {
-    console.error('Error fetching property:', error)
+    logger.error('properties-api', 'Error fetching property', error)
     return NextResponse.json(
       { error: 'Failed to fetch property' },
       { status: 500 }
@@ -134,7 +135,7 @@ export async function PUT(
 
     return NextResponse.json({ property: updated })
   } catch (error) {
-    console.error('Error updating property:', error)
+    logger.error('properties-api', 'Error updating property', error)
     return NextResponse.json(
       { error: 'Failed to update property' },
       { status: 500 }
@@ -165,7 +166,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Property deleted successfully' })
   } catch (error) {
-    console.error('Error deleting property:', error)
+    logger.error('properties-api', 'Error deleting property', error)
     return NextResponse.json(
       { error: 'Failed to delete property' },
       { status: 500 }

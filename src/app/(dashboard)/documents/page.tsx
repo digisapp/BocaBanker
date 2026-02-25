@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 import {
   Upload,
   FileText,
@@ -69,7 +70,7 @@ export default function DocumentsPage() {
         setDocuments(data.documents || []);
       }
     } catch (err) {
-      console.error('Failed to fetch documents:', err);
+      logger.error('documents-page', 'Failed to fetch documents', err);
     } finally {
       setLoading(false);
     }
@@ -93,7 +94,7 @@ export default function DocumentsPage() {
           .upload(filePath, file);
 
         if (uploadError) {
-          console.error('Upload error:', uploadError);
+          logger.error('documents-page', 'Upload error', uploadError);
           continue;
         }
 
@@ -109,7 +110,7 @@ export default function DocumentsPage() {
           }),
         });
       } catch (err) {
-        console.error('Upload failed:', err);
+        logger.error('documents-page', 'Upload failed', err);
       }
     }
 
@@ -124,7 +125,7 @@ export default function DocumentsPage() {
         .download(doc.storagePath);
 
       if (error) {
-        console.error('Download error:', error);
+        logger.error('documents-page', 'Download error', error);
         return;
       }
 
@@ -138,7 +139,7 @@ export default function DocumentsPage() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Download failed:', err);
+      logger.error('documents-page', 'Download failed', err);
     }
   }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDefaultAllocation } from '@/lib/cost-seg/asset-classes';
+import { logger } from '@/lib/logger';
 import { calculateBonusDepreciation } from '@/lib/cost-seg/bonus-depreciation';
 import { calculateStraightLineDepreciation } from '@/lib/cost-seg/depreciation';
 import type { MacrsRecoveryPeriod } from '@/lib/cost-seg/macrs-tables';
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
       breakdown,
     });
   } catch (error) {
-    console.error('Bonus depreciation calculation error:', error);
+    logger.error('calculators-api', 'Bonus depreciation calculation error', error);
     return NextResponse.json(
       { error: 'Failed to calculate bonus depreciation' },
       { status: 500 }

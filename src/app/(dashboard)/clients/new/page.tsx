@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { logger } from '@/lib/logger'
 import { ArrowLeft, UserPlus } from 'lucide-react'
 import { ClientForm } from '@/components/clients/ClientForm'
 import { Button } from '@/components/ui/button'
@@ -27,7 +28,7 @@ export default function NewClientPage() {
 
       router.push('/clients')
     } catch (error) {
-      console.error('Failed to create client:', error)
+      logger.error('clients-page', 'Failed to create client', error)
       alert(error instanceof Error ? error.message : 'Failed to create client')
     } finally {
       setIsSubmitting(false)

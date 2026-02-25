@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { logger } from '@/lib/logger'
 import {
   ArrowLeft,
   Building2,
@@ -17,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { RoleGate } from '@/components/shared/RoleGate'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -110,7 +112,7 @@ export default function PropertyDetailPage() {
         setProperty(data.property)
         setStudies(data.studies || [])
       } catch (error) {
-        console.error('Error:', error)
+        logger.error('properties-page', 'Error fetching property', error)
         router.push('/properties')
       } finally {
         setLoading(false)
@@ -127,7 +129,7 @@ export default function PropertyDetailPage() {
         router.push('/properties')
       }
     } catch (error) {
-      console.error('Error deleting:', error)
+      logger.error('properties-page', 'Error deleting property', error)
     } finally {
       setDeleting(false)
     }
@@ -184,16 +186,19 @@ export default function PropertyDetailPage() {
         </div>
 
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push(`/properties/${id}/edit`)}
-            className="border-gray-200 text-gray-700 hover:bg-gray-50"
-          >
-            <Pencil className="h-4 w-4 mr-1.5" />
-            Edit
-          </Button>
+          <RoleGate permission="canEdit">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/properties/${id}/edit`)}
+              className="border-gray-200 text-gray-700 hover:bg-gray-50"
+            >
+              <Pencil className="h-4 w-4 mr-1.5" />
+              Edit
+            </Button>
+          </RoleGate>
 
+          <RoleGate permission="canDelete">
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
@@ -226,6 +231,7 @@ export default function PropertyDetailPage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          </RoleGate>
         </div>
       </div>
 

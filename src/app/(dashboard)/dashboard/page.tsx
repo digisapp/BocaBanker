@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { logger } from '@/lib/logger';
 import {
   Users,
   Building2,
@@ -45,7 +46,7 @@ export default function DashboardPage() {
           setStats(data);
         }
       } catch (err) {
-        console.error('Failed to fetch dashboard stats:', err);
+        logger.error('dashboard-page', 'Failed to fetch dashboard stats', err);
       } finally {
         setLoading(false);
       }

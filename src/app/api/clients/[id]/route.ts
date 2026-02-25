@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/db';
+import { logger } from '@/lib/logger';
 import { clients } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { clientSchema } from '@/lib/validation/schemas';
@@ -32,7 +33,7 @@ export async function GET(
 
     return NextResponse.json(client);
   } catch (error) {
-    console.error('GET /api/clients/[id] error:', error);
+    logger.error('clients-api', 'GET /api/clients/[id] error', error);
     return NextResponse.json(
       { error: 'Failed to fetch client' },
       { status: 500 }
@@ -107,7 +108,7 @@ export async function PUT(
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error('PUT /api/clients/[id] error:', error);
+    logger.error('clients-api', 'PUT /api/clients/[id] error', error);
     return NextResponse.json(
       { error: 'Failed to update client' },
       { status: 500 }
@@ -148,7 +149,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('DELETE /api/clients/[id] error:', error);
+    logger.error('clients-api', 'DELETE /api/clients/[id] error', error);
     return NextResponse.json(
       { error: 'Failed to delete client' },
       { status: 500 }

@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { logger } from '@/lib/logger'
 import { useRouter } from 'next/navigation'
 import { Plus, Upload, Users, Loader2 } from 'lucide-react'
 import { ClientsTable, type ClientRow } from '@/components/clients/ClientsTable'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { RoleGate } from '@/components/shared/RoleGate'
 import {
   Select,
   SelectContent,
@@ -47,7 +49,7 @@ export default function ClientsPage() {
       setClients(data.clients)
       setTotal(data.total)
     } catch (error) {
-      console.error('Failed to fetch clients:', error)
+      logger.error('clients-page', 'Failed to fetch clients', error)
     } finally {
       setLoading(false)
     }
@@ -65,7 +67,7 @@ export default function ClientsPage() {
       if (!res.ok) throw new Error('Failed to delete')
       fetchClients()
     } catch (error) {
-      console.error('Failed to delete client:', error)
+      logger.error('clients-page', 'Failed to delete client', error)
     }
   }
 
@@ -92,21 +94,25 @@ export default function ClientsPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => router.push('/clients/import')}
-            className="border-gray-200 text-gray-700 hover:bg-gray-50"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Import CSV
-          </Button>
-          <Button
-            onClick={() => router.push('/clients/new')}
-            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Client
-          </Button>
+          <RoleGate permission="canCreate">
+            <Button
+              variant="outline"
+              onClick={() => router.push('/clients/import')}
+              className="border-gray-200 text-gray-700 hover:bg-gray-50"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Import CSV
+            </Button>
+          </RoleGate>
+          <RoleGate permission="canCreate">
+            <Button
+              onClick={() => router.push('/clients/new')}
+              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Client
+            </Button>
+          </RoleGate>
         </div>
       </div>
 

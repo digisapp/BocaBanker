@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/db';
+import { logger } from '@/lib/logger';
 import { clients } from '@/db/schema';
 import { eq, and, ilike, desc, asc, sql, count, or } from 'drizzle-orm';
 import { clientSchema } from '@/lib/validation/schemas';
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
       limit,
     });
   } catch (error) {
-    console.error('GET /api/clients error:', error);
+    logger.error('clients-api', 'GET /api/clients error', error);
     return NextResponse.json(
       { error: 'Failed to fetch clients' },
       { status: 500 }
@@ -146,7 +147,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(created, { status: 201 });
   } catch (error) {
-    console.error('POST /api/clients error:', error);
+    logger.error('clients-api', 'POST /api/clients error', error);
     return NextResponse.json(
       { error: 'Failed to create client' },
       { status: 500 }

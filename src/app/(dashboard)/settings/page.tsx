@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { logger } from '@/lib/logger';
 import { Settings, User, Lock, Bell, Loader2, CheckCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -62,7 +63,7 @@ export default function SettingsPage() {
         setTimeout(() => setProfileSaved(false), 3000);
       }
     } catch (err) {
-      console.error('Failed to update profile:', err);
+      logger.error('settings-page', 'Failed to update profile', err);
     } finally {
       setProfileSaving(false);
     }

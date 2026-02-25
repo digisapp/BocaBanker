@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { logger } from '@/lib/logger'
 import {
   Building2,
   Calculator,
@@ -249,7 +250,7 @@ export default function StudyForm({
         assets,
       })
     } catch (error) {
-      console.error('Error submitting study:', error)
+      logger.error('StudyForm', 'Error submitting study', error)
     } finally {
       setSubmitting(false)
     }

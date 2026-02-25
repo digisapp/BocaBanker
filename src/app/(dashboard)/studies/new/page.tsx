@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { logger } from '@/lib/logger'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -72,7 +73,7 @@ function NewStudyContent() {
           )
         }
       } catch (error) {
-        console.error('Error loading data:', error)
+        logger.error('studies-page', 'Error loading data', error)
       } finally {
         setLoading(false)
       }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { costSegStudies, studyAssets, properties } from '@/db/schema'
+import { logger } from '@/lib/logger'
 import { eq, and } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 import { generateStudyReport } from '@/lib/cost-seg/report-generator'
@@ -100,7 +101,7 @@ export async function POST(
       report,
     })
   } catch (error) {
-    console.error('Error calculating study:', error)
+    logger.error('studies-api', 'Error calculating study', error)
     return NextResponse.json(
       { error: 'Failed to calculate study' },
       { status: 500 }

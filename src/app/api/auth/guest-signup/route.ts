@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { logger } from '@/lib/logger';
 
 const signupSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }).max(100),
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      console.error('Guest signup OTP error:', error);
+      logger.error('auth-api', 'Guest signup OTP error', error);
       return new Response(
         JSON.stringify({ error: 'Failed to send magic link. Please try again.' }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Guest signup error:', error);
+    logger.error('auth-api', 'Guest signup error', error);
     return new Response(
       JSON.stringify({ error: 'Internal Server Error' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

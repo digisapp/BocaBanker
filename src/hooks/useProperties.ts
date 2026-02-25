@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useReducer } from 'react';
 import type { Property } from '@/types';
 
 interface UsePropertiesParams {
@@ -24,7 +24,7 @@ export function useProperties(params?: UsePropertiesParams): UsePropertiesReturn
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshKey, forceRefresh] = useReducer((x: number) => x + 1, 0);
 
   const page = params?.page || 1;
   const limit = params?.limit || 20;
@@ -32,44 +32,56 @@ export function useProperties(params?: UsePropertiesParams): UsePropertiesReturn
   const clientId = params?.clientId || '';
   const propertyType = params?.propertyType || '';
 
-  const fetchProperties = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  useEffect(() => {
+    let cancelled = false;
 
-    try {
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-      });
+    const fetchProperties = async () => {
+      setLoading(true);
+      setError(null);
 
-      if (search) queryParams.set('search', search);
-      if (clientId) queryParams.set('clientId', clientId);
-      if (propertyType) queryParams.set('propertyType', propertyType);
+      try {
+        const queryParams = new URLSearchParams({
+          page: page.toString(),
+          limit: limit.toString(),
+        });
 
-      const res = await fetch(`/api/properties?${queryParams}`);
+        if (search) queryParams.set('search', search);
+        if (clientId) queryParams.set('clientId', clientId);
+        if (propertyType) queryParams.set('propertyType', propertyType);
 
-      if (!res.ok) {
-        throw new Error('Failed to fetch properties');
+        const res = await fetch(`/api/properties?${queryParams}`);
+
+        if (!res.ok) {
+          throw new Error('Failed to fetch properties');
+        }
+
+        const data = await res.json();
+        if (!cancelled) {
+          setProperties(data.properties || []);
+          setTotal(data.total || 0);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'An error occurred');
+          setProperties([]);
+          setTotal(0);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
+    };
 
-      const data = await res.json();
-      setProperties(data.properties || []);
-      setTotal(data.total || 0);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      setProperties([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-    }
+    fetchProperties();
+
+    return () => {
+      cancelled = true;
+    };
   }, [page, limit, search, clientId, propertyType, refreshKey]);
 
-  useEffect(() => {
-    fetchProperties();
-  }, [fetchProperties]);
-
   const mutate = useCallback(() => {
-    setRefreshKey((prev) => prev + 1);
+    forceRefresh();
   }, []);
 
   return { properties, total, loading, error, mutate };

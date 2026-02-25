@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDefaultAllocation } from '@/lib/cost-seg/asset-classes';
+import { logger } from '@/lib/logger';
 import {
   calculateDepreciation,
   calculateStraightLineDepreciation,
@@ -115,7 +116,7 @@ export async function POST(request: NextRequest) {
       schedule: taxSavings,
     });
   } catch (error) {
-    console.error('Tax savings calculation error:', error);
+    logger.error('calculators-api', 'Tax savings calculation error', error);
     return NextResponse.json(
       { error: 'Failed to calculate tax savings' },
       { status: 500 }

@@ -12,7 +12,10 @@ export default function BocaBankerAvatar({ className, size = 200 }: AvatarProps)
       width={size}
       height={size}
       className={className}
+      role="img"
+      aria-label="Boca Banker avatar"
     >
+      <title>Boca Banker</title>
       {/* Sunset background */}
       <circle cx="100" cy="100" r="100" fill="url(#sunsetBg)" />
 

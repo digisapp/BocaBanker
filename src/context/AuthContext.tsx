@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const supabaseRef = useRef<SupabaseClient | null>(null)
 
-  if (!supabaseRef.current) {
+  if (supabaseRef.current === null) {
     supabaseRef.current = createClient()
   }
 

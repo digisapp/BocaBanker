@@ -6,6 +6,7 @@ import { AuthProvider } from '@/context/AuthContext'
 import Sidebar from '@/components/layout/Sidebar'
 import Topbar from '@/components/layout/Topbar'
 import MobileNav from '@/components/layout/MobileNav'
+import Breadcrumbs from '@/components/layout/Breadcrumbs'
 
 /**
  * Map pathname segments to human-readable page titles.
@@ -65,6 +66,7 @@ export default function DashboardLayout({
 
           {/* Page Content */}
           <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+            <Breadcrumbs />
             {children}
           </main>
         </div>

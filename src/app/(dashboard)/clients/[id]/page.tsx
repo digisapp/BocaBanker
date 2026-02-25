@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { logger } from '@/lib/logger'
 import {
   ArrowLeft,
   Pencil,
@@ -19,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { RoleGate } from '@/components/shared/RoleGate'
 
 interface ClientDetail {
   id: string
@@ -103,7 +105,7 @@ export default function ClientDetailPage() {
       if (!res.ok) throw new Error('Failed to delete')
       router.push('/clients')
     } catch (error) {
-      console.error('Failed to delete:', error)
+      logger.error('clients-page', 'Failed to delete client', error)
     }
   }
 
@@ -163,22 +165,26 @@ export default function ClientDetailPage() {
         </div>
 
         <div className="flex items-center gap-2 ml-14 sm:ml-0">
-          <Button
-            variant="outline"
-            onClick={() => router.push(`/clients/${params.id}/edit`)}
-            className="border-gray-200 text-gray-700 hover:bg-gray-50"
-          >
-            <Pencil className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleDelete}
-            className="border-red-200 text-red-500 hover:bg-red-50"
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
-          </Button>
+          <RoleGate permission="canEdit">
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/clients/${params.id}/edit`)}
+              className="border-gray-200 text-gray-700 hover:bg-gray-50"
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          </RoleGate>
+          <RoleGate permission="canDelete">
+            <Button
+              variant="outline"
+              onClick={handleDelete}
+              className="border-red-200 text-red-500 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </Button>
+          </RoleGate>
         </div>
       </div>
 
@@ -252,14 +258,16 @@ export default function ClientDetailPage() {
             <Home className="h-4 w-4" />
             Properties
           </h2>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push(`/properties/new?clientId=${params.id}`)}
-            className="border-gray-200 text-gray-700 hover:bg-gray-50"
-          >
-            Add Property
-          </Button>
+          <RoleGate permission="canCreate">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/properties/new?clientId=${params.id}`)}
+              className="border-gray-200 text-gray-700 hover:bg-gray-50"
+            >
+              Add Property
+            </Button>
+          </RoleGate>
         </div>
         {properties.length === 0 ? (
           <p className="text-sm text-gray-500 py-4 text-center">

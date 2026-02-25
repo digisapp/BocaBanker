@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { properties, clients } from '@/db/schema'
+import { logger } from '@/lib/logger'
 import { eq, and, desc, sql, count } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 import { propertySchema } from '@/lib/validation/schemas'
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Error fetching properties:', error)
+    logger.error('properties-api', 'Error fetching properties', error)
     return NextResponse.json(
       { error: 'Failed to fetch properties' },
       { status: 500 }
@@ -143,7 +144,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ property: newProperty }, { status: 201 })
   } catch (error) {
-    console.error('Error creating property:', error)
+    logger.error('properties-api', 'Error creating property', error)
     return NextResponse.json(
       { error: 'Failed to create property' },
       { status: 500 }

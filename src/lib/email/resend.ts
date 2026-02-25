@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import { db } from '@/db';
 import { emailLogs } from '@/db/schema';
+import { logger } from '@/lib/logger';
 
 let _resend: Resend | null = null;
 export function getResend(): Resend {
@@ -81,7 +82,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
         resendId: null,
       });
     } catch {
-      console.error('Failed to log email error to database');
+      logger.error('resend', 'Failed to log email error to database');
     }
 
     return { success: false, error: errorMessage };

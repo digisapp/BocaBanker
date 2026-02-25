@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { logger } from '@/lib/logger'
 import { useRouter } from 'next/navigation'
 import { FileBarChart, Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -99,7 +100,7 @@ export default function StudiesPage() {
         totalPages: data.pagination.totalPages,
       }))
     } catch (error) {
-      console.error('Error fetching studies:', error)
+      logger.error('studies-page', 'Error fetching studies', error)
     } finally {
       setLoading(false)
     }

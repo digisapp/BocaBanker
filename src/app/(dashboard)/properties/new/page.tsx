@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { logger } from '@/lib/logger'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -36,7 +37,7 @@ export default function NewPropertyPage() {
           )
         }
       } catch (error) {
-        console.error('Error fetching clients:', error)
+        logger.error('properties-page', 'Error fetching clients', error)
       } finally {
         setLoading(false)
       }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { costSegStudies, studyAssets, properties, clients } from '@/db/schema'
+import { logger } from '@/lib/logger'
 import { eq, and } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 
@@ -77,7 +78,7 @@ export async function GET(
       assets,
     })
   } catch (error) {
-    console.error('Error fetching study:', error)
+    logger.error('studies-api', 'Error fetching study', error)
     return NextResponse.json(
       { error: 'Failed to fetch study' },
       { status: 500 }
@@ -121,7 +122,7 @@ export async function PUT(
 
     return NextResponse.json({ study: updated })
   } catch (error) {
-    console.error('Error updating study:', error)
+    logger.error('studies-api', 'Error updating study', error)
     return NextResponse.json(
       { error: 'Failed to update study' },
       { status: 500 }
@@ -156,7 +157,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Study deleted successfully' })
   } catch (error) {
-    console.error('Error deleting study:', error)
+    logger.error('studies-api', 'Error deleting study', error)
     return NextResponse.json(
       { error: 'Failed to delete study' },
       { status: 500 }

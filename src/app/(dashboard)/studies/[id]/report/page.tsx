@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { ArrowLeft, Printer, Building2 } from 'lucide-react'
+import { logger } from '@/lib/logger'
+import { ArrowLeft, Printer, Download, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import AssetBreakdownChart from '@/components/studies/AssetBreakdownChart'
@@ -104,7 +105,7 @@ export default function StudyReportPage() {
         const data = await res.json()
         setStudy(data.study)
       } catch (error) {
-        console.error('Error:', error)
+        logger.error('studies-page', 'Error fetching study report', error)
         router.push('/studies')
       } finally {
         setLoading(false)
@@ -151,13 +152,28 @@ export default function StudyReportPage() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Study
         </Button>
-        <Button
-          onClick={() => window.print()}
-          className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
-        >
-          <Printer className="h-4 w-4 mr-2" />
-          Print Report
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              const link = document.createElement('a')
+              link.href = `/api/studies/${id}/export`
+              link.download = ''
+              link.click()
+            }}
+            className="border-gray-200 text-gray-700 hover:bg-gray-50"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download Report
+          </Button>
+          <Button
+            onClick={() => window.print()}
+            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            Print Report
+          </Button>
+        </div>
       </div>
 
       {/* Report Content */}

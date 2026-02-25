@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/db';
+import { logger } from '@/lib/logger';
 import { clients } from '@/db/schema';
 import { eq, and, isNotNull } from 'drizzle-orm';
 import { sendEmail } from '@/lib/email/resend';
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest) {
       failed,
     });
   } catch (error) {
-    console.error('Bulk email error:', error);
+    logger.error('email-api', 'Bulk email error', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

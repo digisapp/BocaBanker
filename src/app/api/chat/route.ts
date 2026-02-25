@@ -1,6 +1,7 @@
 import { streamText } from 'ai';
 import { xai } from '@ai-sdk/xai';
 import { createClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
 import { db } from '@/db';
 import { chatMessages, chatConversations } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -137,7 +138,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error('Chat API error:', error);
+    logger.error('chat-api', 'Chat API error', error);
     return new Response('Internal Server Error', { status: 500 });
   }
 }

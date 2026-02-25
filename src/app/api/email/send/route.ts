@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { sendEmail } from '@/lib/email/resend';
+import { logger } from '@/lib/logger';
 import {
   outreachTemplate,
   followUpTemplate,
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, resendId: result.resendId });
   } catch (error) {
-    console.error('Email send error:', error);
+    logger.error('email-api', 'Email send error', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

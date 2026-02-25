@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 import { db } from '@/db'
 import { users } from '@/db/schema'
 import { eq } from 'drizzle-orm'
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
         }
       } catch (syncError) {
         // Don't block the redirect if sync fails — user can still use the app
-        console.error('User sync error:', syncError)
+        logger.error('auth-api', 'User sync error', syncError)
       }
 
       const forwardedHost = request.headers.get('x-forwarded-host')

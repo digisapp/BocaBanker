@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/db';
+import { logger } from '@/lib/logger';
 import { chatConversations, chatMessages } from '@/db/schema';
 import { eq, desc, and } from 'drizzle-orm';
 
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ conversations });
   } catch (error) {
-    console.error('Chat history error:', error);
+    logger.error('chat-api', 'Chat history error', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

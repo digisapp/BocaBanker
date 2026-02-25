@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { logger } from '@/lib/logger'
 import { useRouter } from 'next/navigation'
 import { Building2, Plus, Search, LayoutGrid, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import PropertyCard from '@/components/properties/PropertyCard'
+import { RoleGate } from '@/components/shared/RoleGate'
 
 function formatCurrency(value: number | string | null | undefined): string {
   if (value === null || value === undefined) return '$0'
@@ -114,7 +116,7 @@ export default function PropertiesPage() {
         totalPages: data.pagination.totalPages,
       }))
     } catch (error) {
-      console.error('Error fetching properties:', error)
+      logger.error('properties-page', 'Error fetching properties', error)
     } finally {
       setLoading(false)
     }
@@ -142,13 +144,15 @@ export default function PropertiesPage() {
             {pagination.total} {pagination.total === 1 ? 'property' : 'properties'} total
           </p>
         </div>
-        <Button
-          onClick={() => router.push('/properties/new')}
-          className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Property
-        </Button>
+        <RoleGate permission="canCreate">
+          <Button
+            onClick={() => router.push('/properties/new')}
+            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Property
+          </Button>
+        </RoleGate>
       </div>
 
       {/* Filters */}
@@ -215,13 +219,15 @@ export default function PropertiesPage() {
               : 'Add your first property to get started.'}
           </p>
           {!search && !propertyType && (
-            <Button
-              onClick={() => router.push('/properties/new')}
-              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Property
-            </Button>
+            <RoleGate permission="canCreate">
+              <Button
+                onClick={() => router.push('/properties/new')}
+                className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Property
+              </Button>
+            </RoleGate>
           )}
         </div>
       ) : viewMode === 'grid' ? (

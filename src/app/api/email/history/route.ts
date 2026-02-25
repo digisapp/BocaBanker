@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/db';
+import { logger } from '@/lib/logger';
 import { emailLogs, clients } from '@/db/schema';
 import { eq, desc, and, count, sql } from 'drizzle-orm';
 
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil((totalResult?.total || 0) / limit),
     });
   } catch (error) {
-    console.error('Email history error:', error);
+    logger.error('email-api', 'Email history error', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

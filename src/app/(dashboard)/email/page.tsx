@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import EmailComposer from '@/components/email/EmailComposer';
 import BulkEmailModal from '@/components/email/BulkEmailModal';
+import { RoleGate } from '@/components/shared/RoleGate';
 
 export default function EmailPage() {
   return (
@@ -25,7 +26,9 @@ export default function EmailPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <BulkEmailModal />
+          <RoleGate permission="canSendEmail">
+            <BulkEmailModal />
+          </RoleGate>
           <Link href="/email/history">
             <Button
               variant="outline"
@@ -40,7 +43,9 @@ export default function EmailPage() {
 
       {/* Composer */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <EmailComposer />
+        <RoleGate permission="canSendEmail">
+          <EmailComposer />
+        </RoleGate>
       </div>
     </div>
   );

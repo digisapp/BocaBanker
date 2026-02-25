@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/db';
+import { logger } from '@/lib/logger';
 import { clients } from '@/db/schema';
 
 interface ImportBody {
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ imported, errors });
   } catch (error) {
-    console.error('POST /api/clients/import error:', error);
+    logger.error('clients-api', 'POST /api/clients/import error', error);
     return NextResponse.json(
       { error: 'Failed to import clients' },
       { status: 500 }

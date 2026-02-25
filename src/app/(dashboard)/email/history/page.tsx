@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { logger } from '@/lib/logger';
 import { ArrowLeft, Mail, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -70,7 +71,7 @@ export default function EmailHistoryPage() {
         setTotalPages(data.totalPages);
       }
     } catch (err) {
-      console.error('Failed to fetch email history:', err);
+      logger.error('email-history-page', 'Failed to fetch email history', err);
     } finally {
       setLoading(false);
     }

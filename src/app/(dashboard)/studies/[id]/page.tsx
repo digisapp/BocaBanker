@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { logger } from '@/lib/logger'
 import {
   ArrowLeft,
   FileBarChart,
@@ -26,6 +27,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import StudyResults from '@/components/studies/StudyResults'
+import { RoleGate } from '@/components/shared/RoleGate'
 
 function formatCurrency(value: number | string | null | undefined): string {
   if (value === null || value === undefined) return '-'
@@ -102,7 +104,7 @@ export default function StudyDetailPage() {
       setStudy(data.study)
       setAssets(data.assets || [])
     } catch (error) {
-      console.error('Error:', error)
+      logger.error('studies-page', 'Error fetching study', error)
       router.push('/studies')
     } finally {
       setLoading(false)
@@ -125,7 +127,7 @@ export default function StudyDetailPage() {
       // Refresh the study data
       await fetchStudy()
     } catch (error) {
-      console.error('Error calculating:', error)
+      logger.error('studies-page', 'Error calculating', error)
       alert(error instanceof Error ? error.message : 'Calculation failed')
     } finally {
       setCalculating(false)
@@ -140,7 +142,7 @@ export default function StudyDetailPage() {
         router.push('/studies')
       }
     } catch (error) {
-      console.error('Error deleting:', error)
+      logger.error('studies-page', 'Error deleting study', error)
     } finally {
       setDeleting(false)
     }
@@ -231,38 +233,40 @@ export default function StudyDetailPage() {
             </Button>
           )}
 
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
-              >
-                <Trash2 className="h-4 w-4 mr-1.5" />
-                Delete
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="bg-white border-gray-200">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="text-gray-900">Delete Study</AlertDialogTitle>
-                <AlertDialogDescription className="text-gray-500">
-                  Are you sure? This will permanently delete this study and its results.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel className="border-gray-200 text-gray-500">
-                  Cancel
-                </AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="bg-red-500 text-white hover:bg-red-600"
+          <RoleGate permission="canDelete">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
                 >
-                  {deleting ? 'Deleting...' : 'Delete'}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                  <Trash2 className="h-4 w-4 mr-1.5" />
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-white border-gray-200">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-gray-900">Delete Study</AlertDialogTitle>
+                  <AlertDialogDescription className="text-gray-500">
+                    Are you sure? This will permanently delete this study and its results.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="border-gray-200 text-gray-500">
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="bg-red-500 text-white hover:bg-red-600"
+                  >
+                    {deleting ? 'Deleting...' : 'Delete'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </RoleGate>
         </div>
       </div>
 

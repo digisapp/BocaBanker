@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { logger } from '@/lib/logger';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import type { UIMessage } from 'ai';
@@ -146,7 +147,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
         setConversations(data.conversations || []);
       }
     } catch (error) {
-      console.error('Failed to fetch conversations:', error);
+      logger.error('ChatInterface', 'Failed to fetch conversations', error);
     }
   }, []);
 
@@ -174,7 +175,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
         setActiveConversationId(conversationId);
       }
     } catch (error) {
-      console.error('Failed to load conversation:', error);
+      logger.error('ChatInterface', 'Failed to load conversation', error);
     } finally {
       setLoadingHistory(false);
     }

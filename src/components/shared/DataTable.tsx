@@ -30,12 +30,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   searchKey?: string
   onRowClick?: (row: TData) => void
+  loading?: boolean
+}
+
+function DataTableSkeleton({ columns, rows = 5 }: { columns: number; rows?: number }) {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, rowIdx) => (
+        <TableRow key={rowIdx} className="border-b border-gray-100">
+          {Array.from({ length: columns }).map((_, colIdx) => (
+            <TableCell key={colIdx}>
+              <Skeleton className="h-4 w-full max-w-[180px] bg-gray-100" />
+            </TableCell>
+          ))}
+        </TableRow>
+      ))}
+    </>
+  )
 }
 
 export function DataTable<TData, TValue>({
@@ -43,6 +61,7 @@ export function DataTable<TData, TValue>({
   data,
   searchKey,
   onRowClick,
+  loading = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -131,7 +150,9 @@ export function DataTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {loading ? (
+              <DataTableSkeleton columns={columns.length} />
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { calculateDepreciation } from '@/lib/cost-seg/depreciation';
+import { logger } from '@/lib/logger';
 import type { MacrsRecoveryPeriod } from '@/lib/cost-seg/macrs-tables';
 
 export async function POST(request: NextRequest) {
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
       schedule,
     });
   } catch (error) {
-    console.error('Depreciation calculation error:', error);
+    logger.error('calculators-api', 'Depreciation calculation error', error);
     return NextResponse.json(
       { error: 'Failed to calculate depreciation schedule' },
       { status: 500 }

@@ -48,6 +48,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <TooltipProvider delayDuration={0}>
       <aside
+        aria-label="Main navigation"
         className={cn(
           'hidden md:flex flex-col h-screen bg-white border-r border-gray-200 transition-all duration-300 relative z-40',
           collapsed ? 'w-[68px]' : 'w-[240px]'
@@ -109,6 +110,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             variant="ghost"
             size="sm"
             onClick={onToggle}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             className={cn(
               'w-full text-gray-500 hover:text-amber-600 hover:bg-amber-50',
               collapsed && 'justify-center'

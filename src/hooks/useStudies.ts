@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useReducer } from 'react';
 import type { CostSegStudy } from '@/types';
 
 interface UseStudiesParams {
@@ -25,7 +25,7 @@ export function useStudies(params?: UseStudiesParams): UseStudiesReturn {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshKey, forceRefresh] = useReducer((x: number) => x + 1, 0);
 
   const page = params?.page || 1;
   const limit = params?.limit || 20;
@@ -34,45 +34,57 @@ export function useStudies(params?: UseStudiesParams): UseStudiesReturn {
   const propertyId = params?.propertyId || '';
   const status = params?.status || '';
 
-  const fetchStudies = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  useEffect(() => {
+    let cancelled = false;
 
-    try {
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-      });
+    const fetchStudies = async () => {
+      setLoading(true);
+      setError(null);
 
-      if (search) queryParams.set('search', search);
-      if (clientId) queryParams.set('clientId', clientId);
-      if (propertyId) queryParams.set('propertyId', propertyId);
-      if (status) queryParams.set('status', status);
+      try {
+        const queryParams = new URLSearchParams({
+          page: page.toString(),
+          limit: limit.toString(),
+        });
 
-      const res = await fetch(`/api/studies?${queryParams}`);
+        if (search) queryParams.set('search', search);
+        if (clientId) queryParams.set('clientId', clientId);
+        if (propertyId) queryParams.set('propertyId', propertyId);
+        if (status) queryParams.set('status', status);
 
-      if (!res.ok) {
-        throw new Error('Failed to fetch studies');
+        const res = await fetch(`/api/studies?${queryParams}`);
+
+        if (!res.ok) {
+          throw new Error('Failed to fetch studies');
+        }
+
+        const data = await res.json();
+        if (!cancelled) {
+          setStudies(data.studies || []);
+          setTotal(data.total || 0);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'An error occurred');
+          setStudies([]);
+          setTotal(0);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
+    };
 
-      const data = await res.json();
-      setStudies(data.studies || []);
-      setTotal(data.total || 0);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      setStudies([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-    }
+    fetchStudies();
+
+    return () => {
+      cancelled = true;
+    };
   }, [page, limit, search, clientId, propertyId, status, refreshKey]);
 
-  useEffect(() => {
-    fetchStudies();
-  }, [fetchStudies]);
-
   const mutate = useCallback(() => {
-    setRefreshKey((prev) => prev + 1);
+    forceRefresh();
   }, []);
 
   return { studies, total, loading, error, mutate };

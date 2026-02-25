@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/db';
+import { logger } from '@/lib/logger';
 import {
   clients,
   properties,
@@ -159,7 +160,7 @@ export async function GET(request: NextRequest) {
       recentActivity,
     });
   } catch (error) {
-    console.error('Dashboard stats error:', error);
+    logger.error('dashboard-api', 'Dashboard stats error', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

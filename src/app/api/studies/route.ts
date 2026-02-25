@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { costSegStudies, properties, clients, studyAssets } from '@/db/schema'
+import { logger } from '@/lib/logger'
 import { eq, and, desc, sql, count } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 import { studySchema } from '@/lib/validation/schemas'
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Error fetching studies:', error)
+    logger.error('studies-api', 'Error fetching studies', error)
     return NextResponse.json(
       { error: 'Failed to fetch studies' },
       { status: 500 }
@@ -146,7 +147,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ study: newStudy }, { status: 201 })
   } catch (error) {
-    console.error('Error creating study:', error)
+    logger.error('studies-api', 'Error creating study', error)
     return NextResponse.json(
       { error: 'Failed to create study' },
       { status: 500 }
