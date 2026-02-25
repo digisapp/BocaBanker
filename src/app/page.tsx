@@ -155,31 +155,35 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#FAFAF8]">
       {/* ── NAV ── */}
-      <nav
-        className={cn(
-          'fixed top-0 left-0 right-0 z-50 transition-all duration-500',
-          scrolled
-            ? 'bg-white/90 backdrop-blur-xl shadow-sm border-b border-gray-100'
-            : 'bg-transparent'
-        )}
-      >
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <Link href="/" className="flex items-center gap-2.5">
-            <BocaBankerAvatar size={36} />
-            <span className="font-serif text-xl font-bold text-gray-900 hidden sm:block">
-              Boca Banker
-            </span>
-          </Link>
-          <Button asChild variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm">
-            <Link href="/login">Sign In</Link>
-          </Button>
-        </div>
-      </nav>
+      <header>
+        <nav
+          aria-label="Main navigation"
+          className={cn(
+            'fixed top-0 left-0 right-0 z-50 transition-all duration-500',
+            scrolled
+              ? 'bg-white/90 backdrop-blur-xl shadow-sm border-b border-gray-100'
+              : 'bg-transparent'
+          )}
+        >
+          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+            <Link href="/" className="flex items-center gap-2.5">
+              <BocaBankerAvatar size={36} />
+              <span className="font-serif text-xl font-bold text-gray-900 hidden sm:block">
+                Boca Banker
+              </span>
+            </Link>
+            <Button asChild variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm">
+              <Link href="/login">Sign In</Link>
+            </Button>
+          </div>
+        </nav>
+      </header>
 
+      <main>
       {/* ══════════════════════════════════════
          HERO — Light, fun, avatar-forward
          ══════════════════════════════════════ */}
-      <section className="relative pt-24 pb-16 sm:pt-32 sm:pb-24 px-6 overflow-hidden">
+      <section aria-label="Hero" className="relative pt-24 pb-16 sm:pt-32 sm:pb-24 px-6 overflow-hidden">
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-sky-50 via-white to-[#FAFAF8]" />
         {/* Decorative blobs */}
@@ -224,7 +228,7 @@ export default function Home() {
       {/* ══════════════════════════════════════
          STATS BAR
          ══════════════════════════════════════ */}
-      <section className="relative py-16 px-6 bg-white border-y border-gray-100">
+      <section aria-label="Statistics" className="relative py-16 px-6 bg-white border-y border-gray-100">
         <div className="mx-auto max-w-5xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((s, i) => (
@@ -245,7 +249,7 @@ export default function Home() {
       {/* ══════════════════════════════════════
          FEATURES — Fun cards
          ══════════════════════════════════════ */}
-      <section className="py-20 sm:py-28 px-6 bg-white">
+      <section aria-label="Features" className="py-20 sm:py-28 px-6 bg-white">
         <div className="mx-auto max-w-6xl">
           <Reveal>
             <div className="text-center mb-14">
@@ -293,7 +297,7 @@ export default function Home() {
       {/* ══════════════════════════════════════
          HOW IT WORKS
          ══════════════════════════════════════ */}
-      <section className="py-20 sm:py-28 px-6 bg-gradient-to-b from-sky-50 to-white">
+      <section aria-label="How it works" className="py-20 sm:py-28 px-6 bg-gradient-to-b from-sky-50 to-white">
         <div className="mx-auto max-w-4xl">
           <Reveal>
             <div className="text-center mb-16">
@@ -340,7 +344,7 @@ export default function Home() {
       {/* ══════════════════════════════════════
          CTA
          ══════════════════════════════════════ */}
-      <section className="py-24 sm:py-32 px-6 bg-gradient-to-br from-sky-500 via-sky-400 to-teal-400 relative overflow-hidden">
+      <section aria-label="Call to action" className="py-24 sm:py-32 px-6 bg-gradient-to-br from-sky-500 via-sky-400 to-teal-400 relative overflow-hidden">
         {/* Decorative */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-20 -right-20 h-[300px] w-[300px] rounded-full bg-white/10 blur-[60px]" />
@@ -370,6 +374,8 @@ export default function Home() {
         </Reveal>
       </section>
 
+      </main>
+
       {/* ══════════════════════════════════════
          FOOTER
          ══════════════════════════════════════ */}
@@ -382,9 +388,9 @@ export default function Home() {
                 Boca Banker
               </span>
             </div>
-            <div className="flex items-center gap-8 text-sm text-gray-500">
+            <nav aria-label="Footer navigation" className="flex items-center gap-8 text-sm text-gray-500">
               <Link href="/login" className="hover:text-gray-900 transition-colors">Sign In</Link>
-            </div>
+            </nav>
             <p className="text-xs text-gray-400">
               &copy; {new Date().getFullYear()} Boca Banker. All rights reserved.
             </p>
