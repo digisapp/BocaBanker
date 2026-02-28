@@ -14,6 +14,9 @@ import {
   Trash2,
   FileBarChart,
   Plus,
+  Landmark,
+  Percent,
+  Banknote,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -79,6 +82,13 @@ interface PropertyDetail {
   squareFootage: number | null
   yearBuilt: number | null
   description: string | null
+  loanAmount: string | null
+  interestRate: string | null
+  loanTermYears: number | null
+  monthlyPayment: string | null
+  loanType: string | null
+  lenderName: string | null
+  loanOriginationDate: string | null
   clientId: string | null
   clientName: string | null
   clientCompany: string | null
@@ -328,6 +338,82 @@ export default function PropertyDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Loan / Mortgage Information */}
+      {(property.loanAmount || property.interestRate || property.lenderName) && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Landmark className="h-5 w-5 text-amber-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Loan / Mortgage</h2>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            {property.loanAmount && (
+              <div className="bg-gray-50 rounded-xl p-4">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Banknote className="h-3.5 w-3.5 text-amber-500" />
+                  <span className="text-xs text-gray-500">Loan Amount</span>
+                </div>
+                <p className="text-lg font-bold text-gray-900">{formatCurrency(property.loanAmount)}</p>
+              </div>
+            )}
+            {property.monthlyPayment && (
+              <div className="bg-gray-50 rounded-xl p-4">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <DollarSign className="h-3.5 w-3.5 text-blue-500" />
+                  <span className="text-xs text-gray-500">Monthly Payment</span>
+                </div>
+                <p className="text-lg font-bold text-gray-900">{formatCurrency(property.monthlyPayment)}</p>
+              </div>
+            )}
+            {property.interestRate && (
+              <div className="bg-gray-50 rounded-xl p-4">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Percent className="h-3.5 w-3.5 text-emerald-500" />
+                  <span className="text-xs text-gray-500">Interest Rate</span>
+                </div>
+                <p className="text-lg font-bold text-gray-900">{parseFloat(property.interestRate)}%</p>
+              </div>
+            )}
+            {property.loanTermYears && (
+              <div className="bg-gray-50 rounded-xl p-4">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Calendar className="h-3.5 w-3.5 text-gray-500" />
+                  <span className="text-xs text-gray-500">Loan Term</span>
+                </div>
+                <p className="text-lg font-bold text-gray-900">{property.loanTermYears} years</p>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            {property.loanType && (
+              <div>
+                <span className="text-xs text-gray-500">Loan Type</span>
+                <p className="text-sm font-medium text-gray-900 mt-1 capitalize">{property.loanType}</p>
+              </div>
+            )}
+            {property.lenderName && (
+              <div>
+                <span className="text-xs text-gray-500">Lender</span>
+                <p className="text-sm font-medium text-gray-900 mt-1">{property.lenderName}</p>
+              </div>
+            )}
+            {property.loanOriginationDate && (
+              <div>
+                <span className="text-xs text-gray-500">Origination Date</span>
+                <p className="text-sm font-medium text-gray-900 mt-1">
+                  {new Date(property.loanOriginationDate).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Linked Studies */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">

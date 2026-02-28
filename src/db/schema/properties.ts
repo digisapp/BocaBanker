@@ -22,6 +22,14 @@ export const properties = pgTable('properties', {
   squareFootage: integer('square_footage'),
   yearBuilt: integer('year_built'),
   description: text('description'),
+  // Loan / Mortgage fields
+  loanAmount: numeric('loan_amount'),
+  interestRate: numeric('interest_rate'),
+  loanTermYears: integer('loan_term_years'),
+  monthlyPayment: numeric('monthly_payment'),
+  loanType: text('loan_type'),
+  lenderName: text('lender_name'),
+  loanOriginationDate: date('loan_origination_date'),
   createdAt: timestamp('created_at').default(sql`now()`),
   updatedAt: timestamp('updated_at').default(sql`now()`),
 });

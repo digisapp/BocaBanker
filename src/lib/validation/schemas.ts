@@ -163,6 +163,23 @@ export const propertySchema = z.object({
     .min(1800, 'Year must be 1800 or later')
     .max(new Date().getFullYear(), 'Year cannot be in the future')
     .optional(),
+  // Loan / Mortgage fields
+  loan_amount: z.number().positive('Loan amount must be positive').optional(),
+  interest_rate: z
+    .number()
+    .min(0, 'Interest rate must be 0 or greater')
+    .max(30, 'Interest rate must be 30 or less')
+    .optional(),
+  loan_term_years: z
+    .number()
+    .int('Loan term must be a whole number')
+    .min(1, 'Loan term must be at least 1 year')
+    .max(40, 'Loan term must be 40 years or less')
+    .optional(),
+  monthly_payment: z.number().positive('Monthly payment must be positive').optional(),
+  loan_type: z.string().max(50, 'Loan type must be 50 characters or less').optional().or(z.literal('')),
+  lender_name: z.string().max(100, 'Lender name must be 100 characters or less').optional().or(z.literal('')),
+  loan_origination_date: z.string().optional().or(z.literal('')),
 })
 
 export type PropertyInput = z.infer<typeof propertySchema>

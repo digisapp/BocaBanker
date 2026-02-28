@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
     const maxPrice = searchParams.get('maxPrice') ?? '';
     const dateFrom = searchParams.get('dateFrom') ?? '';
     const dateTo = searchParams.get('dateTo') ?? '';
+    const member = searchParams.get('member') ?? '';
     const sort = searchParams.get('sort') ?? 'createdAt';
     const order = searchParams.get('order') ?? 'desc';
 
@@ -84,6 +85,10 @@ export async function GET(request: NextRequest) {
 
     if (dateTo) {
       query = query.lte('sale_date', dateTo);
+    }
+
+    if (member) {
+      query = query.eq('member_name', member);
     }
 
     query = query

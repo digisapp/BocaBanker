@@ -42,6 +42,13 @@ interface PropertyFormData {
   squareFootage: string;
   yearBuilt: string;
   description: string;
+  loanAmount: string;
+  interestRate: string;
+  loanTermYears: string;
+  monthlyPayment: string;
+  loanType: string;
+  lenderName: string;
+  loanOriginationDate: string;
 }
 
 export default function EditPropertyPage() {
@@ -76,6 +83,13 @@ export default function EditPropertyPage() {
             squareFootage: prop.squareFootage?.toString() || '',
             yearBuilt: prop.yearBuilt?.toString() || '',
             description: prop.description || '',
+            loanAmount: prop.loanAmount || '',
+            interestRate: prop.interestRate || '',
+            loanTermYears: prop.loanTermYears?.toString() || '',
+            monthlyPayment: prop.monthlyPayment || '',
+            loanType: prop.loanType || '',
+            lenderName: prop.lenderName || '',
+            loanOriginationDate: prop.loanOriginationDate || '',
           });
         } else {
           setError('Property not found');
@@ -96,12 +110,28 @@ export default function EditPropertyPage() {
 
     try {
       const res = await fetch(`/api/properties/${propertyId}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...data,
-          squareFootage: data.squareFootage ? parseInt(data.squareFootage) : null,
-          yearBuilt: data.yearBuilt ? parseInt(data.yearBuilt) : null,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          zip: data.zip,
+          property_type: data.propertyType,
+          purchase_price: data.purchasePrice ? parseFloat(data.purchasePrice) : undefined,
+          purchase_date: data.purchaseDate || undefined,
+          building_value: data.buildingValue ? parseFloat(data.buildingValue) : undefined,
+          land_value: data.landValue ? parseFloat(data.landValue) : undefined,
+          square_footage: data.squareFootage ? parseInt(data.squareFootage) : undefined,
+          year_built: data.yearBuilt ? parseInt(data.yearBuilt) : undefined,
+          description: data.description || undefined,
+          loan_amount: data.loanAmount ? parseFloat(data.loanAmount) : undefined,
+          interest_rate: data.interestRate ? parseFloat(data.interestRate) : undefined,
+          loan_term_years: data.loanTermYears ? parseInt(data.loanTermYears) : undefined,
+          monthly_payment: data.monthlyPayment ? parseFloat(data.monthlyPayment) : undefined,
+          loan_type: data.loanType || undefined,
+          lender_name: data.lenderName || undefined,
+          loan_origination_date: data.loanOriginationDate || undefined,
         }),
       });
 
@@ -285,6 +315,84 @@ export default function EditPropertyPage() {
               {...form.register('yearBuilt')}
               className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
+          </div>
+        </div>
+
+        {/* Loan / Mortgage Details */}
+        <div className="pt-4 border-t border-gray-100">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">Loan / Mortgage Details</h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-gray-500">Loan Amount ($)</Label>
+              <Input
+                type="number"
+                {...form.register('loanAmount')}
+                placeholder="e.g. 2400000"
+                className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-gray-500">Interest Rate (%)</Label>
+              <Input
+                type="number"
+                step="0.125"
+                {...form.register('interestRate')}
+                placeholder="e.g. 6.5"
+                className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <div className="space-y-2">
+              <Label className="text-gray-500">Loan Term (Years)</Label>
+              <Input
+                type="number"
+                {...form.register('loanTermYears')}
+                placeholder="e.g. 30"
+                className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-gray-500">Monthly Payment ($)</Label>
+              <Input
+                type="number"
+                {...form.register('monthlyPayment')}
+                placeholder="e.g. 15168"
+                className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <div className="space-y-2">
+              <Label className="text-gray-500">Loan Type</Label>
+              <Input
+                {...form.register('loanType')}
+                placeholder="e.g. Conventional, FHA, SBA"
+                className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-gray-500">Lender Name</Label>
+              <Input
+                {...form.register('lenderName')}
+                placeholder="e.g. Wells Fargo"
+                className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <div className="space-y-2">
+              <Label className="text-gray-500">Loan Origination Date</Label>
+              <Input
+                type="date"
+                {...form.register('loanOriginationDate')}
+                className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
+              />
+            </div>
           </div>
         </div>
 
