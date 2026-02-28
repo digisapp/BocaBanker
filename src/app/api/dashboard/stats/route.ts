@@ -7,6 +7,7 @@ import {
   properties,
   costSegStudies,
   emailLogs,
+  leads,
 } from '@/db/schema';
 import { eq, count, sql, desc, gte, and } from 'drizzle-orm';
 
@@ -85,6 +86,55 @@ export async function GET(request: NextRequest) {
         )
       );
 
+    // Lead metrics
+    const [leadCount] = await db
+      .select({ total: count() })
+      .from(leads)
+      .where(eq(leads.userId, userId));
+
+    const [newLeadsCount] = await db
+      .select({ total: count() })
+      .from(leads)
+      .where(
+        and(eq(leads.userId, userId), eq(leads.status, 'new'))
+      );
+
+    const [contactedLeadsCount] = await db
+      .select({ total: count() })
+      .from(leads)
+      .where(
+        and(eq(leads.userId, userId), eq(leads.status, 'contacted'))
+      );
+
+    const [qualifiedLeadsCount] = await db
+      .select({ total: count() })
+      .from(leads)
+      .where(
+        and(eq(leads.userId, userId), eq(leads.status, 'qualified'))
+      );
+
+    const [convertedLeadsCount] = await db
+      .select({ total: count() })
+      .from(leads)
+      .where(
+        and(eq(leads.userId, userId), eq(leads.status, 'converted'))
+      );
+
+    const [newLeadsThisMonthCount] = await db
+      .select({ total: count() })
+      .from(leads)
+      .where(
+        and(eq(leads.userId, userId), gte(leads.createdAt, startOfMonth))
+      );
+
+    // Portfolio value (sum of purchase prices)
+    const [portfolioResult] = await db
+      .select({
+        total: sql<string>`COALESCE(SUM(CAST(${properties.purchasePrice} AS DECIMAL)), 0)`,
+      })
+      .from(properties)
+      .where(eq(properties.userId, userId));
+
     // Recent activity: last 10 created items across tables
     // We simulate activity from recent clients, studies, and emails
     const recentClients = await db
@@ -157,6 +207,13 @@ export async function GET(request: NextRequest) {
       completedStudies: completedCount?.total || 0,
       totalTaxSavings: parseFloat(savingsResult?.total || '0'),
       emailsSentThisMonth: emailCount?.total || 0,
+      totalLeads: leadCount?.total || 0,
+      newLeads: newLeadsCount?.total || 0,
+      contactedLeads: contactedLeadsCount?.total || 0,
+      qualifiedLeads: qualifiedLeadsCount?.total || 0,
+      convertedLeads: convertedLeadsCount?.total || 0,
+      newLeadsThisMonth: newLeadsThisMonthCount?.total || 0,
+      totalPortfolioValue: parseFloat(portfolioResult?.total || '0'),
       recentActivity,
     });
   } catch (error) {

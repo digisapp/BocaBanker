@@ -17,7 +17,12 @@ import {
   Landmark,
   Percent,
   Banknote,
+  Calculator,
+  Sparkles,
+  ArrowRightLeft,
+  Activity,
 } from 'lucide-react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -412,6 +417,47 @@ export default function PropertyDetailPage() {
               </div>
             )}
           </div>
+
+          {/* Quick Analyze Buttons */}
+          {property.loanAmount && (
+            <div className="mt-5 pt-4 border-t border-gray-100">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Quick Analyze</p>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href={`/calculators?tab=combined&propertyValue=${property.purchasePrice}&propertyType=${property.propertyType}&loanAmount=${property.loanAmount}${property.interestRate ? `&currentRate=${property.interestRate}` : ''}${property.loanTermYears ? `&remainingYears=${property.loanTermYears}` : ''}`}
+                >
+                  <Button size="sm" className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold">
+                    <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                    Combined Analysis
+                  </Button>
+                </Link>
+                <Link
+                  href={`/calculators?tab=refinance&currentBalance=${property.loanAmount}${property.interestRate ? `&currentRate=${property.interestRate}` : ''}${property.loanTermYears ? `&remainingYears=${property.loanTermYears}` : ''}`}
+                >
+                  <Button size="sm" variant="outline" className="border-gray-200 text-gray-700 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200">
+                    <ArrowRightLeft className="h-3.5 w-3.5 mr-1.5" />
+                    Refinance
+                  </Button>
+                </Link>
+                <Link
+                  href={`/calculators?tab=dscr&loanAmount=${property.loanAmount}${property.interestRate ? `&interestRate=${property.interestRate}` : ''}${property.loanTermYears ? `&termYears=${property.loanTermYears}` : ''}`}
+                >
+                  <Button size="sm" variant="outline" className="border-gray-200 text-gray-700 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200">
+                    <Calculator className="h-3.5 w-3.5 mr-1.5" />
+                    DSCR
+                  </Button>
+                </Link>
+                <Link
+                  href={`/calculators?tab=rate-sensitivity&loanAmount=${property.loanAmount}${property.interestRate ? `&baseRate=${property.interestRate}` : ''}${property.loanTermYears ? `&termYears=${property.loanTermYears}` : ''}`}
+                >
+                  <Button size="sm" variant="outline" className="border-gray-200 text-gray-700 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200">
+                    <Activity className="h-3.5 w-3.5 mr-1.5" />
+                    Rate Sensitivity
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

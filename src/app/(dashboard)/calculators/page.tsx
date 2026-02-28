@@ -1,7 +1,10 @@
 'use client';
 
-import { Calculator, DollarSign, Zap, Home, ArrowRightLeft, Landmark, Activity } from 'lucide-react';
+import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Calculator, DollarSign, Zap, Home, ArrowRightLeft, Landmark, Activity, Sparkles } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import CombinedAnalyzer from '@/components/calculators/CombinedAnalyzer';
 import DepreciationCalculator from '@/components/calculators/DepreciationCalculator';
 import TaxSavingsCalculator from '@/components/calculators/TaxSavingsCalculator';
 import BonusDepreciationCalculator from '@/components/calculators/BonusDepreciationCalculator';
@@ -10,7 +13,16 @@ import RefinanceAnalyzer from '@/components/calculators/RefinanceAnalyzer';
 import DSCRCalculator from '@/components/calculators/DSCRCalculator';
 import RateSensitivityTool from '@/components/calculators/RateSensitivityTool';
 
-export default function CalculatorsPage() {
+function CalculatorsContent() {
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'combined';
+
+  // Collect all search params as initialValues (excluding 'tab')
+  const initialValues: Record<string, string> = {};
+  searchParams.forEach((value, key) => {
+    if (key !== 'tab') initialValues[key] = value;
+  });
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
@@ -24,8 +36,15 @@ export default function CalculatorsPage() {
       </div>
 
       {/* Calculator Tabs */}
-      <Tabs defaultValue="depreciation" className="w-full">
+      <Tabs defaultValue={activeTab} className="w-full">
         <TabsList className="bg-gray-100 border border-gray-200 p-1 h-auto flex-wrap">
+          <TabsTrigger
+            value="combined"
+            className="data-[state=active]:bg-amber-500 data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
+          >
+            <Sparkles className="h-4 w-4" />
+            Combined Analysis
+          </TabsTrigger>
           <TabsTrigger
             value="depreciation"
             className="data-[state=active]:bg-amber-500 data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
@@ -77,6 +96,10 @@ export default function CalculatorsPage() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="combined" className="mt-6">
+          <CombinedAnalyzer initialValues={initialValues} />
+        </TabsContent>
+
         <TabsContent value="depreciation" className="mt-6">
           <DepreciationCalculator />
         </TabsContent>
@@ -90,21 +113,29 @@ export default function CalculatorsPage() {
         </TabsContent>
 
         <TabsContent value="mortgage" className="mt-6">
-          <MortgageCalculator />
+          <MortgageCalculator initialValues={initialValues} />
         </TabsContent>
 
         <TabsContent value="refinance" className="mt-6">
-          <RefinanceAnalyzer />
+          <RefinanceAnalyzer initialValues={initialValues} />
         </TabsContent>
 
         <TabsContent value="dscr" className="mt-6">
-          <DSCRCalculator />
+          <DSCRCalculator initialValues={initialValues} />
         </TabsContent>
 
         <TabsContent value="rate-sensitivity" className="mt-6">
-          <RateSensitivityTool />
+          <RateSensitivityTool initialValues={initialValues} />
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function CalculatorsPage() {
+  return (
+    <Suspense>
+      <CalculatorsContent />
+    </Suspense>
   );
 }

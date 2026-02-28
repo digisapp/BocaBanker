@@ -51,12 +51,16 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-export default function DSCRCalculator() {
+interface DSCRCalculatorProps {
+  initialValues?: Record<string, string>;
+}
+
+export default function DSCRCalculator({ initialValues }: DSCRCalculatorProps) {
   const [grossIncome, setGrossIncome] = useState('');
   const [operatingExpenses, setOperatingExpenses] = useState('');
-  const [loanAmount, setLoanAmount] = useState('');
-  const [interestRate, setInterestRate] = useState('');
-  const [termYears, setTermYears] = useState('30');
+  const [loanAmount, setLoanAmount] = useState(initialValues?.loanAmount || '');
+  const [interestRate, setInterestRate] = useState(initialValues?.interestRate || '');
+  const [termYears, setTermYears] = useState(initialValues?.termYears || '30');
   const [result, setResult] = useState<DSCRResult | null>(null);
   const [calculated, setCalculated] = useState(false);
 

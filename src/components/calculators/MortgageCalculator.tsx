@@ -52,10 +52,14 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-export default function MortgageCalculator() {
-  const [loanAmount, setLoanAmount] = useState('');
-  const [interestRate, setInterestRate] = useState('');
-  const [termYears, setTermYears] = useState('30');
+interface MortgageCalculatorProps {
+  initialValues?: Record<string, string>;
+}
+
+export default function MortgageCalculator({ initialValues }: MortgageCalculatorProps) {
+  const [loanAmount, setLoanAmount] = useState(initialValues?.loanAmount || '');
+  const [interestRate, setInterestRate] = useState(initialValues?.interestRate || '');
+  const [termYears, setTermYears] = useState(initialValues?.termYears || '30');
   const [propertyTax, setPropertyTax] = useState('');
   const [insurance, setInsurance] = useState('');
   const [result, setResult] = useState<MortgageResult | null>(null);

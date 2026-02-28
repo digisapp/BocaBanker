@@ -52,10 +52,14 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-export default function RateSensitivityTool() {
-  const [loanAmount, setLoanAmount] = useState('');
-  const [baseRate, setBaseRate] = useState('');
-  const [termYears, setTermYears] = useState('30');
+interface RateSensitivityToolProps {
+  initialValues?: Record<string, string>;
+}
+
+export default function RateSensitivityTool({ initialValues }: RateSensitivityToolProps) {
+  const [loanAmount, setLoanAmount] = useState(initialValues?.loanAmount || '');
+  const [baseRate, setBaseRate] = useState(initialValues?.baseRate || '');
+  const [termYears, setTermYears] = useState(initialValues?.termYears || '30');
   const [result, setResult] = useState<RateSensitivityResult | null>(null);
   const [calculated, setCalculated] = useState(false);
 

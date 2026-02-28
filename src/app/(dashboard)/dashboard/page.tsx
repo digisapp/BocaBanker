@@ -8,6 +8,10 @@ import {
   FileText,
   DollarSign,
   Loader2,
+  Target,
+  TrendingUp,
+  Percent,
+  Briefcase,
 } from 'lucide-react';
 import {
   BarChart,
@@ -17,11 +21,12 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Cell,
 } from 'recharts';
 import MetricCard from '@/components/dashboard/MetricCard';
 import QuickActions from '@/components/dashboard/QuickActions';
 import RecentActivity from '@/components/dashboard/RecentActivity';
-import type { DashboardStats, ActivityItem } from '@/types';
+import type { DashboardStats } from '@/types';
 
 function formatCurrency(value: number): string {
   if (value >= 1_000_000) {
@@ -62,20 +67,25 @@ export default function DashboardPage() {
     );
   }
 
-  // Build a simple monthly savings chart from the recent activity data
-  // In a real app, this would come from an aggregated API endpoint
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  const savingsChartData = monthNames.map((month, i) => ({
-    month,
-    savings: stats
-      ? Math.round(
-          (stats.totalTaxSavings / 6) * (0.5 + Math.random() * 1)
-        )
-      : 0,
-  }));
+  const newClientsThisMonth = stats?.newClientsThisMonth || 0;
+  const clientChangeText = newClientsThisMonth > 0 ? `+${newClientsThisMonth} this month` : undefined;
 
-  const newThisMonth = stats?.newClientsThisMonth || 0;
-  const changeText = newThisMonth > 0 ? `+${newThisMonth} this month` : undefined;
+  const newLeadsThisMonth = stats?.newLeadsThisMonth || 0;
+  const leadChangeText = newLeadsThisMonth > 0 ? `+${newLeadsThisMonth} this month` : undefined;
+
+  const totalLeads = stats?.totalLeads || 0;
+  const convertedLeads = stats?.convertedLeads || 0;
+  const conversionRate = totalLeads > 0 ? ((convertedLeads / totalLeads) * 100).toFixed(1) : '0';
+
+  const pipelineCount = (stats?.contactedLeads || 0) + (stats?.qualifiedLeads || 0);
+
+  // Lead pipeline chart data
+  const pipelineChartData = [
+    { stage: 'New', count: stats?.newLeads || 0, fill: '#6B7280' },
+    { stage: 'Contacted', count: stats?.contactedLeads || 0, fill: '#3B82F6' },
+    { stage: 'Qualified', count: stats?.qualifiedLeads || 0, fill: '#F59E0B' },
+    { stage: 'Converted', count: stats?.convertedLeads || 0, fill: '#10B981' },
+  ];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -89,13 +99,13 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Metric Cards */}
+      {/* Row 1: Core Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           icon={Users}
           label="Total Clients"
           value={String(stats?.totalClients || 0)}
-          change={changeText}
+          change={clientChangeText}
         />
         <MetricCard
           icon={Building2}
@@ -114,6 +124,33 @@ export default function DashboardPage() {
         />
       </div>
 
+      {/* Row 2: Lead & Portfolio Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          icon={Target}
+          label="Total Leads"
+          value={String(totalLeads)}
+          change={leadChangeText}
+        />
+        <MetricCard
+          icon={TrendingUp}
+          label="Pipeline"
+          value={String(pipelineCount)}
+          change={pipelineCount > 0 ? `${stats?.contactedLeads || 0} contacted, ${stats?.qualifiedLeads || 0} qualified` : undefined}
+        />
+        <MetricCard
+          icon={Percent}
+          label="Conversion Rate"
+          value={`${conversionRate}%`}
+          change={convertedLeads > 0 ? `${convertedLeads} converted` : undefined}
+        />
+        <MetricCard
+          icon={Briefcase}
+          label="Portfolio Value"
+          value={formatCurrency(stats?.totalPortfolioValue || 0)}
+        />
+      </div>
+
       {/* Quick Actions */}
       <QuickActions />
 
@@ -122,48 +159,53 @@ export default function DashboardPage() {
         {/* Recent Activity */}
         <RecentActivity activities={stats?.recentActivity || []} />
 
-        {/* Savings Chart */}
+        {/* Lead Pipeline Chart */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Tax Savings Trend</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">Lead Pipeline</h3>
           <div className="h-[320px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={savingsChartData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="rgba(0,0,0,0.06)"
-                />
-                <XAxis
-                  dataKey="month"
-                  stroke="#D1D5DB"
-                  tick={{ fill: '#6B7280', fontSize: 12 }}
-                />
-                <YAxis
-                  stroke="#D1D5DB"
-                  tick={{ fill: '#6B7280', fontSize: 12 }}
-                  tickFormatter={(v) =>
-                    v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`
-                  }
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '8px',
-                    color: '#111827',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                  }}
-                  formatter={(value) => [
-                    formatCurrency(value as number),
-                    'Savings',
-                  ]}
-                />
-                <Bar
-                  dataKey="savings"
-                  fill="#F59E0B"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            {totalLeads > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={pipelineChartData}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="rgba(0,0,0,0.06)"
+                  />
+                  <XAxis
+                    dataKey="stage"
+                    stroke="#D1D5DB"
+                    tick={{ fill: '#6B7280', fontSize: 12 }}
+                  />
+                  <YAxis
+                    stroke="#D1D5DB"
+                    tick={{ fill: '#6B7280', fontSize: 12 }}
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid #E5E7EB',
+                      borderRadius: '8px',
+                      color: '#111827',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                    }}
+                    formatter={(value) => [String(value), 'Leads']}
+                  />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                    {pipelineChartData.map((entry, index) => (
+                      <Cell key={index} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <Target className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500">No leads yet.</p>
+                  <p className="text-xs text-gray-400 mt-1">Import leads to see your pipeline.</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

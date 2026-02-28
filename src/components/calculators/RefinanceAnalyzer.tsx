@@ -53,10 +53,14 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-export default function RefinanceAnalyzer() {
-  const [currentBalance, setCurrentBalance] = useState('');
-  const [currentRate, setCurrentRate] = useState('');
-  const [remainingYears, setRemainingYears] = useState('25');
+interface RefinanceAnalyzerProps {
+  initialValues?: Record<string, string>;
+}
+
+export default function RefinanceAnalyzer({ initialValues }: RefinanceAnalyzerProps) {
+  const [currentBalance, setCurrentBalance] = useState(initialValues?.currentBalance || '');
+  const [currentRate, setCurrentRate] = useState(initialValues?.currentRate || '');
+  const [remainingYears, setRemainingYears] = useState(initialValues?.remainingYears || '25');
   const [newRate, setNewRate] = useState('');
   const [newTermYears, setNewTermYears] = useState('30');
   const [closingCosts, setClosingCosts] = useState('');

@@ -6,6 +6,10 @@
  */
 
 import { calculateNPV } from '@/lib/cost-seg/npv';
+import { getDefaultAllocation } from '@/lib/cost-seg/asset-classes';
+import { calculateDepreciation, calculateStraightLineDepreciation } from '@/lib/cost-seg/depreciation';
+import { calculateTaxSavings } from '@/lib/cost-seg/tax-savings';
+import type { MacrsRecoveryPeriod } from '@/lib/cost-seg/macrs-tables';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -384,5 +388,217 @@ export function calculateRateSensitivity(
     baseRate,
     basePayment: Math.round(basePayment * 100) / 100,
     entries,
+  };
+}
+
+// ─── Combined Analysis ──────────────────────────────────────────────
+
+export interface CombinedYearEntry {
+  year: number;
+  costSegSavings: number;
+  refiSavings: number;
+  combinedSavings: number;
+  cumulativeBenefit: number;
+  loanBalanceWithPaydown: number;
+  loanBalanceWithout: number;
+}
+
+export interface CombinedAnalysisResult {
+  // Cost Seg
+  costSegFirstYearSavings: number;
+  costSegFiveYearSavings: number;
+  costSegTotalSavings: number;
+  reclassifiedPercentage: number;
+  // Refinance
+  currentMonthlyPayment: number;
+  newMonthlyPayment: number;
+  monthlySavings: number;
+  refiBreakEvenMonths: number;
+  refiTotalSavings: number;
+  // Combined
+  totalYear1Benefit: number;
+  totalFiveYearBenefit: number;
+  monthsSavedOnMortgage: number;
+  additionalInterestSaved: number;
+  combinedSchedule: CombinedYearEntry[];
+}
+
+/**
+ * Combined Cost Seg + Refinance analysis.
+ * Shows the total financial impact of doing both strategies together,
+ * including the effect of applying Year 1 cost seg savings to principal.
+ */
+export function calculateCombinedAnalysis(
+  propertyValue: number,
+  propertyType: string,
+  taxRate: number,
+  bonusDepreciationRate: number,
+  loanAmount: number,
+  currentRate: number,
+  remainingYears: number,
+  newRate: number,
+  newTermYears: number,
+  closingCosts: number
+): CombinedAnalysisResult {
+  // ── Cost Seg Calculation ──
+  const allocation = getDefaultAllocation(propertyType, propertyValue);
+
+  // Build combined accelerated depreciation schedule
+  const maxYears = 40;
+  const acceleratedByYear = new Array(maxYears).fill(0);
+
+  // Determine building recovery period (residential = 27.5, else 39)
+  const residentialTypes = ['residential', 'multifamily'];
+  const buildingPeriod: 27.5 | 39 = residentialTypes.includes(propertyType.toLowerCase()) ? 27.5 : 39;
+
+  let reclassifiedAmount = 0;
+  let buildingBasis = 0;
+
+  for (const asset of allocation) {
+    if (asset.recoveryPeriod === 0) continue; // Skip land
+    const schedule = calculateDepreciation(
+      asset.amount,
+      asset.recoveryPeriod as MacrsRecoveryPeriod,
+      asset.recoveryPeriod <= 20 ? bonusDepreciationRate : 0
+    );
+    for (const entry of schedule) {
+      if (entry.year <= maxYears) {
+        acceleratedByYear[entry.year - 1] += entry.depreciation;
+      }
+    }
+    if (asset.recoveryPeriod <= 20) {
+      reclassifiedAmount += asset.amount;
+    }
+    if (asset.recoveryPeriod === 27.5 || asset.recoveryPeriod === 39) {
+      buildingBasis += asset.amount;
+    }
+  }
+
+  // Straight-line baseline (all depreciable value at building rate)
+  const depreciableBasis = allocation
+    .filter((a) => a.recoveryPeriod > 0)
+    .reduce((sum, a) => sum + a.amount, 0);
+  const straightLine = calculateStraightLineDepreciation(depreciableBasis, buildingPeriod);
+
+  // Build schedules for tax savings calc
+  const accSchedule = acceleratedByYear.map((dep, i) => ({
+    year: i + 1,
+    depreciation: Math.round(dep * 100) / 100,
+  })).filter((e) => e.depreciation > 0 || e.year <= straightLine.length);
+
+  const slSchedule = straightLine.map((e) => ({
+    year: e.year,
+    depreciation: e.depreciation,
+  }));
+
+  const taxSavings = calculateTaxSavings(accSchedule, slSchedule, taxRate);
+
+  const costSegFirstYearSavings = taxSavings.length > 0 ? taxSavings[0].annualSavings : 0;
+  const costSegFiveYearSavings = taxSavings
+    .slice(0, 5)
+    .reduce((sum, e) => sum + e.annualSavings, 0);
+  const costSegTotalSavings = taxSavings.reduce((sum, e) => sum + e.annualSavings, 0);
+  const reclassifiedPercentage = propertyValue > 0
+    ? Math.round((reclassifiedAmount / propertyValue) * 100)
+    : 0;
+
+  // ── Refinance Calculation ──
+  const currentMonthly = calculateMonthlyPayment(loanAmount, currentRate, remainingYears);
+  const newMonthly = calculateMonthlyPayment(loanAmount, newRate, newTermYears);
+  const monthlySavings = Math.round((currentMonthly - newMonthly) * 100) / 100;
+  const refiBreakEvenMonths = monthlySavings > 0
+    ? Math.ceil(closingCosts / monthlySavings)
+    : 0;
+  const comparisonYears = Math.min(remainingYears, newTermYears);
+  const refiTotalSavings = Math.round(
+    (monthlySavings * comparisonYears * 12 - closingCosts) * 100
+  ) / 100;
+
+  // ── Combined Analysis ──
+  const annualRefiSavings = monthlySavings * 12;
+  const totalYear1Benefit = Math.round(
+    (costSegFirstYearSavings + annualRefiSavings - closingCosts) * 100
+  ) / 100;
+
+  // Calculate 5-year benefit
+  const totalFiveYearBenefit = Math.round(
+    (costSegFiveYearSavings + annualRefiSavings * 5 - closingCosts) * 100
+  ) / 100;
+
+  // Loan paydown scenario: apply Year 1 cost seg savings as lump-sum to principal
+  // after the first year of the new loan
+  const r = newRate > 0 ? newRate / 100 / 12 : 0;
+  const n = newTermYears * 12;
+
+  // Track two loan balances: with and without the cost seg paydown
+  let balanceWithout = loanAmount;
+  let balanceWith = loanAmount;
+  let interestWithout = 0;
+  let interestWith = 0;
+  let monthsPaidWith = 0;
+  let monthsPaidWithout = 0;
+
+  const combinedSchedule: CombinedYearEntry[] = [];
+  let cumulativeBenefit = -closingCosts; // Start negative (closing costs)
+
+  for (let year = 1; year <= comparisonYears; year++) {
+    const yearCostSegSavings = year <= taxSavings.length ? taxSavings[year - 1].annualSavings : 0;
+    const yearRefiSavings = annualRefiSavings;
+    const combined = Math.round((yearCostSegSavings + yearRefiSavings) * 100) / 100;
+    cumulativeBenefit = Math.round((cumulativeBenefit + combined) * 100) / 100;
+
+    // Simulate 12 months for both balances
+    for (let m = 0; m < 12; m++) {
+      if (balanceWithout > 0) {
+        const intWithout = balanceWithout * r;
+        const princWithout = Math.min(newMonthly - intWithout, balanceWithout);
+        interestWithout += intWithout;
+        balanceWithout = Math.max(0, balanceWithout - princWithout);
+        monthsPaidWithout++;
+      }
+      if (balanceWith > 0) {
+        const intWith = balanceWith * r;
+        const princWith = Math.min(newMonthly - intWith, balanceWith);
+        interestWith += intWith;
+        balanceWith = Math.max(0, balanceWith - princWith);
+        monthsPaidWith++;
+      }
+    }
+
+    // Apply cost seg savings as lump-sum principal payment at end of year
+    if (balanceWith > 0 && yearCostSegSavings > 0) {
+      const paydown = Math.min(yearCostSegSavings, balanceWith);
+      balanceWith = Math.max(0, balanceWith - paydown);
+    }
+
+    combinedSchedule.push({
+      year,
+      costSegSavings: Math.round(yearCostSegSavings * 100) / 100,
+      refiSavings: Math.round(yearRefiSavings * 100) / 100,
+      combinedSavings: combined,
+      cumulativeBenefit,
+      loanBalanceWithPaydown: Math.round(balanceWith * 100) / 100,
+      loanBalanceWithout: Math.round(balanceWithout * 100) / 100,
+    });
+  }
+
+  const monthsSaved = monthsPaidWithout - monthsPaidWith;
+  const additionalInterestSaved = Math.round((interestWithout - interestWith) * 100) / 100;
+
+  return {
+    costSegFirstYearSavings: Math.round(costSegFirstYearSavings * 100) / 100,
+    costSegFiveYearSavings: Math.round(costSegFiveYearSavings * 100) / 100,
+    costSegTotalSavings: Math.round(costSegTotalSavings * 100) / 100,
+    reclassifiedPercentage,
+    currentMonthlyPayment: Math.round(currentMonthly * 100) / 100,
+    newMonthlyPayment: Math.round(newMonthly * 100) / 100,
+    monthlySavings,
+    refiBreakEvenMonths,
+    refiTotalSavings,
+    totalYear1Benefit,
+    totalFiveYearBenefit,
+    monthsSavedOnMortgage: monthsSaved,
+    additionalInterestSaved,
+    combinedSchedule,
   };
 }

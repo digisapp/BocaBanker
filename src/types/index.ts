@@ -191,6 +191,13 @@ export interface DashboardStats {
   completedStudies: number;
   totalTaxSavings: number;
   emailsSentThisMonth: number;
+  totalLeads: number;
+  newLeads: number;
+  contactedLeads: number;
+  qualifiedLeads: number;
+  convertedLeads: number;
+  newLeadsThisMonth: number;
+  totalPortfolioValue: number;
   recentActivity: ActivityItem[];
 }
 
