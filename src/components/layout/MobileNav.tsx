@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   MessageSquare,
+  Target,
   Users,
   Building2,
   FileBarChart,
@@ -29,6 +30,7 @@ import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/chat', label: 'Chat', icon: MessageSquare },
+  { href: '/leads', label: 'Leads', icon: Target },
   { href: '/clients', label: 'Clients', icon: Users },
   { href: '/properties', label: 'Properties', icon: Building2 },
   { href: '/studies', label: 'Studies', icon: FileBarChart },

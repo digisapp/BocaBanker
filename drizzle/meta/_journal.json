@@ -8,6 +8,13 @@
       "when": 1770490096416,
       "tag": "0000_odd_thundra",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772250350840,
+      "tag": "0001_redundant_hex",
+      "breakpoints": true
     }
   ]
 }

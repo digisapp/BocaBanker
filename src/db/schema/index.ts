@@ -7,3 +7,4 @@ export * from './chat-conversations';
 export * from './chat-messages';
 export * from './documents';
 export * from './email-logs';
+export * from './leads';

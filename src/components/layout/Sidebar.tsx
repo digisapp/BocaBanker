@@ -12,6 +12,7 @@ import {
   Mail,
   FolderOpen,
   Settings,
+  Target,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
@@ -33,6 +34,7 @@ interface SidebarProps {
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/chat', label: 'Chat', icon: MessageSquare },
+  { href: '/leads', label: 'Leads', icon: Target },
   { href: '/clients', label: 'Clients', icon: Users },
   { href: '/properties', label: 'Properties', icon: Building2 },
   { href: '/studies', label: 'Studies', icon: FileBarChart },

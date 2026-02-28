@@ -9,6 +9,7 @@ import {
   Settings,
   LayoutDashboard,
   MessageSquare,
+  Target,
   Users,
   Building2,
   FileBarChart,
@@ -43,6 +44,7 @@ interface SearchResult {
 const searchableItems: SearchResult[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'page' },
   { label: 'AI Chat', href: '/chat', icon: MessageSquare, category: 'page' },
+  { label: 'Leads', href: '/leads', icon: Target, category: 'page' },
   { label: 'Clients', href: '/clients', icon: Users, category: 'page' },
   { label: 'New Client', href: '/clients/new', icon: Users, category: 'action' },
   { label: 'Import Clients', href: '/clients/import', icon: Users, category: 'action' },

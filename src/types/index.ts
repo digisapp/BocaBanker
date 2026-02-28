@@ -132,6 +132,53 @@ export interface EmailLog {
   sentAt: string;
 }
 
+export interface Lead {
+  id: string;
+  userId: string;
+  propertyAddress: string;
+  propertyCity: string | null;
+  propertyCounty: string | null;
+  propertyState: string | null;
+  propertyZip: string | null;
+  propertyType:
+    | 'industrial'
+    | 'office'
+    | 'retail'
+    | 'multifamily'
+    | 'mixed-use'
+    | 'hospitality'
+    | 'healthcare'
+    | 'other';
+  salePrice: string | null;
+  saleDate: string | null;
+  parcelId: string | null;
+  deedBookPage: string | null;
+  buyerName: string | null;
+  buyerCompany: string | null;
+  buyerEmail: string | null;
+  buyerPhone: string | null;
+  sellerName: string | null;
+  squareFootage: number | null;
+  yearBuilt: number | null;
+  buildingValue: string | null;
+  landValue: string | null;
+  status:
+    | 'new'
+    | 'contacted'
+    | 'qualified'
+    | 'proposal_sent'
+    | 'converted'
+    | 'lost';
+  priority: 'low' | 'medium' | 'high';
+  source: string | null;
+  notes: string | null;
+  tags: string[];
+  contactedAt: string | null;
+  convertedClientId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ---------------------------------------------------------------------------
 // Dashboard
 // ---------------------------------------------------------------------------
