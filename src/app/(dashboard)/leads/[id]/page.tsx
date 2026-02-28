@@ -45,6 +45,12 @@ interface LeadDetail {
   buyerEmail: string | null
   buyerPhone: string | null
   sellerName: string | null
+  memberName: string | null
+  memberAddress: string | null
+  memberCity: string | null
+  memberState: string | null
+  memberZip: string | null
+  sunbizDocNumber: string | null
   squareFootage: string | null
   yearBuilt: string | null
   status: string | null
@@ -396,6 +402,44 @@ export default function LeadDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* LLC Member / Registered Agent */}
+      {lead.memberName && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
+            <User className="h-4 w-4" />
+            LLC Member / Registered Agent
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InfoRow
+              icon={<User className="h-4 w-4" />}
+              label="Name"
+              value={lead.memberName}
+            />
+            <InfoRow
+              icon={<MapPin className="h-4 w-4" />}
+              label="Address"
+              value={lead.memberAddress}
+            />
+            <InfoRow
+              icon={<MapPin className="h-4 w-4" />}
+              label="City / State / ZIP"
+              value={
+                [lead.memberCity, lead.memberState, lead.memberZip]
+                  .filter(Boolean)
+                  .join(', ') || null
+              }
+            />
+            {lead.sunbizDocNumber && (
+              <InfoRow
+                icon={<Hash className="h-4 w-4" />}
+                label="Sunbiz Doc #"
+                value={lead.sunbizDocNumber}
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Seller Information */}
       {lead.sellerName && (

@@ -58,6 +58,11 @@ interface LeadRow {
   buyerCompany: string | null
   buyerEmail: string | null
   buyerPhone: string | null
+  memberName: string | null
+  memberAddress: string | null
+  memberCity: string | null
+  memberState: string | null
+  memberZip: string | null
   status: string | null
   priority: string | null
 }
@@ -375,7 +380,10 @@ export default function LeadsPage() {
                     Sale Date
                   </TableHead>
                   <TableHead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
-                    Buyer
+                    Buyer / LLC
+                  </TableHead>
+                  <TableHead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
+                    Member / Person
                   </TableHead>
                   <TableHead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
                     Contact
@@ -453,6 +461,22 @@ export default function LeadsPage() {
                             </p>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {lead.memberName ? (
+                          <div>
+                            <p className="text-sm text-gray-900">
+                              {lead.memberName}
+                            </p>
+                            {(lead.memberCity || lead.memberState) && (
+                              <p className="text-xs text-gray-500">
+                                {[lead.memberAddress, lead.memberCity, lead.memberState].filter(Boolean).join(', ')}
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">--</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">

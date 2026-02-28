@@ -50,6 +50,14 @@ export const leads = pgTable('leads', {
   // Seller info
   sellerName: text('seller_name'),
 
+  // LLC member / registered agent (from Sunbiz)
+  memberName: text('member_name'),
+  memberAddress: text('member_address'),
+  memberCity: text('member_city'),
+  memberState: text('member_state'),
+  memberZip: text('member_zip'),
+  sunbizDocNumber: text('sunbiz_doc_number'),
+
   // Building details
   squareFootage: integer('square_footage'),
   yearBuilt: integer('year_built'),
