@@ -15,6 +15,8 @@ import {
   TrendingUp,
   DollarSign,
   Sparkles,
+  Mail,
+  Phone,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -54,6 +56,8 @@ interface LeadRow {
   saleDate: string | null
   buyerName: string | null
   buyerCompany: string | null
+  buyerEmail: string | null
+  buyerPhone: string | null
   status: string | null
   priority: string | null
 }
@@ -374,6 +378,9 @@ export default function LeadsPage() {
                     Buyer
                   </TableHead>
                   <TableHead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
+                    Contact
+                  </TableHead>
+                  <TableHead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
                     Status
                   </TableHead>
                   <TableHead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
@@ -444,6 +451,40 @@ export default function LeadsPage() {
                             <p className="text-xs text-gray-500">
                               {lead.buyerCompany}
                             </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          {lead.buyerEmail ? (
+                            <a
+                              href={`mailto:${lead.buyerEmail}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex items-center gap-1.5 text-xs text-amber-600 hover:underline"
+                            >
+                              <Mail className="h-3 w-3" />
+                              {lead.buyerEmail}
+                            </a>
+                          ) : (
+                            <span className="flex items-center gap-1.5 text-xs text-gray-400">
+                              <Mail className="h-3 w-3" />
+                              --
+                            </span>
+                          )}
+                          {lead.buyerPhone ? (
+                            <a
+                              href={`tel:${lead.buyerPhone}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex items-center gap-1.5 text-xs text-amber-600 hover:underline"
+                            >
+                              <Phone className="h-3 w-3" />
+                              {lead.buyerPhone}
+                            </a>
+                          ) : (
+                            <span className="flex items-center gap-1.5 text-xs text-gray-400">
+                              <Phone className="h-3 w-3" />
+                              --
+                            </span>
                           )}
                         </div>
                       </TableCell>

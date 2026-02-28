@@ -1,10 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { db } from '@/db';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
-import { leads } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
-import { leadSchema } from '@/lib/validation/schemas';
+
+// Map snake_case DB row to camelCase for frontend
+function mapLead(r: Record<string, unknown>) {
+  return {
+    id: r.id,
+    userId: r.user_id,
+    propertyAddress: r.property_address,
+    propertyCity: r.property_city,
+    propertyCounty: r.property_county,
+    propertyState: r.property_state,
+    propertyZip: r.property_zip,
+    propertyType: r.property_type,
+    salePrice: r.sale_price,
+    saleDate: r.sale_date,
+    parcelId: r.parcel_id,
+    buyerName: r.buyer_name,
+    buyerCompany: r.buyer_company,
+    buyerEmail: r.buyer_email,
+    buyerPhone: r.buyer_phone,
+    sellerName: r.seller_name,
+    squareFootage: r.square_footage,
+    yearBuilt: r.year_built,
+    status: r.status,
+    priority: r.priority,
+    source: r.source,
+    notes: r.notes,
+    tags: r.tags,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
 
 export async function GET(
   _request: NextRequest,
@@ -22,16 +50,17 @@ export async function GET(
 
     const { id } = await params;
 
-    const [lead] = await db
-      .select()
-      .from(leads)
-      .where(and(eq(leads.id, id), eq(leads.userId, user.id)));
+    const { data: lead, error } = await supabaseAdmin
+      .from('leads')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-    if (!lead) {
+    if (error || !lead) {
       return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
     }
 
-    return NextResponse.json(lead);
+    return NextResponse.json(mapLead(lead));
   } catch (error) {
     logger.error('leads-api', 'GET /api/leads/[id] error', error);
     return NextResponse.json(
@@ -57,64 +86,60 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const parsed = leadSchema.safeParse(body);
 
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: parsed.error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    // Verify ownership
-    const [existing] = await db
-      .select()
-      .from(leads)
-      .where(and(eq(leads.id, id), eq(leads.userId, user.id)));
+    // Verify lead exists
+    const { data: existing } = await supabaseAdmin
+      .from('leads')
+      .select('id')
+      .eq('id', id)
+      .single();
 
     if (!existing) {
       return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
     }
 
-    const data = parsed.data;
-
-    const tagsArray = data.tags
-      ? data.tags
-          .split(',')
-          .map((t) => t.trim())
-          .filter(Boolean)
+    const tagsArray = body.tags
+      ? (typeof body.tags === 'string'
+          ? body.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+          : body.tags)
       : [];
 
-    const [updated] = await db
-      .update(leads)
-      .set({
-        propertyAddress: data.property_address,
-        propertyCity: data.property_city || null,
-        propertyCounty: data.property_county || null,
-        propertyState: data.property_state || 'FL',
-        propertyZip: data.property_zip || null,
-        propertyType: data.property_type,
-        salePrice: data.sale_price?.toString() ?? null,
-        saleDate: data.sale_date || null,
-        parcelId: data.parcel_id || null,
-        buyerName: data.buyer_name || null,
-        buyerCompany: data.buyer_company || null,
-        buyerEmail: data.buyer_email || null,
-        buyerPhone: data.buyer_phone || null,
-        sellerName: data.seller_name || null,
-        squareFootage: data.square_footage ?? null,
-        yearBuilt: data.year_built ?? null,
-        status: data.status,
-        priority: data.priority,
-        source: data.source || null,
-        notes: data.notes || null,
+    const { data: updated, error } = await supabaseAdmin
+      .from('leads')
+      .update({
+        property_address: body.property_address ?? body.propertyAddress,
+        property_city: body.property_city ?? body.propertyCity ?? null,
+        property_county: body.property_county ?? body.propertyCounty ?? null,
+        property_state: body.property_state ?? body.propertyState ?? 'FL',
+        property_zip: body.property_zip ?? body.propertyZip ?? null,
+        property_type: body.property_type ?? body.propertyType,
+        sale_price: body.sale_price ?? body.salePrice ?? null,
+        sale_date: body.sale_date ?? body.saleDate ?? null,
+        parcel_id: body.parcel_id ?? body.parcelId ?? null,
+        buyer_name: body.buyer_name ?? body.buyerName ?? null,
+        buyer_company: body.buyer_company ?? body.buyerCompany ?? null,
+        buyer_email: body.buyer_email ?? body.buyerEmail ?? null,
+        buyer_phone: body.buyer_phone ?? body.buyerPhone ?? null,
+        seller_name: body.seller_name ?? body.sellerName ?? null,
+        square_footage: body.square_footage ?? body.squareFootage ?? null,
+        year_built: body.year_built ?? body.yearBuilt ?? null,
+        status: body.status,
+        priority: body.priority,
+        source: body.source ?? null,
+        notes: body.notes ?? null,
         tags: tagsArray,
-        updatedAt: new Date(),
+        updated_at: new Date().toISOString(),
       })
-      .where(and(eq(leads.id, id), eq(leads.userId, user.id)))
-      .returning();
+      .eq('id', id)
+      .select()
+      .single();
 
-    return NextResponse.json(updated);
+    if (error) {
+      logger.error('leads-api', 'Supabase update error', error);
+      return NextResponse.json({ error: 'Failed to update lead' }, { status: 500 });
+    }
+
+    return NextResponse.json(mapLead(updated));
   } catch (error) {
     logger.error('leads-api', 'PUT /api/leads/[id] error', error);
     return NextResponse.json(
@@ -140,20 +165,15 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Verify ownership
-    const [existing] = await db
-      .select()
-      .from(leads)
-      .where(and(eq(leads.id, id), eq(leads.userId, user.id)));
+    const { error } = await supabaseAdmin
+      .from('leads')
+      .delete()
+      .eq('id', id);
 
-    if (!existing) {
-      return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+    if (error) {
+      logger.error('leads-api', 'Supabase delete error', error);
+      return NextResponse.json({ error: 'Failed to delete lead' }, { status: 500 });
     }
-
-    // Hard delete
-    await db
-      .delete(leads)
-      .where(and(eq(leads.id, id), eq(leads.userId, user.id)));
 
     return NextResponse.json({ success: true });
   } catch (error) {
