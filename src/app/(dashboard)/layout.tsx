@@ -46,6 +46,7 @@ export default function DashboardLayout({
 
   return (
     <AuthProvider>
+      <meta name="robots" content="noindex, nofollow" />
       <div className="flex h-screen overflow-hidden bg-[#FAFAF8]">
         {/* Desktop Sidebar */}
         <Sidebar

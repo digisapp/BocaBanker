@@ -19,6 +19,7 @@ export default function robots(): MetadataRoute.Robots {
           '/documents/',
           '/settings/',
           '/api/',
+          '/leads/',
           '/reset-password/',
         ],
       },

@@ -10,6 +10,7 @@ import {
   DollarSign,
   Landmark,
   Search,
+  ChevronDown,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -202,6 +203,9 @@ export default function Home() {
                   <span className="block text-4xl sm:text-5xl md:text-6xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-500 bg-clip-text text-transparent">
                     Boca Banker
                   </span>
+                  <span className="block text-lg sm:text-xl md:text-2xl text-gray-500 font-medium mt-2">
+                    AI-Powered Cost Segregation &amp; Banking Intelligence
+                  </span>
                 </h1>
               </Reveal>
 
@@ -342,6 +346,60 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════
+         FAQ
+         ══════════════════════════════════════ */}
+      <section aria-label="Frequently asked questions" className="py-20 sm:py-28 px-6 bg-white">
+        <div className="mx-auto max-w-3xl">
+          <Reveal>
+            <div className="text-center mb-14">
+              <p className="text-sm font-semibold tracking-widest uppercase text-amber-600 mb-3">
+                FAQ
+              </p>
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">
+                Common{' '}
+                <span className="bg-gradient-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent">
+                  questions
+                </span>
+              </h2>
+            </div>
+          </Reveal>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: 'What is cost segregation?',
+                a: 'Cost segregation is a tax strategy that accelerates depreciation deductions on commercial real estate by reclassifying building components into shorter depreciation categories (5, 7, or 15 years instead of 27.5 or 39 years). This can generate significant tax savings in the first years of ownership.',
+              },
+              {
+                q: 'How much can I save with a cost segregation study?',
+                a: 'Typical savings range from 15% to 40% of a property\u2019s depreciable basis, accelerated into the first few years. For a $1M commercial property, this could mean $150,000\u2013$400,000 in accelerated depreciation deductions. Boca Banker provides instant AI-powered estimates based on your specific property.',
+              },
+              {
+                q: 'How does Boca Banker work?',
+                a: 'Simply start a conversation with Boca Banker\u2019s AI chat. Describe your property and he\u2019ll analyze its cost segregation potential, estimate tax savings through MACRS and bonus depreciation, and provide expert guidance on banking and real estate strategy \u2014 all powered by 40 years of Boca Raton banking intelligence.',
+              },
+              {
+                q: 'Is the AI chat free?',
+                a: 'Yes! You can chat with Boca Banker for free \u2014 no signup required. Ask about cost segregation, mortgages, tax strategy, or property analysis. Sign up for a free account to access the full platform including automated studies, client CRM, and email outreach tools.',
+              },
+            ].map((faq, i) => (
+              <Reveal key={faq.q} delay={i * 60}>
+                <details className="group rounded-2xl border border-gray-200 bg-white overflow-hidden">
+                  <summary className="flex items-center justify-between cursor-pointer px-6 py-5 text-left font-semibold text-gray-900 hover:bg-gray-50 transition-colors">
+                    <span>{faq.q}</span>
+                    <ChevronDown className="h-5 w-5 text-gray-400 shrink-0 ml-4 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="px-6 pb-5 text-sm leading-relaxed text-gray-500">
+                    {faq.a}
+                  </div>
+                </details>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════
          CTA
          ══════════════════════════════════════ */}
       <section aria-label="Call to action" className="py-24 sm:py-32 px-6 bg-gradient-to-br from-sky-500 via-sky-400 to-teal-400 relative overflow-hidden">
@@ -379,20 +437,47 @@ export default function Home() {
       {/* ══════════════════════════════════════
          FOOTER
          ══════════════════════════════════════ */}
-      <footer className="bg-white border-t border-gray-100 py-10 px-6">
+      <footer className="bg-gray-50 border-t border-gray-200 py-14 px-6">
         <div className="mx-auto max-w-6xl">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2.5">
-              <BocaBankerAvatar size={32} />
-              <span className="font-serif text-lg font-bold text-gray-900">
-                Boca Banker
-              </span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
+            <div>
+              <div className="flex items-center gap-2.5 mb-4">
+                <BocaBankerAvatar size={32} />
+                <span className="font-serif text-lg font-bold text-gray-900">
+                  Boca Banker
+                </span>
+              </div>
+              <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
+                AI-powered cost segregation analysis and banking intelligence built on 40 years of Boca Raton financial expertise. Maximize your commercial real estate tax savings.
+              </p>
+              <p className="text-xs text-gray-400 mt-3">Boca Raton, FL</p>
             </div>
-            <nav aria-label="Footer navigation" className="flex items-center gap-8 text-sm text-gray-500">
-              <Link href="/login" className="hover:text-gray-900 transition-colors">Sign In</Link>
-            </nav>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 text-sm mb-4">Platform</h3>
+              <nav aria-label="Footer navigation" className="flex flex-col gap-2.5 text-sm text-gray-500">
+                <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-left hover:text-gray-900 transition-colors">AI Chat</button>
+                <button onClick={() => document.querySelector('[aria-label="Features"]')?.scrollIntoView({ behavior: 'smooth' })} className="text-left hover:text-gray-900 transition-colors">Features</button>
+                <button onClick={() => document.querySelector('[aria-label="How it works"]')?.scrollIntoView({ behavior: 'smooth' })} className="text-left hover:text-gray-900 transition-colors">How It Works</button>
+                <button onClick={() => document.querySelector('[aria-label="Frequently asked questions"]')?.scrollIntoView({ behavior: 'smooth' })} className="text-left hover:text-gray-900 transition-colors">FAQ</button>
+              </nav>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 text-sm mb-4">Get Started</h3>
+              <nav className="flex flex-col gap-2.5 text-sm text-gray-500">
+                <Link href="/login" className="hover:text-gray-900 transition-colors">Sign In</Link>
+                <Link href="/reset-password" className="hover:text-gray-900 transition-colors">Reset Password</Link>
+              </nav>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-gray-400">
               &copy; {new Date().getFullYear()} Boca Banker. All rights reserved.
+            </p>
+            <p className="text-xs text-gray-400">
+              Cost segregation &middot; MACRS depreciation &middot; Tax savings &middot; South Florida
             </p>
           </div>
         </div>
