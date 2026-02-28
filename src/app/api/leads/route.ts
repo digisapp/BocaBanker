@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { leads } from '@/db/schema';
-import { eq, and, or, ilike, desc, asc, count, gte, lte } from 'drizzle-orm';
 import { leadSchema } from '@/lib/validation/schemas';
+
+// Map camelCase sort keys to snake_case DB columns
+const SORT_COLUMNS: Record<string, string> = {
+  propertyAddress: 'property_address',
+  buyerName: 'buyer_name',
+  salePrice: 'sale_price',
+  saleDate: 'sale_date',
+  status: 'status',
+  priority: 'priority',
+  propertyType: 'property_type',
+  createdAt: 'created_at',
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,95 +44,91 @@ export async function GET(request: NextRequest) {
     const order = searchParams.get('order') ?? 'desc';
 
     const offset = (page - 1) * limit;
+    const sortColumn = SORT_COLUMNS[sort] || 'created_at';
+    const ascending = order === 'asc';
 
-    // Build where conditions — show all leads (shared pool), not just user-owned
-    const conditions = [];
+    // Use Supabase REST API (HTTP) instead of postgres-js to avoid serverless connection issues
+    let query = supabaseAdmin
+      .from('leads')
+      .select('*', { count: 'exact' });
 
     if (search) {
-      conditions.push(
-        or(
-          ilike(leads.propertyAddress, `%${search}%`),
-          ilike(leads.buyerName, `%${search}%`),
-          ilike(leads.buyerCompany, `%${search}%`),
-          ilike(leads.propertyCity, `%${search}%`),
-          ilike(leads.propertyCounty, `%${search}%`)
-        )!
+      query = query.or(
+        `property_address.ilike.%${search}%,buyer_name.ilike.%${search}%,buyer_company.ilike.%${search}%,property_city.ilike.%${search}%,property_county.ilike.%${search}%`
       );
     }
 
     if (status && status !== 'all') {
-      conditions.push(
-        eq(leads.status, status as 'new' | 'contacted' | 'qualified' | 'proposal_sent' | 'converted' | 'lost')
-      );
+      query = query.eq('status', status);
     }
 
     if (propertyType && propertyType !== 'all') {
-      conditions.push(
-        eq(leads.propertyType, propertyType as 'industrial' | 'office' | 'retail' | 'multifamily' | 'mixed-use' | 'hospitality' | 'healthcare' | 'other')
-      );
+      query = query.eq('property_type', propertyType);
     }
 
     if (priority && priority !== 'all') {
-      conditions.push(
-        eq(leads.priority, priority as 'low' | 'medium' | 'high')
-      );
+      query = query.eq('priority', priority);
     }
 
     if (minPrice) {
-      conditions.push(gte(leads.salePrice, minPrice));
+      query = query.gte('sale_price', minPrice);
     }
 
     if (maxPrice) {
-      conditions.push(lte(leads.salePrice, maxPrice));
+      query = query.lte('sale_price', maxPrice);
     }
 
     if (dateFrom) {
-      conditions.push(gte(leads.saleDate, dateFrom));
+      query = query.gte('sale_date', dateFrom);
     }
 
     if (dateTo) {
-      conditions.push(lte(leads.saleDate, dateTo));
+      query = query.lte('sale_date', dateTo);
     }
 
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    query = query
+      .order(sortColumn, { ascending })
+      .range(offset, offset + limit - 1);
 
-    // Determine sort column
-    const getSortColumn = (key: string) => {
-      switch (key) {
-        case 'propertyAddress': return leads.propertyAddress;
-        case 'buyerName': return leads.buyerName;
-        case 'salePrice': return leads.salePrice;
-        case 'saleDate': return leads.saleDate;
-        case 'status': return leads.status;
-        case 'priority': return leads.priority;
-        case 'propertyType': return leads.propertyType;
-        default: return leads.createdAt;
-      }
-    };
+    const { data: rows, count: total, error } = await query;
 
-    const sortColumn = getSortColumn(sort);
-    const orderFn = order === 'asc' ? asc : desc;
+    if (error) {
+      logger.error('leads-api', 'Supabase query error', error);
+      return NextResponse.json({ error: 'Failed to fetch leads' }, { status: 500 });
+    }
 
-    // Query leads
-    const [leadRows, totalResult] = await Promise.all([
-      db
-        .select()
-        .from(leads)
-        .where(whereClause)
-        .orderBy(orderFn(sortColumn))
-        .limit(limit)
-        .offset(offset),
-      db
-        .select({ total: count() })
-        .from(leads)
-        .where(whereClause),
-    ]);
-
-    const total = totalResult[0]?.total ?? 0;
+    // Map snake_case DB rows to camelCase for frontend
+    const leadRows = (rows || []).map((r: Record<string, unknown>) => ({
+      id: r.id,
+      userId: r.user_id,
+      propertyAddress: r.property_address,
+      propertyCity: r.property_city,
+      propertyCounty: r.property_county,
+      propertyState: r.property_state,
+      propertyZip: r.property_zip,
+      propertyType: r.property_type,
+      salePrice: r.sale_price,
+      saleDate: r.sale_date,
+      parcelId: r.parcel_id,
+      buyerName: r.buyer_name,
+      buyerCompany: r.buyer_company,
+      buyerEmail: r.buyer_email,
+      buyerPhone: r.buyer_phone,
+      sellerName: r.seller_name,
+      squareFootage: r.square_footage,
+      yearBuilt: r.year_built,
+      status: r.status,
+      priority: r.priority,
+      source: r.source,
+      notes: r.notes,
+      tags: r.tags,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    }));
 
     return NextResponse.json({
       leads: leadRows,
-      total,
+      total: total ?? 0,
       page,
       limit,
     });
