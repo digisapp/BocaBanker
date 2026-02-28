@@ -33,8 +33,8 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * limit;
 
-    // Build where conditions
-    const conditions = [eq(leads.userId, user.id)];
+    // Build where conditions — show all leads (shared pool), not just user-owned
+    const conditions = [];
 
     if (search) {
       conditions.push(
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
       conditions.push(lte(leads.saleDate, dateTo));
     }
 
-    const whereClause = and(...conditions);
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     // Determine sort column
     const getSortColumn = (key: string) => {
