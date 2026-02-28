@@ -14,15 +14,30 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const [dbUser] = await db
+    let [dbUser] = await db
       .select({ role: users.role, fullName: users.fullName })
       .from(users)
       .where(eq(users.id, user.id))
       .limit(1)
 
+    // Auto-create user row if missing (e.g. first login after Supabase Auth signup)
+    if (!dbUser) {
+      const [created] = await db
+        .insert(users)
+        .values({
+          id: user.id,
+          email: user.email!,
+          fullName: user.user_metadata?.full_name || null,
+          role: 'admin',
+        })
+        .onConflictDoNothing()
+        .returning({ role: users.role, fullName: users.fullName })
+      dbUser = created ?? { role: 'admin', fullName: null }
+    }
+
     return NextResponse.json({
-      role: dbUser?.role || 'viewer',
-      fullName: dbUser?.fullName || null,
+      role: dbUser.role || 'viewer',
+      fullName: dbUser.fullName || null,
     })
   } catch (error) {
     logger.error('auth-api', 'Error fetching user role', error)
