@@ -35,6 +35,7 @@ function mapLead(r: Record<string, unknown>) {
     source: r.source,
     notes: r.notes,
     tags: r.tags,
+    convertedClientId: r.converted_client_id ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };

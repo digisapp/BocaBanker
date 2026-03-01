@@ -280,7 +280,11 @@ export default function LeadsPage() {
       const res = await fetch(`/api/leads/${id}/convert`, { method: 'POST' })
       if (!res.ok) throw new Error('Failed to convert')
       const data = await res.json()
-      router.push(`/clients/${data.clientId}`)
+      if (data.propertyId) {
+        router.push(`/properties/${data.propertyId}`)
+      } else {
+        router.push(`/clients/${data.clientId}`)
+      }
     } catch (error) {
       logger.error('leads-page', 'Failed to convert lead', error)
     }
@@ -689,15 +693,17 @@ export default function LeadsPage() {
                                   <Eye className="h-4 w-4 mr-2" />
                                   View
                                 </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleConvert(lead.id)
-                                  }}
-                                >
-                                  <UserCheck className="h-4 w-4 mr-2" />
-                                  Convert to Client
-                                </DropdownMenuItem>
+                                {status !== 'converted' && (
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleConvert(lead.id)
+                                    }}
+                                  >
+                                    <UserCheck className="h-4 w-4 mr-2" />
+                                    Convert to Client
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuSeparator className="bg-gray-100" />
                                 <DropdownMenuItem
                                   variant="destructive"

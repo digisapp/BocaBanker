@@ -53,11 +53,21 @@ export async function POST(
       );
     }
 
-    // Parse buyer name into first/last
-    const buyerName = (lead.buyer_name ?? '').trim();
-    const nameParts = buyerName.split(/\s+/);
+    // Parse buyer name into first/last — prefer LLC member name if available
+    const contactName = (lead.member_name || lead.buyer_name || '').trim();
+    const nameParts = contactName.split(/\s+/);
     const firstName = nameParts[0] || 'Unknown';
     const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'Unknown';
+
+    // Build notes with LLC/member info
+    const notesParts: string[] = [];
+    if (lead.notes) notesParts.push(lead.notes);
+    if (lead.member_name) notesParts.push(`LLC Member: ${lead.member_name}`);
+    if (lead.sunbiz_doc_number) notesParts.push(`Sunbiz Doc#: ${lead.sunbiz_doc_number}`);
+    if (lead.seller_name) notesParts.push(`Seller: ${lead.seller_name}`);
+    if (lead.parcel_id) notesParts.push(`Parcel ID: ${lead.parcel_id}`);
+    if (lead.deed_book_page) notesParts.push(`Deed Book/Page: ${lead.deed_book_page}`);
+    const combinedNotes = notesParts.length > 0 ? notesParts.join('\n') : null;
 
     // Create client from buyer info
     const { data: client, error: clientErr } = await supabaseAdmin
@@ -69,14 +79,14 @@ export async function POST(
         email: lead.buyer_email || null,
         phone: lead.buyer_phone || null,
         company: lead.buyer_company || null,
-        address: lead.property_address,
-        city: lead.property_city || null,
-        state: lead.property_state || null,
-        zip: lead.property_zip || null,
+        address: lead.member_address || lead.property_address,
+        city: lead.member_city || lead.property_city || null,
+        state: lead.member_state || lead.property_state || null,
+        zip: lead.member_zip || lead.property_zip || null,
         status: 'active',
         source: lead.source || 'lead-conversion',
         tags: lead.tags ?? [],
-        notes: lead.notes || null,
+        notes: combinedNotes,
       })
       .select()
       .single();
@@ -111,11 +121,12 @@ export async function POST(
       logger.error('leads-api', 'Failed to create property', propErr);
     }
 
-    // Update lead status to converted
+    // Update lead status to converted and link to client
     await supabaseAdmin
       .from('leads')
       .update({
         status: 'converted',
+        converted_client_id: client.id,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id);

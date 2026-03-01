@@ -21,7 +21,10 @@ import {
   Hash,
   Ruler,
   Loader2,
+  CheckCircle,
+  ExternalLink,
 } from 'lucide-react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -58,6 +61,7 @@ interface LeadDetail {
   source: string | null
   notes: string | null
   tags: string[] | null
+  convertedClientId: string | null
   createdAt: string | null
   updatedAt: string | null
 }
@@ -113,6 +117,7 @@ export default function LeadDetailPage() {
 
   const [lead, setLead] = useState<LeadDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [converting, setConverting] = useState(false)
 
   useEffect(() => {
     const fetchLead = async () => {
@@ -133,15 +138,22 @@ export default function LeadDetailPage() {
   }, [params.id, router])
 
   const handleConvert = async () => {
+    setConverting(true)
     try {
       const res = await fetch(`/api/leads/${params.id}/convert`, {
         method: 'POST',
       })
       if (!res.ok) throw new Error('Failed to convert')
       const data = await res.json()
-      router.push(`/clients/${data.clientId}`)
+      // Redirect to the new property so user can start a study or run calculators
+      if (data.propertyId) {
+        router.push(`/properties/${data.propertyId}`)
+      } else {
+        router.push(`/clients/${data.clientId}`)
+      }
     } catch (error) {
       logger.error('lead-detail', 'Failed to convert lead', error)
+      setConverting(false)
     }
   }
 
@@ -223,25 +235,24 @@ export default function LeadDetailPage() {
         </div>
 
         <div className="flex items-center gap-2 ml-14 sm:ml-0">
-          <Button
-            variant="outline"
-            onClick={() => {
-              // TODO: Edit lead page
-            }}
-            className="border-gray-200 text-gray-700 hover:bg-gray-50"
-          >
-            <Pencil className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
-          <RoleGate permission="canCreate">
-            <Button
-              onClick={handleConvert}
-              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
-            >
-              <UserCheck className="h-4 w-4 mr-2" />
-              Convert to Client
-            </Button>
-          </RoleGate>
+          {status !== 'converted' && (
+            <>
+              <RoleGate permission="canCreate">
+                <Button
+                  onClick={handleConvert}
+                  disabled={converting}
+                  className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
+                >
+                  {converting ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <UserCheck className="h-4 w-4 mr-2" />
+                  )}
+                  {converting ? 'Converting...' : 'Convert to Client'}
+                </Button>
+              </RoleGate>
+            </>
+          )}
           <RoleGate permission="canDelete">
             <Button
               variant="outline"
@@ -254,6 +265,32 @@ export default function LeadDetailPage() {
           </RoleGate>
         </div>
       </div>
+
+      {/* Converted Banner */}
+      {status === 'converted' && (
+        <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-5">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="h-6 w-6 text-emerald-600" />
+            <div className="flex-1">
+              <p className="font-semibold text-emerald-700">Lead Converted</p>
+              <p className="text-sm text-emerald-600 mt-0.5">
+                This lead has been converted to a client and property.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {lead.convertedClientId && (
+                <Link href={`/clients/${lead.convertedClientId}`}>
+                  <Button size="sm" variant="outline" className="border-emerald-300 text-emerald-700 hover:bg-emerald-100">
+                    <User className="h-3.5 w-3.5 mr-1.5" />
+                    View Client
+                    <ExternalLink className="h-3 w-3 ml-1.5" />
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Property Information */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
