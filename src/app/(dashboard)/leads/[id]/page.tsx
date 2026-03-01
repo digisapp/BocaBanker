@@ -23,11 +23,22 @@ import {
   Loader2,
   CheckCircle,
   ExternalLink,
+  Save,
+  X,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { RoleGate } from '@/components/shared/RoleGate'
 
 interface LeadDetail {
@@ -118,6 +129,17 @@ export default function LeadDetailPage() {
   const [lead, setLead] = useState<LeadDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [converting, setConverting] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [editForm, setEditForm] = useState({
+    status: '',
+    priority: '',
+    buyerEmail: '',
+    buyerPhone: '',
+    source: '',
+    notes: '',
+    tags: '',
+  })
 
   useEffect(() => {
     const fetchLead = async () => {
@@ -170,6 +192,53 @@ export default function LeadDetailPage() {
       router.push('/leads')
     } catch (error) {
       logger.error('lead-detail', 'Failed to delete lead', error)
+    }
+  }
+
+  const startEditing = () => {
+    if (!lead) return
+    setEditForm({
+      status: lead.status ?? 'new',
+      priority: lead.priority ?? 'medium',
+      buyerEmail: lead.buyerEmail ?? '',
+      buyerPhone: lead.buyerPhone ?? '',
+      source: lead.source ?? '',
+      notes: lead.notes ?? '',
+      tags: lead.tags?.join(', ') ?? '',
+    })
+    setEditing(true)
+  }
+
+  const cancelEditing = () => {
+    setEditing(false)
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/leads/${params.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          propertyAddress: lead!.propertyAddress,
+          propertyType: lead!.propertyType,
+          status: editForm.status,
+          priority: editForm.priority,
+          buyerEmail: editForm.buyerEmail || null,
+          buyerPhone: editForm.buyerPhone || null,
+          source: editForm.source || null,
+          notes: editForm.notes || null,
+          tags: editForm.tags,
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to save')
+      const updated = await res.json()
+      setLead(updated)
+      setEditing(false)
+    } catch (error) {
+      logger.error('lead-detail', 'Failed to save lead', error)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -235,34 +304,68 @@ export default function LeadDetailPage() {
         </div>
 
         <div className="flex items-center gap-2 ml-14 sm:ml-0">
-          {status !== 'converted' && (
+          {editing ? (
             <>
-              <RoleGate permission="canCreate">
+              <Button
+                onClick={handleSave}
+                disabled={saving}
+                className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
+              >
+                {saving ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={cancelEditing}
+                disabled={saving}
+                className="border-gray-200 text-gray-600 hover:bg-gray-50"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+            </>
+          ) : (
+            <>
+              {status !== 'converted' && (
+                <RoleGate permission="canCreate">
+                  <Button
+                    onClick={handleConvert}
+                    disabled={converting}
+                    className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
+                  >
+                    {converting ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <UserCheck className="h-4 w-4 mr-2" />
+                    )}
+                    {converting ? 'Converting...' : 'Convert to Client'}
+                  </Button>
+                </RoleGate>
+              )}
+              <Button
+                variant="outline"
+                onClick={startEditing}
+                className="border-gray-200 text-gray-700 hover:bg-gray-50"
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+              <RoleGate permission="canDelete">
                 <Button
-                  onClick={handleConvert}
-                  disabled={converting}
-                  className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
+                  variant="outline"
+                  onClick={handleDelete}
+                  className="border-red-200 text-red-500 hover:bg-red-50"
                 >
-                  {converting ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <UserCheck className="h-4 w-4 mr-2" />
-                  )}
-                  {converting ? 'Converting...' : 'Convert to Client'}
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
                 </Button>
               </RoleGate>
             </>
           )}
-          <RoleGate permission="canDelete">
-            <Button
-              variant="outline"
-              onClick={handleDelete}
-              className="border-red-200 text-red-500 hover:bg-red-50"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
-          </RoleGate>
         </div>
       </div>
 
@@ -288,6 +391,109 @@ export default function LeadDetailPage() {
                 </Link>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Mode Form */}
+      {editing && (
+        <div className="bg-amber-50/50 rounded-2xl border border-amber-200 shadow-sm p-6 space-y-5">
+          <h2 className="text-lg font-semibold text-amber-600 flex items-center gap-2">
+            <Pencil className="h-4 w-4" />
+            Edit Lead
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Status */}
+            <div className="space-y-1.5">
+              <label className="text-xs text-gray-500 uppercase tracking-wider font-medium">Status</label>
+              <Select value={editForm.status} onValueChange={(v) => setEditForm((f) => ({ ...f, status: v }))}>
+                <SelectTrigger className="bg-white border-gray-200">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-gray-200">
+                  <SelectItem value="new">New</SelectItem>
+                  <SelectItem value="contacted">Contacted</SelectItem>
+                  <SelectItem value="qualified">Qualified</SelectItem>
+                  <SelectItem value="proposal_sent">Proposal Sent</SelectItem>
+                  <SelectItem value="converted">Converted</SelectItem>
+                  <SelectItem value="lost">Lost</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Priority */}
+            <div className="space-y-1.5">
+              <label className="text-xs text-gray-500 uppercase tracking-wider font-medium">Priority</label>
+              <Select value={editForm.priority} onValueChange={(v) => setEditForm((f) => ({ ...f, priority: v }))}>
+                <SelectTrigger className="bg-white border-gray-200">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-gray-200">
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Email */}
+            <div className="space-y-1.5">
+              <label className="text-xs text-gray-500 uppercase tracking-wider font-medium">Buyer Email</label>
+              <Input
+                type="email"
+                value={editForm.buyerEmail}
+                onChange={(e) => setEditForm((f) => ({ ...f, buyerEmail: e.target.value }))}
+                placeholder="email@example.com"
+                className="bg-white border-gray-200"
+              />
+            </div>
+
+            {/* Phone */}
+            <div className="space-y-1.5">
+              <label className="text-xs text-gray-500 uppercase tracking-wider font-medium">Buyer Phone</label>
+              <Input
+                type="tel"
+                value={editForm.buyerPhone}
+                onChange={(e) => setEditForm((f) => ({ ...f, buyerPhone: e.target.value }))}
+                placeholder="(555) 123-4567"
+                className="bg-white border-gray-200"
+              />
+            </div>
+
+            {/* Source */}
+            <div className="space-y-1.5">
+              <label className="text-xs text-gray-500 uppercase tracking-wider font-medium">Source</label>
+              <Input
+                value={editForm.source}
+                onChange={(e) => setEditForm((f) => ({ ...f, source: e.target.value }))}
+                placeholder="e.g. county-records, referral"
+                className="bg-white border-gray-200"
+              />
+            </div>
+
+            {/* Tags */}
+            <div className="space-y-1.5">
+              <label className="text-xs text-gray-500 uppercase tracking-wider font-medium">Tags (comma-separated)</label>
+              <Input
+                value={editForm.tags}
+                onChange={(e) => setEditForm((f) => ({ ...f, tags: e.target.value }))}
+                placeholder="tag1, tag2, tag3"
+                className="bg-white border-gray-200"
+              />
+            </div>
+          </div>
+
+          {/* Notes (full width) */}
+          <div className="space-y-1.5">
+            <label className="text-xs text-gray-500 uppercase tracking-wider font-medium">Notes</label>
+            <Textarea
+              value={editForm.notes}
+              onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))}
+              placeholder="Add notes about this lead..."
+              rows={4}
+              className="bg-white border-gray-200 resize-none"
+            />
           </div>
         </div>
       )}

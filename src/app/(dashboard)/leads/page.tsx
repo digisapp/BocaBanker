@@ -23,6 +23,7 @@ import {
   X,
   LayoutList,
   Briefcase,
+  ArrowRightCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -48,6 +49,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { LeadImportModal } from '@/components/leads/LeadImportModal'
@@ -287,6 +291,27 @@ export default function LeadsPage() {
       }
     } catch (error) {
       logger.error('leads-page', 'Failed to convert lead', error)
+    }
+  }
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      const lead = leads.find((l) => l.id === id)
+      if (!lead) return
+      const res = await fetch(`/api/leads/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          propertyAddress: lead.propertyAddress,
+          propertyType: lead.propertyType,
+          status: newStatus,
+          priority: lead.priority,
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to update status')
+      fetchLeads()
+    } catch (error) {
+      logger.error('leads-page', 'Failed to update lead status', error)
     }
   }
 
@@ -693,6 +718,35 @@ export default function LeadsPage() {
                                   <Eye className="h-4 w-4 mr-2" />
                                   View
                                 </DropdownMenuItem>
+                                {status !== 'converted' && (
+                                  <DropdownMenuSub>
+                                    <DropdownMenuSubTrigger onClick={(e) => e.stopPropagation()}>
+                                      <ArrowRightCircle className="h-4 w-4 mr-2" />
+                                      Change Status
+                                    </DropdownMenuSubTrigger>
+                                    <DropdownMenuSubContent className="bg-white border-gray-200">
+                                      {['new', 'contacted', 'qualified', 'proposal_sent', 'lost'].map((s) => (
+                                        <DropdownMenuItem
+                                          key={s}
+                                          disabled={status === s}
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            handleStatusChange(lead.id, s)
+                                          }}
+                                        >
+                                          <span className={`w-2 h-2 rounded-full mr-2 ${
+                                            s === 'new' ? 'bg-blue-500' :
+                                            s === 'contacted' ? 'bg-amber-500' :
+                                            s === 'qualified' ? 'bg-emerald-500' :
+                                            s === 'proposal_sent' ? 'bg-purple-500' :
+                                            'bg-red-500'
+                                          }`} />
+                                          {statusLabel[s] ?? s}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuSubContent>
+                                  </DropdownMenuSub>
+                                )}
                                 {status !== 'converted' && (
                                   <DropdownMenuItem
                                     onClick={(e) => {
