@@ -185,3 +185,131 @@ export function reportDeliveryTemplate({
   `;
   return emailWrapper(body);
 }
+
+// ---------------------------------------------------------------------------
+// Mortgage / Arive Templates
+// ---------------------------------------------------------------------------
+
+interface AriveLinkParams {
+  borrowerName: string;
+  senderName: string;
+  companyName: string;
+  ariveLink: string;
+  propertyAddress?: string;
+}
+
+interface RateAlertParams {
+  borrowerName: string;
+  senderName: string;
+  companyName: string;
+  ariveLink: string;
+  oldRate: number;
+  newRate: number;
+  changeBps: number;
+  propertyAddress?: string;
+}
+
+export function rateAlertTemplate({
+  borrowerName,
+  senderName,
+  companyName,
+  ariveLink,
+  oldRate,
+  newRate,
+  changeBps,
+  propertyAddress,
+}: RateAlertParams): string {
+  const propertyLine = propertyAddress
+    ? `<p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
+        For your property at <strong>${propertyAddress}</strong>, this could mean meaningful savings on your monthly payment.
+      </p>`
+    : '';
+
+  const body = `
+    <h2 style="margin: 0 0 16px; font-size: 20px; color: #1F2937;">Great news, ${borrowerName}!</h2>
+    <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
+      Mortgage rates just dropped, and I wanted to make sure you were the first to know.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 24px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e5e7eb;">
+      <tr>
+        <td style="padding: 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td width="33%" style="text-align: center; padding: 8px;">
+                <p style="margin: 0 0 4px; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Previous</p>
+                <p style="margin: 0; font-size: 24px; color: #6B7280; font-weight: 700;">${oldRate.toFixed(2)}%</p>
+              </td>
+              <td width="33%" style="text-align: center; padding: 8px;">
+                <p style="margin: 0 0 4px; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Current</p>
+                <p style="margin: 0; font-size: 24px; color: #D97706; font-weight: 700;">${newRate.toFixed(2)}%</p>
+              </td>
+              <td width="33%" style="text-align: center; padding: 8px;">
+                <p style="margin: 0 0 4px; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Change</p>
+                <p style="margin: 0; font-size: 24px; color: #10B981; font-weight: 700;">-${changeBps} bps</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    ${propertyLine}
+    <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
+      Now is a great time to lock in a lower rate. Whether you are buying or refinancing,
+      I can walk you through your options and help you take advantage of this drop.
+    </p>
+    ${amberButton('Start Your Application', ariveLink)}
+    <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
+      If you have any questions or want to discuss your options, feel free to reach out directly.
+    </p>
+    <p style="margin: 0; font-size: 15px; color: #374151;">
+      Best regards,<br />
+      <strong style="color: #1F2937;">${senderName}</strong><br />
+      <span style="color: #D97706;">${companyName}</span>
+    </p>
+  `;
+  return emailWrapper(body);
+}
+
+export function ariveLinkTemplate({
+  borrowerName,
+  senderName,
+  companyName,
+  ariveLink,
+  propertyAddress,
+}: AriveLinkParams): string {
+  const propertyLine = propertyAddress
+    ? `<p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
+        This application is for the property at <strong>${propertyAddress}</strong>.
+      </p>`
+    : '';
+
+  const body = `
+    <h2 style="margin: 0 0 16px; font-size: 20px; color: #1F2937;">Hi ${borrowerName},</h2>
+    <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
+      Thank you for choosing <strong>${companyName}</strong> for your mortgage needs!
+      To get started, please click the button below to complete your secure loan application.
+    </p>
+    ${propertyLine}
+    <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
+      The application is quick, secure, and can be saved at any point if you need to come back later.
+      You will need the following information handy:
+    </p>
+    <ul style="margin: 0 0 20px; padding-left: 24px; font-size: 15px; color: #374151; line-height: 1.8;">
+      <li>Social Security Number</li>
+      <li>Employment &amp; income details (pay stubs, W-2s)</li>
+      <li>Bank &amp; asset statements</li>
+      <li>Photo ID</li>
+    </ul>
+    ${amberButton('Start Your Application', ariveLink)}
+    <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
+      If you have any questions or run into any issues, do not hesitate to reach out directly.
+      I am here to guide you through every step of the process.
+    </p>
+    <p style="margin: 0; font-size: 15px; color: #374151;">
+      Best regards,<br />
+      <strong style="color: #1F2937;">${senderName}</strong><br />
+      <span style="color: #D97706;">${companyName}</span>
+    </p>
+  `;
+  return emailWrapper(body);
+}

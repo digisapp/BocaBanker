@@ -54,8 +54,10 @@ export async function GET(request: NextRequest) {
       .select('*', { count: 'exact' });
 
     if (search) {
+      // Sanitize search input — escape special PostgREST/SQL chars
+      const s = search.replace(/[%_\\]/g, (c) => `\\${c}`);
       query = query.or(
-        `property_address.ilike.%${search}%,buyer_name.ilike.%${search}%,buyer_company.ilike.%${search}%,property_city.ilike.%${search}%,property_county.ilike.%${search}%`
+        `property_address.ilike.%${s}%,buyer_name.ilike.%${s}%,buyer_company.ilike.%${s}%,property_city.ilike.%${s}%,property_county.ilike.%${s}%`
       );
     }
 

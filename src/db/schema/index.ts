@@ -8,3 +8,7 @@ export * from './chat-messages';
 export * from './documents';
 export * from './email-logs';
 export * from './leads';
+export * from './loans';
+export * from './user-settings';
+export * from './mortgage-rates';
+export * from './reviews';

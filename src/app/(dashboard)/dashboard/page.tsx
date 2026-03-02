@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Percent,
   Briefcase,
+  Landmark,
 } from 'lucide-react';
 import {
   BarChart,
@@ -38,17 +39,36 @@ function formatCurrency(value: number): string {
   return `$${value.toFixed(0)}`;
 }
 
+interface MortgageQuickStats {
+  currentRate30yr: number | null;
+  rateChangeBps: number | null;
+  pipelineCount: number;
+  pipelineVolume: number;
+  commissionYTD: number;
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [mortgageStats, setMortgageStats] = useState<MortgageQuickStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchStats() {
       try {
-        const res = await fetch('/api/dashboard/stats');
-        if (res.ok) {
-          const data = await res.json();
-          setStats(data);
+        const [dashRes, mtgRes] = await Promise.all([
+          fetch('/api/dashboard/stats'),
+          fetch('/api/mortgage/stats'),
+        ]);
+        if (dashRes.ok) setStats(await dashRes.json());
+        if (mtgRes.ok) {
+          const mtg = await mtgRes.json();
+          setMortgageStats({
+            currentRate30yr: mtg.currentRate30yr ?? null,
+            rateChangeBps: mtg.rateChangeBps ?? null,
+            pipelineCount: mtg.pipelineCount ?? 0,
+            pipelineVolume: mtg.pipelineVolume ?? 0,
+            commissionYTD: mtg.commissionYTD ?? 0,
+          });
         }
       } catch (err) {
         logger.error('dashboard-page', 'Failed to fetch dashboard stats', err);
@@ -95,7 +115,7 @@ export default function DashboardPage() {
           Dashboard
         </h1>
         <p className="text-gray-500 mt-1">
-          Overview of your cost segregation business
+          Your business at a glance
         </p>
       </div>
 
@@ -150,6 +170,33 @@ export default function DashboardPage() {
           value={formatCurrency(stats?.totalPortfolioValue || 0)}
         />
       </div>
+
+      {/* Row 3: Mortgage Quick Stats */}
+      {mortgageStats && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <MetricCard
+            icon={Landmark}
+            label="30yr Rate"
+            value={mortgageStats.currentRate30yr != null ? `${mortgageStats.currentRate30yr.toFixed(2)}%` : '--'}
+            change={
+              mortgageStats.rateChangeBps != null
+                ? `${mortgageStats.rateChangeBps > 0 ? '+' : ''}${mortgageStats.rateChangeBps} bps`
+                : undefined
+            }
+          />
+          <MetricCard
+            icon={TrendingUp}
+            label="Loan Pipeline"
+            value={String(mortgageStats.pipelineCount)}
+            change={mortgageStats.pipelineVolume > 0 ? formatCurrency(mortgageStats.pipelineVolume) + ' volume' : undefined}
+          />
+          <MetricCard
+            icon={DollarSign}
+            label="YTD Commission"
+            value={formatCurrency(mortgageStats.commissionYTD)}
+          />
+        </div>
+      )}
 
       {/* Quick Actions */}
       <QuickActions />

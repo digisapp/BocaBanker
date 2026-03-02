@@ -28,11 +28,11 @@ export async function GET() {
           id: user.id,
           email: user.email!,
           fullName: user.user_metadata?.full_name || null,
-          role: 'admin',
+          role: 'viewer',
         })
         .onConflictDoNothing()
         .returning({ role: users.role, fullName: users.fullName })
-      dbUser = created ?? { role: 'admin', fullName: null }
+      dbUser = created ?? { role: 'viewer', fullName: null }
     }
 
     return NextResponse.json({

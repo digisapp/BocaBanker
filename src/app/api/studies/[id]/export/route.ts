@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/db'
 import { costSegStudies, properties, clients, studyAssets } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { logger } from '@/lib/logger'
 
 function formatCurrency(value: number | string | null | undefined): string {
@@ -68,7 +68,7 @@ export async function GET(
       .from(costSegStudies)
       .leftJoin(properties, eq(costSegStudies.propertyId, properties.id))
       .leftJoin(clients, eq(costSegStudies.clientId, clients.id))
-      .where(eq(costSegStudies.id, id))
+      .where(and(eq(costSegStudies.id, id), eq(costSegStudies.userId, user.id)))
       .limit(1)
 
     if (!study) {

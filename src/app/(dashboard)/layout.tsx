@@ -20,6 +20,8 @@ function getPageTitle(pathname: string): string {
     '/properties': 'Properties',
     '/studies': 'Studies',
     '/calculators': 'Calculators',
+    '/mortgage': 'Mortgage Intelligence',
+    '/review-management': 'Reviews',
     '/email': 'Email Outreach',
     '/documents': 'Documents',
     '/settings': 'Settings',

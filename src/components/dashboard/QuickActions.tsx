@@ -8,6 +8,7 @@ import {
   Mail,
   Calculator,
   MessageSquare,
+  Landmark,
 } from 'lucide-react';
 
 const ACTIONS = [
@@ -16,6 +17,12 @@ const ACTIONS = [
     icon: UserPlus,
     href: '/clients?action=new',
     description: 'Add a new client',
+  },
+  {
+    label: 'New Loan',
+    icon: Landmark,
+    href: '/mortgage/loans/new',
+    description: 'Start a mortgage loan',
   },
   {
     label: 'New Property',
@@ -53,7 +60,7 @@ export default function QuickActions() {
   return (
     <div>
       <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
         {ACTIONS.map((action) => {
           const Icon = action.icon;
           return (

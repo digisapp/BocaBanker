@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Calculator, DollarSign, Zap, Home, ArrowRightLeft, Landmark, Activity, Sparkles } from 'lucide-react';
+import { Calculator, DollarSign, Zap, Home, ArrowRightLeft, Landmark, Activity, Sparkles, GitCompare } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CombinedAnalyzer from '@/components/calculators/CombinedAnalyzer';
 import DepreciationCalculator from '@/components/calculators/DepreciationCalculator';
@@ -12,6 +12,7 @@ import MortgageCalculator from '@/components/calculators/MortgageCalculator';
 import RefinanceAnalyzer from '@/components/calculators/RefinanceAnalyzer';
 import DSCRCalculator from '@/components/calculators/DSCRCalculator';
 import RateSensitivityTool from '@/components/calculators/RateSensitivityTool';
+import ScenarioCompareCalculator from '@/components/calculators/ScenarioCompareCalculator';
 
 function CalculatorsContent() {
   const searchParams = useSearchParams();
@@ -94,6 +95,13 @@ function CalculatorsContent() {
             <Activity className="h-4 w-4" />
             Rate Sensitivity
           </TabsTrigger>
+          <TabsTrigger
+            value="scenario-compare"
+            className="data-[state=active]:bg-amber-500 data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
+          >
+            <GitCompare className="h-4 w-4" />
+            Loan Comparison
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="combined" className="mt-6">
@@ -126,6 +134,10 @@ function CalculatorsContent() {
 
         <TabsContent value="rate-sensitivity" className="mt-6">
           <RateSensitivityTool initialValues={initialValues} />
+        </TabsContent>
+
+        <TabsContent value="scenario-compare" className="mt-6">
+          <ScenarioCompareCalculator initialValues={initialValues} />
         </TabsContent>
       </Tabs>
     </div>

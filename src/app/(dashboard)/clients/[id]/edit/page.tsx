@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { logger } from '@/lib/logger'
+import { toast } from 'sonner'
 import { ArrowLeft, Pencil, Loader2 } from 'lucide-react'
 import { ClientForm } from '@/components/clients/ClientForm'
 import { Button } from '@/components/ui/button'
@@ -67,7 +68,7 @@ export default function EditClientPage() {
       router.push(`/clients/${params.id}`)
     } catch (error) {
       logger.error('clients-page', 'Failed to update client', error)
-      alert(error instanceof Error ? error.message : 'Failed to update client')
+      toast.error(error instanceof Error ? error.message : 'Failed to update client')
     } finally {
       setIsSubmitting(false)
     }

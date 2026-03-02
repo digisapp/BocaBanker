@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
-import { Settings, User, Lock, Bell, Loader2, CheckCircle } from 'lucide-react';
+import { Settings, User, Lock, Bell, Landmark, Loader2, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,57 @@ export default function SettingsPage() {
   const [passwordError, setPasswordError] = useState('');
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [studyAlerts, setStudyAlerts] = useState(true);
+
+  // Mortgage settings
+  const [ariveLink, setAriveLink] = useState('');
+  const [ariveCompanyName, setAriveCompanyName] = useState('');
+  const [rateAlertEnabled, setRateAlertEnabled] = useState(false);
+  const [rateAlertThresholdBps, setRateAlertThresholdBps] = useState('25');
+  const [mortgageSaving, setMortgageSaving] = useState(false);
+  const [mortgageSaved, setMortgageSaved] = useState(false);
+
+  useEffect(() => {
+    async function loadMortgageSettings() {
+      try {
+        const res = await fetch('/api/settings');
+        if (res.ok) {
+          const data = await res.json();
+          setAriveLink(data.ariveLink || '');
+          setAriveCompanyName(data.ariveCompanyName || '');
+          setRateAlertEnabled(data.rateAlertEnabled || false);
+          setRateAlertThresholdBps(data.rateAlertThresholdBps?.toString() || '25');
+        }
+      } catch {
+        // Settings may not exist yet — that's fine
+      }
+    }
+    loadMortgageSettings();
+  }, []);
+
+  async function handleMortgageSettingsSave() {
+    setMortgageSaving(true);
+    setMortgageSaved(false);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ariveLink: ariveLink || null,
+          ariveCompanyName: ariveCompanyName || null,
+          rateAlertEnabled,
+          rateAlertThresholdBps: rateAlertThresholdBps ? Number(rateAlertThresholdBps) : null,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      setMortgageSaved(true);
+      setTimeout(() => setMortgageSaved(false), 3000);
+    } catch (err) {
+      logger.error('settings-page', 'Failed to save mortgage settings', err);
+      toast.error('Failed to save mortgage settings');
+    } finally {
+      setMortgageSaving(false);
+    }
+  }
 
   const profileForm = useForm<ProfileFormData>({
     defaultValues: {
@@ -235,6 +287,96 @@ export default function SettingsPage() {
             )}
           </div>
         </form>
+      </div>
+
+      {/* Mortgage & Arive Section */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <Landmark className="h-5 w-5 text-amber-600" />
+          <h2 className="text-lg font-semibold text-gray-900">Mortgage & Arive</h2>
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label className="text-gray-500">Arive Application Link</Label>
+            <Input
+              type="url"
+              value={ariveLink}
+              onChange={(e) => setAriveLink(e.target.value)}
+              placeholder="https://apply.arive.com/your-nmls"
+              className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
+            />
+            <p className="text-xs text-gray-400">
+              Your Arive POS link that borrowers use to apply
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-gray-500">Company Name</Label>
+            <Input
+              value={ariveCompanyName}
+              onChange={(e) => setAriveCompanyName(e.target.value)}
+              placeholder="Your Brokerage Name"
+              className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
+            />
+            <p className="text-xs text-gray-400">
+              Used in email templates sent to borrowers
+            </p>
+          </div>
+
+          <Separator className="bg-gray-200" />
+
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-900">Rate Drop Alerts</p>
+              <p className="text-xs text-gray-400">
+                Get notified when mortgage rates drop significantly
+              </p>
+            </div>
+            <Switch
+              checked={rateAlertEnabled}
+              onCheckedChange={setRateAlertEnabled}
+            />
+          </div>
+
+          {rateAlertEnabled && (
+            <div className="space-y-2 pl-0">
+              <Label className="text-gray-500">Alert Threshold (basis points)</Label>
+              <Input
+                type="number"
+                value={rateAlertThresholdBps}
+                onChange={(e) => setRateAlertThresholdBps(e.target.value)}
+                placeholder="25"
+                min={5}
+                max={200}
+                className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20 w-32"
+              />
+              <p className="text-xs text-gray-400">
+                Alert when rate drops by this many bps (25 = 0.25%)
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 pt-2">
+            <Button
+              type="button"
+              disabled={mortgageSaving}
+              onClick={handleMortgageSettingsSave}
+              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
+            >
+              {mortgageSaving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : null}
+              Save Mortgage Settings
+            </Button>
+            {mortgageSaved && (
+              <span className="flex items-center gap-1 text-sm text-emerald-500">
+                <CheckCircle className="h-4 w-4" />
+                Saved
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Preferences Section */}

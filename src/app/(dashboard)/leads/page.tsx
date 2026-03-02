@@ -19,11 +19,18 @@ import {
   Phone,
   Users,
   Building2,
+  ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   X,
   LayoutList,
   Briefcase,
   ArrowRightCircle,
+  Download,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -160,6 +167,8 @@ const formatDate = (value: string | null) => {
   })
 }
 
+const ITEMS_PER_PAGE = 50
+
 export default function LeadsPage() {
   const router = useRouter()
 
@@ -175,6 +184,9 @@ export default function LeadsPage() {
   const [propertyTypeFilter, setPropertyTypeFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [sortKey, setSortKey] = useState('createdAt')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [importOpen, setImportOpen] = useState(false)
   const [memberFilter, setMemberFilter] = useState('')
 
@@ -203,11 +215,19 @@ export default function LeadsPage() {
     return () => clearTimeout(timer)
   }, [search])
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, statusFilter, propertyTypeFilter, priorityFilter, memberFilter])
+
   const fetchLeads = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams({
-        limit: '100',
+        page: String(page),
+        limit: String(ITEMS_PER_PAGE),
+        sort: sortKey,
+        order: sortOrder,
         ...(debouncedSearch && { search: debouncedSearch }),
         ...(statusFilter !== 'all' && { status: statusFilter }),
         ...(propertyTypeFilter !== 'all' && { property_type: propertyTypeFilter }),
@@ -243,7 +263,7 @@ export default function LeadsPage() {
     } finally {
       setLoading(false)
     }
-  }, [debouncedSearch, statusFilter, propertyTypeFilter, priorityFilter, memberFilter])
+  }, [page, sortKey, sortOrder, debouncedSearch, statusFilter, propertyTypeFilter, priorityFilter, memberFilter])
 
   const fetchPortfolios = useCallback(async () => {
     setPortfolioLoading(true)
@@ -324,6 +344,34 @@ export default function LeadsPage() {
     setMemberFilter('')
   }
 
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortKey(key)
+      setSortOrder('desc')
+    }
+    setPage(1)
+  }
+
+  const SortIcon = ({ column }: { column: string }) => {
+    if (sortKey !== column) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-0 group-hover:opacity-50 transition-opacity" />
+    return sortOrder === 'asc'
+      ? <ArrowUp className="h-3 w-3 ml-1 text-amber-600" />
+      : <ArrowDown className="h-3 w-3 ml-1 text-amber-600" />
+  }
+
+  const handleExportCsv = () => {
+    const params = new URLSearchParams({
+      ...(debouncedSearch && { search: debouncedSearch }),
+      ...(statusFilter !== 'all' && { status: statusFilter }),
+      ...(propertyTypeFilter !== 'all' && { propertyType: propertyTypeFilter }),
+      ...(priorityFilter !== 'all' && { priority: priorityFilter }),
+      ...(memberFilter && { member: memberFilter }),
+    })
+    window.open(`/api/leads/export?${params}`, '_blank')
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -377,6 +425,14 @@ export default function LeadsPage() {
             </Button>
           </div>
 
+          <Button
+            variant="outline"
+            className="border-gray-200 text-gray-700 hover:bg-gray-50"
+            onClick={handleExportCsv}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
           <RoleGate permission="canCreate">
             <LeadImportModal
               open={importOpen}
@@ -526,20 +582,35 @@ export default function LeadsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-b border-gray-200 hover:bg-transparent">
-                      <TableHead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
-                        Property Address
+                      <TableHead
+                        className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider cursor-pointer select-none group"
+                        onClick={() => handleSort('propertyAddress')}
+                      >
+                        <span className="flex items-center">Property Address<SortIcon column="propertyAddress" /></span>
                       </TableHead>
-                      <TableHead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
-                        Property Type
+                      <TableHead
+                        className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider cursor-pointer select-none group"
+                        onClick={() => handleSort('propertyType')}
+                      >
+                        <span className="flex items-center">Property Type<SortIcon column="propertyType" /></span>
                       </TableHead>
-                      <TableHead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
-                        Sale Price
+                      <TableHead
+                        className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider cursor-pointer select-none group"
+                        onClick={() => handleSort('salePrice')}
+                      >
+                        <span className="flex items-center">Sale Price<SortIcon column="salePrice" /></span>
                       </TableHead>
-                      <TableHead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
-                        Sale Date
+                      <TableHead
+                        className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider cursor-pointer select-none group"
+                        onClick={() => handleSort('saleDate')}
+                      >
+                        <span className="flex items-center">Sale Date<SortIcon column="saleDate" /></span>
                       </TableHead>
-                      <TableHead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
-                        Buyer / LLC
+                      <TableHead
+                        className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider cursor-pointer select-none group"
+                        onClick={() => handleSort('buyerName')}
+                      >
+                        <span className="flex items-center">Buyer / LLC<SortIcon column="buyerName" /></span>
                       </TableHead>
                       <TableHead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
                         Member / Person
@@ -547,11 +618,17 @@ export default function LeadsPage() {
                       <TableHead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
                         Contact
                       </TableHead>
-                      <TableHead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
-                        Status
+                      <TableHead
+                        className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider cursor-pointer select-none group"
+                        onClick={() => handleSort('status')}
+                      >
+                        <span className="flex items-center">Status<SortIcon column="status" /></span>
                       </TableHead>
-                      <TableHead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
-                        Priority
+                      <TableHead
+                        className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider cursor-pointer select-none group"
+                        onClick={() => handleSort('priority')}
+                      >
+                        <span className="flex items-center">Priority<SortIcon column="priority" /></span>
                       </TableHead>
                       <TableHead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider w-[50px]">
                         {/* Actions */}
@@ -778,6 +855,63 @@ export default function LeadsPage() {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Pagination */}
+              {(() => {
+                const totalPages = Math.ceil(total / ITEMS_PER_PAGE)
+                if (totalPages <= 1) return null
+                const start = (page - 1) * ITEMS_PER_PAGE + 1
+                const end = Math.min(page * ITEMS_PER_PAGE, total)
+                return (
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+                    <p className="text-sm text-gray-500">
+                      Showing <span className="font-medium text-gray-700">{start}</span>–<span className="font-medium text-gray-700">{end}</span> of{' '}
+                      <span className="font-medium text-gray-700">{total.toLocaleString()}</span> leads
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        disabled={page === 1}
+                        onClick={() => setPage(1)}
+                      >
+                        <ChevronsLeft className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        disabled={page === 1}
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm text-gray-700 px-2">
+                        Page <span className="font-medium">{page}</span> of <span className="font-medium">{totalPages}</span>
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        disabled={page === totalPages}
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        disabled={page === totalPages}
+                        onClick={() => setPage(totalPages)}
+                      >
+                        <ChevronsRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
           )}
         </>

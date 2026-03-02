@@ -13,6 +13,8 @@ import {
   FolderOpen,
   Settings,
   Target,
+  Landmark,
+  Star,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
@@ -39,6 +41,8 @@ const navItems = [
   { href: '/properties', label: 'Properties', icon: Building2 },
   { href: '/studies', label: 'Studies', icon: FileBarChart },
   { href: '/calculators', label: 'Calculators', icon: Calculator },
+  { href: '/mortgage', label: 'Mortgage', icon: Landmark },
+  { href: '/review-management', label: 'Reviews', icon: Star },
   { href: '/email', label: 'Email', icon: Mail },
   { href: '/documents', label: 'Documents', icon: FolderOpen },
   { href: '/settings', label: 'Settings', icon: Settings },

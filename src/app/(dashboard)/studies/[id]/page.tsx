@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { logger } from '@/lib/logger'
+import { toast } from 'sonner'
 import {
   ArrowLeft,
   FileBarChart,
@@ -128,7 +129,7 @@ export default function StudyDetailPage() {
       await fetchStudy()
     } catch (error) {
       logger.error('studies-page', 'Error calculating', error)
-      alert(error instanceof Error ? error.message : 'Calculation failed')
+      toast.error(error instanceof Error ? error.message : 'Calculation failed')
     } finally {
       setCalculating(false)
     }

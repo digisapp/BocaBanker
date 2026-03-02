@@ -25,6 +25,8 @@ import {
   ExternalLink,
   Save,
   X,
+  Landmark,
+  Send,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -331,20 +333,41 @@ export default function LeadDetailPage() {
           ) : (
             <>
               {status !== 'converted' && (
-                <RoleGate permission="canCreate">
+                <>
+                  <RoleGate permission="canCreate">
+                    <Button
+                      onClick={handleConvert}
+                      disabled={converting}
+                      className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
+                    >
+                      {converting ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <UserCheck className="h-4 w-4 mr-2" />
+                      )}
+                      {converting ? 'Converting...' : 'Convert to Client'}
+                    </Button>
+                  </RoleGate>
                   <Button
-                    onClick={handleConvert}
-                    disabled={converting}
-                    className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
+                    variant="outline"
+                    onClick={() => {
+                      const params = new URLSearchParams()
+                      if (lead.id) params.set('leadId', lead.id)
+                      if (lead.buyerName) params.set('borrowerName', lead.buyerName)
+                      if (lead.buyerEmail) params.set('borrowerEmail', lead.buyerEmail)
+                      if (lead.buyerPhone) params.set('borrowerPhone', lead.buyerPhone)
+                      if (lead.propertyAddress) params.set('propertyAddress', lead.propertyAddress)
+                      if (lead.propertyCity) params.set('propertyCity', lead.propertyCity)
+                      if (lead.propertyState) params.set('propertyState', lead.propertyState)
+                      if (lead.salePrice) params.set('purchasePrice', lead.salePrice)
+                      router.push(`/mortgage/loans/new?${params}`)
+                    }}
+                    className="border-amber-200 text-amber-700 hover:bg-amber-50"
                   >
-                    {converting ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <UserCheck className="h-4 w-4 mr-2" />
-                    )}
-                    {converting ? 'Converting...' : 'Convert to Client'}
+                    <Landmark className="h-4 w-4 mr-2" />
+                    Start Loan
                   </Button>
-                </RoleGate>
+                </>
               )}
               <Button
                 variant="outline"

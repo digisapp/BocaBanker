@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { logger } from '@/lib/logger'
+import { toast } from 'sonner'
 import { ArrowLeft, Target } from 'lucide-react'
 import { LeadForm } from '@/components/leads/LeadForm'
 import { Button } from '@/components/ui/button'
@@ -29,7 +30,7 @@ export default function NewLeadPage() {
       router.push('/leads')
     } catch (error) {
       logger.error('leads-page', 'Failed to create lead', error)
-      alert(error instanceof Error ? error.message : 'Failed to create lead')
+      toast.error(error instanceof Error ? error.message : 'Failed to create lead')
     } finally {
       setIsSubmitting(false)
     }

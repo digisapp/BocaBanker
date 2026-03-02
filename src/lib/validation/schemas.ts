@@ -268,6 +268,144 @@ export const leadSchema = z.object({
 export type LeadInput = z.infer<typeof leadSchema>
 
 // ──────────────────────────────────────────────
+// Loan Schema
+// ──────────────────────────────────────────────
+
+export const loanSchema = z.object({
+  borrower_name: z
+    .string()
+    .min(1, 'Borrower name is required')
+    .max(200, 'Name must be 200 characters or less'),
+  borrower_email: z
+    .string()
+    .email('Please enter a valid email')
+    .optional()
+    .or(z.literal('')),
+  borrower_phone: z
+    .string()
+    .max(20, 'Phone must be 20 characters or less')
+    .optional()
+    .or(z.literal('')),
+  property_address: z
+    .string()
+    .min(1, 'Property address is required')
+    .max(300, 'Address must be 300 characters or less'),
+  property_city: z.string().max(100).optional().or(z.literal('')),
+  property_state: z.string().max(2).optional().or(z.literal('')),
+  property_zip: z.string().max(10).optional().or(z.literal('')),
+  purchase_price: z.number().positive('Purchase price must be positive').optional(),
+  loan_amount: z
+    .number({ message: 'Loan amount is required' })
+    .positive('Loan amount must be positive'),
+  loan_type: z.enum(
+    ['conventional', 'fha', 'va', 'usda', 'jumbo', 'heloc', 'commercial', 'other'],
+    { message: 'Loan type is required' }
+  ),
+  interest_rate: z
+    .number()
+    .min(0, 'Rate must be 0 or greater')
+    .max(30, 'Rate must be 30 or less')
+    .optional(),
+  term: z
+    .number()
+    .int('Term must be a whole number')
+    .min(1, 'Term must be at least 1 year')
+    .max(40, 'Term must be 40 years or less')
+    .optional(),
+  status: z
+    .enum([
+      'pre_qual',
+      'application',
+      'processing',
+      'underwriting',
+      'clear_to_close',
+      'funded',
+      'closed',
+      'withdrawn',
+    ])
+    .default('pre_qual'),
+  arive_link: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
+  estimated_closing_date: z.string().optional().or(z.literal('')),
+  actual_closing_date: z.string().optional().or(z.literal('')),
+  commission_bps: z.number().int().min(0).max(500).optional(),
+  lender_name: z.string().max(100).optional().or(z.literal('')),
+  lead_id: z.string().uuid().optional().or(z.literal('')),
+  notes: z.string().max(5000).optional().or(z.literal('')),
+})
+
+export type LoanInput = z.infer<typeof loanSchema>
+
+// ──────────────────────────────────────────────
+// User Settings Schema
+// ──────────────────────────────────────────────
+
+export const userSettingsSchema = z.object({
+  arive_link: z
+    .string()
+    .url('Please enter a valid URL')
+    .optional()
+    .or(z.literal('')),
+  arive_company_name: z.string().max(100).optional().or(z.literal('')),
+  rate_alert_enabled: z.boolean().optional(),
+  rate_alert_threshold_bps: z.number().int().min(5).max(200).optional(),
+})
+
+export type UserSettingsInput = z.infer<typeof userSettingsSchema>
+
+// ──────────────────────────────────────────────
+// Review Submission Schema (public)
+// ──────────────────────────────────────────────
+
+export const reviewSubmissionSchema = z.object({
+  reviewer_name: z
+    .string()
+    .min(1, 'Name is required')
+    .max(100, 'Name must be 100 characters or less'),
+  reviewer_email: z
+    .string()
+    .email('Please enter a valid email')
+    .optional()
+    .or(z.literal('')),
+  reviewer_city: z.string().max(100).optional().or(z.literal('')),
+  reviewer_state: z.string().max(2).optional().or(z.literal('')),
+  rating: z
+    .number({ message: 'Rating is required' })
+    .int('Rating must be a whole number')
+    .min(1, 'Rating must be at least 1')
+    .max(5, 'Rating must be at most 5'),
+  title: z
+    .string()
+    .min(1, 'Title is required')
+    .max(200, 'Title must be 200 characters or less'),
+  body: z
+    .string()
+    .min(10, 'Review must be at least 10 characters')
+    .max(5000, 'Review must be 5000 characters or less'),
+  loan_type: z.string().max(50).optional().or(z.literal('')),
+  loan_term: z.string().max(50).optional().or(z.literal('')),
+  closed_on_time: z.boolean().optional(),
+  is_first_time_buyer: z.boolean().optional(),
+  is_self_employed: z.boolean().optional(),
+})
+
+export type ReviewSubmissionInput = z.infer<typeof reviewSubmissionSchema>
+
+// ──────────────────────────────────────────────
+// Review Admin Update Schema
+// ──────────────────────────────────────────────
+
+export const reviewAdminUpdateSchema = z.object({
+  status: z.enum(['pending', 'approved', 'rejected']).optional(),
+  response_text: z
+    .string()
+    .max(2000, 'Response must be 2000 characters or less')
+    .optional()
+    .or(z.literal('')),
+})
+
+export type ReviewAdminUpdateInput = z.infer<typeof reviewAdminUpdateSchema>
+
+// ──────────────────────────────────────────────
 // Email Schema
 // ──────────────────────────────────────────────
 

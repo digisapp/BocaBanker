@@ -270,6 +270,127 @@ export interface TaxSavingsItem {
 }
 
 // ---------------------------------------------------------------------------
+// Mortgage / Loans
+// ---------------------------------------------------------------------------
+
+export interface Loan {
+  id: string;
+  userId: string;
+  borrowerName: string;
+  borrowerEmail: string | null;
+  borrowerPhone: string | null;
+  propertyAddress: string;
+  propertyCity: string | null;
+  propertyState: string | null;
+  propertyZip: string | null;
+  purchasePrice: string | null;
+  loanAmount: string;
+  loanType:
+    | 'conventional'
+    | 'fha'
+    | 'va'
+    | 'usda'
+    | 'jumbo'
+    | 'heloc'
+    | 'commercial'
+    | 'other';
+  interestRate: string | null;
+  term: number | null;
+  status:
+    | 'pre_qual'
+    | 'application'
+    | 'processing'
+    | 'underwriting'
+    | 'clear_to_close'
+    | 'funded'
+    | 'closed'
+    | 'withdrawn';
+  ariveLink: string | null;
+  ariveLinkSentAt: string | null;
+  estimatedClosingDate: string | null;
+  actualClosingDate: string | null;
+  commissionBps: number | null;
+  commissionAmount: string | null;
+  lenderId: string | null;
+  lenderName: string | null;
+  leadId: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserSettings {
+  id: string;
+  userId: string;
+  ariveLink: string | null;
+  ariveCompanyName: string | null;
+  rateAlertEnabled: boolean;
+  rateAlertThresholdBps: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MortgageRate {
+  id: string;
+  weekOf: string;
+  rate30yr: string | null;
+  rate15yr: string | null;
+  rate5arm: string | null;
+  source: string;
+  fetchedAt: string;
+}
+
+export interface MortgageDashboardStats {
+  currentRate30yr: number | null;
+  currentRate15yr: number | null;
+  rateChange30yr: number | null;
+  rateTrend: { weekOf: string; rate30yr: number; rate15yr: number }[];
+  pipelineSummary: {
+    preQual: number;
+    application: number;
+    processing: number;
+    underwriting: number;
+    clearToClose: number;
+    total: number;
+    totalVolume: number;
+  };
+  commissionMTD: number;
+  commissionYTD: number;
+  loansFundedMTD: number;
+  loansFundedYTD: number;
+}
+
+// ---------------------------------------------------------------------------
+// Reviews
+// ---------------------------------------------------------------------------
+
+export interface Review {
+  id: string;
+  reviewerName: string;
+  reviewerEmail: string | null;
+  reviewerCity: string | null;
+  reviewerState: string | null;
+  rating: number;
+  title: string;
+  body: string;
+  loanStatus: string | null;
+  loanType: string | null;
+  interestRateExperience: string | null;
+  closedOnTime: boolean | null;
+  feesExperience: string | null;
+  loanTerm: string | null;
+  loanProgram: string | null;
+  isFirstTimeBuyer: boolean | null;
+  isSelfEmployed: boolean | null;
+  status: 'pending' | 'approved' | 'rejected';
+  responseText: string | null;
+  responseDate: string | null;
+  reviewDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ---------------------------------------------------------------------------
 // CSV Import
 // ---------------------------------------------------------------------------
 
