@@ -8,7 +8,7 @@ interface AvatarProps {
 export default function BocaBankerAvatar({ className, size = 200 }: AvatarProps) {
   return (
     <Image
-      src="/carmen-profile.jpg"
+      src="/carmen-profile.png"
       alt="Charles Carmen Mayell - Boca Banker"
       width={size}
       height={size}

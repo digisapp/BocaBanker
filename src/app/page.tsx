@@ -11,6 +11,7 @@ import {
   Landmark,
   Search,
   ChevronDown,
+  Star,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -142,6 +143,108 @@ const stats = [
   { value: 85, suffix: '%', label: 'Faster Than Manual Analysis', prefix: '', emoji: '⚡' },
 ]
 
+/* ─── Star Display ─── */
+function Stars({ rating }: { rating: number }) {
+  return (
+    <div className="flex gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          className={cn(
+            'h-4 w-4',
+            i < rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'
+          )}
+        />
+      ))}
+    </div>
+  )
+}
+
+/* ─── Reviews Preview ─── */
+function ReviewsPreview() {
+  const [reviews, setReviews] = useState<Array<{
+    id: string
+    reviewerName: string
+    reviewerCity?: string
+    reviewerState?: string
+    rating: number
+    title: string
+    body: string
+  }>>([])
+  const [stats, setStats] = useState({ averageRating: 5, totalReviews: 0 })
+
+  useEffect(() => {
+    fetch('/api/reviews?limit=3')
+      .then(r => r.json())
+      .then(data => {
+        if (data.reviews) setReviews(data.reviews)
+        if (data.averageRating) setStats({ averageRating: data.averageRating, totalReviews: data.totalReviews })
+      })
+      .catch(() => {})
+  }, [])
+
+  if (reviews.length === 0) return null
+
+  return (
+    <section aria-label="Client reviews" className="py-20 sm:py-28 px-6 bg-gradient-to-b from-white to-amber-50/30">
+      <div className="mx-auto max-w-6xl">
+        <Reveal>
+          <div className="text-center mb-14">
+            <p className="text-sm font-semibold tracking-widest uppercase text-amber-600 mb-3">
+              Client Reviews
+            </p>
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">
+              Trusted by{' '}
+              <span className="bg-gradient-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent">
+                real clients
+              </span>
+            </h2>
+            <div className="mt-4 flex items-center justify-center gap-2">
+              <Stars rating={5} />
+              <span className="text-gray-600 font-medium">{stats.averageRating.toFixed(2)}</span>
+              <span className="text-gray-400">from {stats.totalReviews}+ reviews</span>
+            </div>
+          </div>
+        </Reveal>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {reviews.map((review, i) => (
+            <Reveal key={review.id} delay={i * 80}>
+              <div className="h-full rounded-2xl border border-amber-200/60 bg-white p-7 shadow-sm hover:shadow-lg hover:shadow-black/5 transition-all duration-300 hover:-translate-y-1">
+                <Stars rating={review.rating} />
+                <h3 className="font-serif text-lg font-semibold text-gray-900 mt-3 mb-2 line-clamp-1">
+                  {review.title}
+                </h3>
+                <p className="text-sm text-gray-500 leading-relaxed line-clamp-4 mb-4">
+                  {review.body}
+                </p>
+                <div className="mt-auto pt-3 border-t border-gray-100">
+                  <p className="text-sm font-medium text-gray-700">{review.reviewerName}</p>
+                  {(review.reviewerCity || review.reviewerState) && (
+                    <p className="text-xs text-gray-400">
+                      {[review.reviewerCity, review.reviewerState].filter(Boolean).join(', ')}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+
+        <Reveal delay={300}>
+          <div className="text-center mt-10">
+            <Button asChild variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-50 hover:text-amber-800">
+              <Link href="/reviews">
+                See All {stats.totalReviews}+ Reviews
+              </Link>
+            </Button>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  )
+}
+
 /* ─── Page ─── */
 
 export default function Home() {
@@ -173,9 +276,14 @@ export default function Home() {
                 Boca Banker
               </span>
             </Link>
-            <Button asChild variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm">
-              <Link href="/login">Sign In</Link>
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button asChild variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm">
+                <Link href="/reviews">Reviews</Link>
+              </Button>
+              <Button asChild variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm">
+                <Link href="/login">Sign In</Link>
+              </Button>
+            </div>
           </div>
         </nav>
       </header>
@@ -400,6 +508,11 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════
+         REVIEWS — Social proof
+         ══════════════════════════════════════ */}
+      <ReviewsPreview />
+
+      {/* ══════════════════════════════════════
          CTA
          ══════════════════════════════════════ */}
       <section aria-label="Call to action" className="py-24 sm:py-32 px-6 bg-gradient-to-br from-sky-500 via-sky-400 to-teal-400 relative overflow-hidden">
@@ -460,6 +573,7 @@ export default function Home() {
                 <button onClick={() => document.querySelector('[aria-label="Features"]')?.scrollIntoView({ behavior: 'smooth' })} className="text-left hover:text-gray-900 transition-colors">Features</button>
                 <button onClick={() => document.querySelector('[aria-label="How it works"]')?.scrollIntoView({ behavior: 'smooth' })} className="text-left hover:text-gray-900 transition-colors">How It Works</button>
                 <button onClick={() => document.querySelector('[aria-label="Frequently asked questions"]')?.scrollIntoView({ behavior: 'smooth' })} className="text-left hover:text-gray-900 transition-colors">FAQ</button>
+                <Link href="/reviews" className="text-left hover:text-gray-900 transition-colors">Reviews</Link>
               </nav>
             </div>
 
