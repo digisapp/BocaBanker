@@ -483,12 +483,20 @@ export default function Home() {
                 a: 'Typical savings range from 15% to 40% of a property\u2019s depreciable basis, accelerated into the first few years. For a $1M commercial property, this could mean $150,000\u2013$400,000 in accelerated depreciation deductions. Boca Banker provides instant AI-powered estimates based on your specific property.',
               },
               {
+                q: 'What types of properties qualify for cost segregation?',
+                a: 'Almost any commercial or investment property can benefit \u2014 office buildings, retail centers, warehouses, multifamily apartments, hotels, restaurants, and even mixed-use properties. Residential rental properties (27.5-year class) and commercial properties (39-year class) both qualify. Generally, properties valued at $500K or more see the most meaningful tax savings.',
+              },
+              {
+                q: 'What mortgage options are available in South Florida?',
+                a: 'South Florida offers a wide range of lending options including conventional loans, FHA/VA, jumbo loans for high-value properties, DSCR loans for investors, and commercial financing. Carmen specializes in finding the right fit for each client \u2014 whether you\u2019re a first-time buyer, seasoned investor, or looking to refinance.',
+              },
+              {
                 q: 'How does Boca Banker work?',
                 a: 'Simply start a conversation with Boca Banker\u2019s AI chat. Describe your property and he\u2019ll analyze its cost segregation potential, estimate tax savings through MACRS and bonus depreciation, and provide expert guidance on banking and real estate strategy \u2014 all powered by 40 years of Boca Raton banking intelligence.',
               },
               {
-                q: 'Is the AI chat free?',
-                a: 'Yes! You can chat with Boca Banker for free \u2014 no signup required. Ask about cost segregation, mortgages, tax strategy, or property analysis. Sign up for a free account to access the full platform including automated studies, client CRM, and email outreach tools.',
+                q: 'What makes Carmen different from other loan officers?',
+                a: 'With 40+ years of banking experience in South Florida and a perfect 5-star rating from 61+ client reviews, Carmen combines deep local market knowledge with a genuinely personal approach. He\u2019s not just closing loans \u2014 he\u2019s building long-term relationships and helping clients make smart financial decisions for their future.',
               },
             ].map((faq, i) => (
               <Reveal key={faq.q} delay={i * 60}>
