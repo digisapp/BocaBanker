@@ -93,54 +93,54 @@ function CountUp({ target, suffix = '', prefix = '' }: { target: number; suffix?
 
 const features = [
   {
-    icon: Brain,
-    title: 'AI Chat Assistant',
-    desc: 'Ask him anything about banking, mortgages, cost segregation, or property analysis. He responds in seconds with decades of financial expertise.',
-    color: 'bg-sky-100 text-sky-600',
-    border: 'border-sky-200',
-  },
-  {
-    icon: Calculator,
-    title: 'Cost Seg Calculator',
-    desc: 'Tell him about your property and get MACRS depreciation schedules, bonus dep estimates, and tax savings projections on the spot.',
+    icon: Landmark,
+    title: 'Mortgage Expertise',
+    desc: 'Navigate rates, loan programs, and refinancing options with an advisor who understands South Florida home lending inside and out.',
     color: 'bg-amber-100 text-amber-600',
     border: 'border-amber-200',
   },
   {
+    icon: Brain,
+    title: 'AI Chat Assistant',
+    desc: 'Ask him anything about home loans, pre-approvals, refinancing, or cost segregation. He responds in seconds with decades of financial expertise.',
+    color: 'bg-sky-100 text-sky-600',
+    border: 'border-sky-200',
+  },
+  {
     icon: Building2,
     title: 'Real Estate Guidance',
-    desc: 'From commercial acquisitions to multifamily strategies — get expert-level guidance on structuring your next deal.',
+    desc: 'From first-time homebuyers to seasoned investors — get expert-level guidance on financing your next property.',
     color: 'bg-teal-100 text-teal-600',
     border: 'border-teal-200',
   },
   {
-    icon: Landmark,
-    title: 'Mortgage Intelligence',
-    desc: 'Navigate rates, terms, and refinancing options with AI that understands South Florida lending inside and out.',
+    icon: DollarSign,
+    title: 'Rate & Payment Tools',
+    desc: 'Compare loan programs, estimate monthly payments, and find the best rate for your situation — conventional, FHA, VA, jumbo, and more.',
     color: 'bg-violet-100 text-violet-600',
     border: 'border-violet-200',
   },
   {
-    icon: DollarSign,
-    title: 'Tax Savings Strategy',
-    desc: 'Discover exactly how much you could save through accelerated depreciation, bonus dep, and smart tax planning.',
+    icon: Calculator,
+    title: 'Cost Segregation',
+    desc: 'For investment properties — get MACRS depreciation schedules, bonus depreciation estimates, and tax savings projections on the spot.',
     color: 'bg-emerald-100 text-emerald-600',
     border: 'border-emerald-200',
   },
   {
     icon: Search,
     title: 'Property Analysis',
-    desc: 'Get a quick assessment of any property\'s cost segregation potential — residential, commercial, or mixed-use.',
+    desc: 'Get a quick assessment of any property\'s value, loan eligibility, or cost segregation potential — residential, commercial, or mixed-use.',
     color: 'bg-rose-100 text-rose-600',
     border: 'border-rose-200',
   },
 ]
 
 const stats = [
-  { value: 2, suffix: 'B+', label: 'Property Values Analyzed', prefix: '$', emoji: '🏢' },
-  { value: 500, suffix: '+', label: 'Studies Completed', prefix: '', emoji: '📊' },
+  { value: 2, suffix: 'B+', label: 'In Loans Closed', prefix: '$', emoji: '🏠' },
+  { value: 61, suffix: '+', label: '5-Star Reviews', prefix: '', emoji: '⭐' },
   { value: 40, suffix: '+', label: 'Years of Experience', prefix: '', emoji: '🏦' },
-  { value: 85, suffix: '%', label: 'Faster Than Manual Analysis', prefix: '', emoji: '⚡' },
+  { value: 500, suffix: '+', label: 'Cost Seg Studies', prefix: '', emoji: '📊' },
 ]
 
 /* ─── Star Display ─── */
@@ -312,14 +312,14 @@ export default function Home() {
                     Boca Banker
                   </span>
                   <span className="block text-lg sm:text-xl md:text-2xl text-gray-500 font-medium mt-2">
-                    AI-Powered Cost Segregation &amp; Banking Intelligence
+                    South Florida&apos;s Mortgage &amp; Real Estate Finance Expert
                   </span>
                 </h1>
               </Reveal>
 
               <Reveal delay={200}>
                 <p className="mt-6 text-lg sm:text-xl text-gray-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                  Your AI-powered financial specialist. He knows banking, mortgages, and cost segregation
+                  Your AI-powered mortgage specialist. He knows home loans, refinancing, and real estate finance
                   inside and out, never takes a coffee break, and has the best tan in fintech.
                 </p>
               </Reveal>
@@ -375,7 +375,7 @@ export default function Home() {
                 </span>
               </h2>
               <p className="mt-4 text-gray-500 max-w-lg mx-auto">
-                Just ask Boca Banker — he handles cost seg analysis, mortgage guidance, real estate strategy, and tax planning so you don&apos;t have to.
+                Just ask Boca Banker — he handles mortgage guidance, rate comparisons, real estate strategy, and cost segregation so you don&apos;t have to.
               </p>
             </div>
           </Reveal>
@@ -430,9 +430,9 @@ export default function Home() {
             <div className="hidden md:block absolute top-14 left-[18%] right-[18%] h-0.5 bg-gradient-to-r from-sky-200 via-amber-200 to-teal-200 rounded-full" />
 
             {[
-              { num: '01', icon: MessageCircle, title: 'Ask Boca Banker', desc: 'Start a conversation about your property, mortgage, or tax situation. No signup required — just start chatting.', color: 'bg-sky-100 text-sky-600' },
-              { num: '02', icon: Search, title: 'Get Expert Analysis', desc: 'Boca Banker analyzes your property and identifies cost segregation opportunities, tax savings, and strategy options.', color: 'bg-amber-100 text-amber-600' },
-              { num: '03', icon: DollarSign, title: 'See Your Savings', desc: 'Get a personalized breakdown of how much you could save through accelerated depreciation and smart tax planning.', color: 'bg-teal-100 text-teal-600' },
+              { num: '01', icon: MessageCircle, title: 'Ask Boca Banker', desc: 'Start a conversation about your mortgage, home purchase, refinance, or investment property. No signup required — just start chatting.', color: 'bg-sky-100 text-sky-600' },
+              { num: '02', icon: Search, title: 'Get Expert Guidance', desc: 'Boca Banker analyzes your situation and recommends the best loan programs, rates, and financing strategies for your goals.', color: 'bg-amber-100 text-amber-600' },
+              { num: '03', icon: DollarSign, title: 'Save Money', desc: 'Get a personalized breakdown of your best options — from the lowest rates to cost segregation tax savings on investment properties.', color: 'bg-teal-100 text-teal-600' },
             ].map((step, i) => (
               <Reveal key={step.num} delay={i * 120}>
                 <div className="relative text-center flex flex-col items-center">
@@ -475,8 +475,20 @@ export default function Home() {
           <div className="space-y-4">
             {[
               {
+                q: 'What mortgage options are available in South Florida?',
+                a: 'South Florida offers a wide range of lending options including conventional loans, FHA/VA, jumbo loans for high-value properties, DSCR loans for investors, and commercial financing. Carmen specializes in finding the right fit for each client \u2014 whether you\u2019re a first-time buyer, seasoned investor, or looking to refinance.',
+              },
+              {
+                q: 'What makes Carmen different from other loan officers?',
+                a: 'With 40+ years of banking experience in South Florida and a perfect 5-star rating from 61+ client reviews, Carmen combines deep local market knowledge with a genuinely personal approach. He\u2019s not just closing loans \u2014 he\u2019s building long-term relationships and helping clients make smart financial decisions for their future.',
+              },
+              {
+                q: 'How does Boca Banker work?',
+                a: 'Simply start a conversation with Boca Banker\u2019s AI chat. Describe your mortgage needs, home purchase, or refinance situation and he\u2019ll guide you to the best loan programs and rates \u2014 plus cost segregation analysis for investment properties \u2014 all powered by 40 years of Boca Raton banking expertise.',
+              },
+              {
                 q: 'What is cost segregation?',
-                a: 'Cost segregation is a tax strategy that accelerates depreciation deductions on commercial real estate by reclassifying building components into shorter depreciation categories (5, 7, or 15 years instead of 27.5 or 39 years). This can generate significant tax savings in the first years of ownership.',
+                a: 'Cost segregation is a tax strategy that accelerates depreciation deductions on commercial and investment real estate by reclassifying building components into shorter depreciation categories (5, 7, or 15 years instead of 27.5 or 39 years). This can generate significant tax savings in the first years of ownership.',
               },
               {
                 q: 'How much can I save with a cost segregation study?',
@@ -485,18 +497,6 @@ export default function Home() {
               {
                 q: 'What types of properties qualify for cost segregation?',
                 a: 'Almost any commercial or investment property can benefit \u2014 office buildings, retail centers, warehouses, multifamily apartments, hotels, restaurants, and even mixed-use properties. Residential rental properties (27.5-year class) and commercial properties (39-year class) both qualify. Generally, properties valued at $500K or more see the most meaningful tax savings.',
-              },
-              {
-                q: 'What mortgage options are available in South Florida?',
-                a: 'South Florida offers a wide range of lending options including conventional loans, FHA/VA, jumbo loans for high-value properties, DSCR loans for investors, and commercial financing. Carmen specializes in finding the right fit for each client \u2014 whether you\u2019re a first-time buyer, seasoned investor, or looking to refinance.',
-              },
-              {
-                q: 'How does Boca Banker work?',
-                a: 'Simply start a conversation with Boca Banker\u2019s AI chat. Describe your property and he\u2019ll analyze its cost segregation potential, estimate tax savings through MACRS and bonus depreciation, and provide expert guidance on banking and real estate strategy \u2014 all powered by 40 years of Boca Raton banking intelligence.',
-              },
-              {
-                q: 'What makes Carmen different from other loan officers?',
-                a: 'With 40+ years of banking experience in South Florida and a perfect 5-star rating from 61+ client reviews, Carmen combines deep local market knowledge with a genuinely personal approach. He\u2019s not just closing loans \u2014 he\u2019s building long-term relationships and helping clients make smart financial decisions for their future.',
               },
             ].map((faq, i) => (
               <Reveal key={faq.q} delay={i * 60}>
@@ -539,7 +539,7 @@ export default function Home() {
               Ready to put him to work?
             </h2>
             <p className="mt-5 text-lg text-white/80 max-w-xl mx-auto">
-              Ask him about banking, mortgages, or cost segregation — he&apos;s ready to chat right now.
+              Ask him about home loans, refinancing, or cost segregation — he&apos;s ready to chat right now.
               Zero vacation days required.
             </p>
             <button
@@ -569,7 +569,7 @@ export default function Home() {
                 </span>
               </div>
               <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
-                AI-powered cost segregation analysis and banking intelligence built on 40 years of Boca Raton financial expertise. Maximize your commercial real estate tax savings.
+                South Florida&apos;s trusted mortgage and real estate finance expert — powered by 40 years of Boca Raton banking experience. Home loans, refinancing, and cost segregation analysis.
               </p>
               <p className="text-xs text-gray-400 mt-3">Boca Raton, FL</p>
             </div>
@@ -599,7 +599,7 @@ export default function Home() {
               &copy; {new Date().getFullYear()} Boca Banker. All rights reserved.
             </p>
             <p className="text-xs text-gray-400">
-              Cost segregation &middot; MACRS depreciation &middot; Tax savings &middot; South Florida
+              Home mortgages &middot; Refinancing &middot; South Florida loans &middot; Cost segregation
             </p>
           </div>
         </div>

@@ -21,7 +21,7 @@ const dmSerif = DM_Serif_Display({
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://bocabanker.com";
 const SITE_NAME = "Boca Banker";
 const SITE_DESCRIPTION =
-  "AI-powered cost segregation analysis built on 40 years of Boca Raton banking intelligence. Maximize tax savings with automated property studies, client CRM, and smart outreach.";
+  "South Florida's trusted mortgage expert with 40+ years of Boca Raton banking experience. Home loans, refinancing, and cost segregation analysis powered by AI.";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -32,26 +32,27 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Boca Banker | Cost Segregation & Banking Intelligence",
+    default: "Boca Banker | South Florida Mortgage & Real Estate Finance Expert",
     template: "%s | Boca Banker",
   },
   description: SITE_DESCRIPTION,
   keywords: [
+    "mortgage",
+    "home loans",
+    "South Florida mortgage",
+    "Boca Raton mortgage",
+    "refinancing",
+    "home purchase",
+    "loan officer",
+    "FHA loans",
+    "VA loans",
+    "jumbo loans",
+    "first-time homebuyer",
     "cost segregation",
     "cost segregation study",
-    "tax savings",
-    "accelerated depreciation",
-    "bonus depreciation",
-    "MACRS depreciation",
-    "commercial real estate",
-    "real estate tax strategy",
-    "property tax analysis",
-    "Boca Raton",
+    "real estate finance",
     "South Florida",
-    "banking intelligence",
-    "AI financial advisor",
-    "CRE tax savings",
-    "property depreciation calculator",
+    "Boca Raton",
   ],
   authors: [{ name: SITE_NAME }],
   creator: SITE_NAME,
@@ -72,12 +73,12 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: "Boca Banker | Cost Segregation & Banking Intelligence",
+    title: "Boca Banker | South Florida Mortgage & Real Estate Finance Expert",
     description: SITE_DESCRIPTION,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Boca Banker | Cost Segregation & Banking Intelligence",
+    title: "Boca Banker | South Florida Mortgage & Real Estate Finance Expert",
     description: SITE_DESCRIPTION,
   },
   alternates: {
@@ -119,7 +120,7 @@ const jsonLd = {
       "@id": `${SITE_URL}/#localbusiness`,
       name: SITE_NAME,
       description:
-        "AI-powered cost segregation and banking intelligence platform serving commercial real estate investors in South Florida and nationwide.",
+        "South Florida mortgage and real estate finance expert serving homebuyers, investors, and property owners in Boca Raton and nationwide.",
       url: SITE_URL,
       image: `${SITE_URL}/icon-512.png`,
       address: {
@@ -165,7 +166,7 @@ const jsonLd = {
       "@type": "WebPage",
       "@id": `${SITE_URL}/#webpage`,
       url: SITE_URL,
-      name: "Boca Banker | Cost Segregation & Banking Intelligence",
+      name: "Boca Banker | South Florida Mortgage & Real Estate Finance Expert",
       isPartOf: { "@id": `${SITE_URL}/#website` },
       about: { "@id": `${SITE_URL}/#organization` },
       description: SITE_DESCRIPTION,
@@ -176,7 +177,7 @@ const jsonLd = {
       applicationCategory: "FinanceApplication",
       operatingSystem: "Web",
       description:
-        "AI-powered cost segregation analysis platform with automated property studies, tax savings calculations, client CRM, and smart outreach tools.",
+        "AI-powered mortgage and real estate finance platform with home loan guidance, rate comparisons, cost segregation analysis, and client management tools.",
       offers: {
         "@type": "Offer",
         price: "0",
