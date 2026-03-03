@@ -67,9 +67,19 @@ export async function GET(request: NextRequest) {
       ratingBreakdown,
     });
   } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
     logger.error('reviews-api', 'GET /api/reviews error', error);
     return NextResponse.json(
-      { error: 'Failed to fetch reviews' },
+      {
+        error: 'Failed to fetch reviews',
+        debug: {
+          message: err.message,
+          cause: (error as Record<string, unknown>)?.cause,
+          code: (error as Record<string, unknown>)?.code,
+          severity: (error as Record<string, unknown>)?.severity,
+          detail: (error as Record<string, unknown>)?.detail,
+        },
+      },
       { status: 500 }
     );
   }
