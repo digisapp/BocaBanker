@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { db } from '@/db';
-import { reviews } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 import { reviewAdminUpdateSchema } from '@/lib/validation/schemas';
 
@@ -33,8 +31,8 @@ export async function PUT(
 
     const data = parsed.data;
 
-    const updateData: Partial<typeof reviews.$inferInsert> = {
-      updatedAt: new Date(),
+    const updateData: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
     };
 
     if (data.status) {
@@ -42,23 +40,31 @@ export async function PUT(
     }
 
     if (data.response_text !== undefined) {
-      updateData.responseText = data.response_text || null;
+      updateData.response_text = data.response_text || null;
       if (data.response_text) {
-        updateData.responseDate = new Date();
+        updateData.response_date = new Date().toISOString();
       }
     }
 
-    const [updated] = await db
-      .update(reviews)
-      .set(updateData)
-      .where(eq(reviews.id, id))
-      .returning();
+    const { data: updated, error } = await supabaseAdmin
+      .from('reviews')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
 
-    if (!updated) {
+    if (error || !updated) {
+      logger.error('reviews-api', 'Supabase update error', error);
       return NextResponse.json({ error: 'Review not found' }, { status: 404 });
     }
 
-    return NextResponse.json(updated);
+    return NextResponse.json({
+      id: updated.id,
+      reviewerName: updated.reviewer_name,
+      status: updated.status,
+      responseText: updated.response_text,
+      responseDate: updated.response_date,
+    });
   } catch (error) {
     logger.error('reviews-api', 'PUT /api/reviews/[id] error', error);
     return NextResponse.json(
@@ -84,7 +90,15 @@ export async function DELETE(
 
     const { id } = await params;
 
-    await db.delete(reviews).where(eq(reviews.id, id));
+    const { error } = await supabaseAdmin
+      .from('reviews')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      logger.error('reviews-api', 'Supabase delete error', error);
+      return NextResponse.json({ error: 'Failed to delete review' }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

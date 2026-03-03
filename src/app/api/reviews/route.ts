@@ -1,9 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
-import { reviews } from '@/db/schema';
-import { eq, desc, sql, count } from 'drizzle-orm';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 import { reviewSubmissionSchema } from '@/lib/validation/schemas';
+
+function mapReview(r: Record<string, unknown>) {
+  return {
+    id: r.id,
+    reviewerName: r.reviewer_name,
+    reviewerEmail: r.reviewer_email,
+    reviewerCity: r.reviewer_city,
+    reviewerState: r.reviewer_state,
+    rating: r.rating,
+    title: r.title,
+    body: r.body,
+    loanStatus: r.loan_status,
+    loanType: r.loan_type,
+    interestRateExperience: r.interest_rate_experience,
+    closedOnTime: r.closed_on_time,
+    feesExperience: r.fees_experience,
+    loanTerm: r.loan_term,
+    loanProgram: r.loan_program,
+    isFirstTimeBuyer: r.is_first_time_buyer,
+    isSelfEmployed: r.is_self_employed,
+    status: r.status,
+    responseText: r.response_text,
+    responseDate: r.response_date,
+    reviewDate: r.review_date,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
 
 // Public GET — returns approved reviews with pagination
 export async function GET(request: NextRequest) {
@@ -11,55 +37,52 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
     const limit = Math.min(50, Math.max(1, Number(searchParams.get('limit') ?? '12')));
-    const ratingFilter = searchParams.get('rating');
+    const rating = searchParams.get('rating');
 
     const offset = (page - 1) * limit;
 
-    // Build conditions
-    const conditions = [eq(reviews.status, 'approved')];
-    if (ratingFilter) {
-      conditions.push(eq(reviews.rating, Number(ratingFilter)));
+    let query = supabaseAdmin
+      .from('reviews')
+      .select('*', { count: 'exact' })
+      .eq('status', 'approved');
+
+    if (rating) {
+      query = query.eq('rating', Number(rating));
     }
 
-    const where = conditions.length === 1 ? conditions[0] : sql`${conditions[0]} AND ${conditions[1]}`;
+    query = query
+      .order('review_date', { ascending: false, nullsFirst: false })
+      .range(offset, offset + limit - 1);
 
-    // Fetch reviews
-    const rows = await db
-      .select()
-      .from(reviews)
-      .where(where)
-      .orderBy(desc(reviews.reviewDate))
-      .limit(limit)
-      .offset(offset);
+    const { data: rows, count: total, error } = await query;
 
-    // Total count
-    const [{ total }] = await db
-      .select({ total: count() })
-      .from(reviews)
-      .where(where);
+    if (error) {
+      logger.error('reviews-api', 'Supabase query error', error);
+      return NextResponse.json({ error: 'Failed to fetch reviews' }, { status: 500 });
+    }
 
-    // Aggregate stats (all approved, ignoring rating filter)
-    const allApproved = await db
-      .select({ rating: reviews.rating })
-      .from(reviews)
-      .where(eq(reviews.status, 'approved'));
+    // Get aggregate stats
+    const { data: allApproved } = await supabaseAdmin
+      .from('reviews')
+      .select('rating')
+      .eq('status', 'approved');
 
-    const ratings = allApproved.map(r => r.rating);
+    const ratings = (allApproved || []).map((r: { rating: number }) => r.rating);
     const averageRating = ratings.length > 0
-      ? ratings.reduce((a, b) => a + b, 0) / ratings.length
+      ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length
       : 0;
 
     const ratingBreakdown = {
-      5: ratings.filter(r => r === 5).length,
-      4: ratings.filter(r => r === 4).length,
-      3: ratings.filter(r => r === 3).length,
-      2: ratings.filter(r => r === 2).length,
-      1: ratings.filter(r => r === 1).length,
+      5: ratings.filter((r: number) => r === 5).length,
+      4: ratings.filter((r: number) => r === 4).length,
+      3: ratings.filter((r: number) => r === 3).length,
+      2: ratings.filter((r: number) => r === 2).length,
+      1: ratings.filter((r: number) => r === 1).length,
     };
 
     return NextResponse.json({
-      reviews: rows,
-      total,
+      reviews: (rows || []).map((r: Record<string, unknown>) => mapReview(r)),
+      total: total ?? 0,
       page,
       limit,
       averageRating: Math.round(averageRating * 100) / 100,
@@ -67,19 +90,9 @@ export async function GET(request: NextRequest) {
       ratingBreakdown,
     });
   } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
     logger.error('reviews-api', 'GET /api/reviews error', error);
     return NextResponse.json(
-      {
-        error: 'Failed to fetch reviews',
-        debug: {
-          message: err.message,
-          cause: (error as Record<string, unknown>)?.cause,
-          code: (error as Record<string, unknown>)?.code,
-          severity: (error as Record<string, unknown>)?.severity,
-          detail: (error as Record<string, unknown>)?.detail,
-        },
-      },
+      { error: 'Failed to fetch reviews' },
       { status: 500 }
     );
   }
@@ -100,27 +113,33 @@ export async function POST(request: NextRequest) {
 
     const data = parsed.data;
 
-    const [created] = await db
-      .insert(reviews)
-      .values({
-        reviewerName: data.reviewer_name,
-        reviewerEmail: data.reviewer_email || null,
-        reviewerCity: data.reviewer_city || null,
-        reviewerState: data.reviewer_state || null,
+    const { data: created, error } = await supabaseAdmin
+      .from('reviews')
+      .insert({
+        reviewer_name: data.reviewer_name,
+        reviewer_email: data.reviewer_email || null,
+        reviewer_city: data.reviewer_city || null,
+        reviewer_state: data.reviewer_state || null,
         rating: data.rating,
         title: data.title,
         body: data.body,
-        loanType: data.loan_type || null,
-        loanTerm: data.loan_term || null,
-        closedOnTime: data.closed_on_time ?? null,
-        isFirstTimeBuyer: data.is_first_time_buyer ?? null,
-        isSelfEmployed: data.is_self_employed ?? null,
+        loan_type: data.loan_type || null,
+        loan_term: data.loan_term || null,
+        closed_on_time: data.closed_on_time ?? null,
+        is_first_time_buyer: data.is_first_time_buyer ?? null,
+        is_self_employed: data.is_self_employed ?? null,
         status: 'pending',
-        reviewDate: new Date().toISOString().split('T')[0],
+        review_date: new Date().toISOString().split('T')[0],
       })
-      .returning();
+      .select()
+      .single();
 
-    return NextResponse.json(created, { status: 201 });
+    if (error) {
+      logger.error('reviews-api', 'Supabase insert error', error);
+      return NextResponse.json({ error: 'Failed to submit review' }, { status: 500 });
+    }
+
+    return NextResponse.json(mapReview(created), { status: 201 });
   } catch (error) {
     logger.error('reviews-api', 'POST /api/reviews error', error);
     return NextResponse.json(
