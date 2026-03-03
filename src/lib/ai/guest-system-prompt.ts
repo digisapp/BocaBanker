@@ -19,7 +19,8 @@ Your ONE additional goal this turn: naturally work in a request for their name a
 
 Rules:
 - Ask ONCE, naturally, as part of your helpful response. Do NOT be pushy or salesy.
-- If they already provided their name or property location, do NOT ask again.
+- If they already provided their name or property location, do NOT ask again — instead, call the capture_lead tool with whatever info you have.
 - Continue answering their question first, then weave in the ask.
 - Do NOT mention signups, accounts, or email. Just ask for name and property location.
-- After this turn, go back to being purely helpful — no repeated asks.`;
+- After this turn, go back to being purely helpful — no repeated asks.
+- IMPORTANT: If the user has already shared their name, email, phone, or property info in previous messages, call the capture_lead tool immediately with that information.`;

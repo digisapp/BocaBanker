@@ -342,6 +342,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
                   key={message.id}
                   role={message.role as 'user' | 'assistant'}
                   content={getTextContent(message)}
+                  parts={message.parts}
                 />
               ))}
               {isLoading &&

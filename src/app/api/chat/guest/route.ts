@@ -1,10 +1,17 @@
-import { streamText } from 'ai';
+import { streamText, stepCountIs, tool } from 'ai';
 import { xai } from '@ai-sdk/xai';
 import { logger } from '@/lib/logger';
 import { getGuestCount, createGuestCountCookie } from '@/lib/guest-chat/cookie';
 import { GUEST_SYSTEM_PROMPT, GUEST_SYSTEM_PROMPT_LEAD_CAPTURE } from '@/lib/ai/guest-system-prompt';
 import { augmentPromptWithContext } from '@/lib/ai/xai-collections';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
+import {
+  calculateMortgage,
+  captureLeadSchema,
+  CAPTURE_LEAD_DESCRIPTION,
+  scheduleConsultation,
+} from '@/lib/ai/tools';
+import { createGuestLeadCapture } from '@/lib/ai/tool-executors';
 
 const LEAD_CAPTURE_THRESHOLD = 3;
 const MAX_MESSAGE_ENTRIES = 50;
@@ -59,10 +66,33 @@ export async function POST(request: Request) {
     const lastUserContent = coreMessages.filter((m: { role: string }) => m.role === 'user').pop()?.content || '';
     const systemPrompt = await augmentPromptWithContext(basePrompt, lastUserContent);
 
+    // Guest-specific capture_lead tool
+    const captureLead = tool({
+      description: CAPTURE_LEAD_DESCRIPTION,
+      inputSchema: captureLeadSchema,
+      execute: createGuestLeadCapture(),
+    });
+
     const result = streamText({
-      model: xai('grok-3'),
+      model: xai('grok-4-1-fast-non-reasoning'),
       system: systemPrompt,
       messages: coreMessages,
+      tools: {
+        calculate_mortgage: calculateMortgage,
+        capture_lead: captureLead,
+        schedule_consultation: scheduleConsultation,
+      },
+      stopWhen: stepCountIs(5),
+      providerOptions: {
+        xai: {
+          searchParameters: {
+            mode: 'auto',
+            returnCitations: true,
+            maxSearchResults: 3,
+            sources: [{ type: 'web' }],
+          },
+        },
+      },
     });
 
     const newCount = count + 1;

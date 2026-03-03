@@ -1,4 +1,4 @@
-import { streamText } from 'ai';
+import { streamText, stepCountIs, tool } from 'ai';
 import { xai } from '@ai-sdk/xai';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
@@ -7,6 +7,13 @@ import { chatMessages, chatConversations } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { BOCA_BANKER_SYSTEM_PROMPT } from '@/lib/ai/boca-banker-prompt';
 import { augmentPromptWithContext } from '@/lib/ai/xai-collections';
+import {
+  calculateMortgage,
+  captureLeadSchema,
+  CAPTURE_LEAD_DESCRIPTION,
+  scheduleConsultation,
+} from '@/lib/ai/tools';
+import { createAuthLeadCapture } from '@/lib/ai/tool-executors';
 
 export async function POST(request: Request) {
   try {
@@ -123,17 +130,42 @@ export async function POST(request: Request) {
     const lastUserContent = coreMessages.filter((m: { role: string }) => m.role === 'user').pop()?.content || '';
     const systemPrompt = await augmentPromptWithContext(BOCA_BANKER_SYSTEM_PROMPT, lastUserContent);
 
+    // Build capture_lead tool with user-specific executor
+    const captureLead = tool({
+      description: CAPTURE_LEAD_DESCRIPTION,
+      inputSchema: captureLeadSchema,
+      execute: createAuthLeadCapture(user.id),
+    });
+
     const result = streamText({
-      model: xai('grok-3'),
+      model: xai('grok-4-1-fast-non-reasoning'),
       system: systemPrompt,
       messages: coreMessages,
+      tools: {
+        calculate_mortgage: calculateMortgage,
+        capture_lead: captureLead,
+        schedule_consultation: scheduleConsultation,
+      },
+      stopWhen: stepCountIs(5),
+      providerOptions: {
+        xai: {
+          searchParameters: {
+            mode: 'auto',
+            returnCitations: true,
+            maxSearchResults: 5,
+            sources: [{ type: 'web' }, { type: 'news' }],
+          },
+        },
+      },
       onFinish: async ({ text }) => {
         // Save assistant response to database
-        await db.insert(chatMessages).values({
-          conversationId: activeConversationId,
-          role: 'assistant',
-          content: text,
-        });
+        if (text) {
+          await db.insert(chatMessages).values({
+            conversationId: activeConversationId,
+            role: 'assistant',
+            content: text,
+          });
+        }
       },
     });
 
