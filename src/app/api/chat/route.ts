@@ -6,6 +6,7 @@ import { db } from '@/db';
 import { chatMessages, chatConversations } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { BOCA_BANKER_SYSTEM_PROMPT } from '@/lib/ai/boca-banker-prompt';
+import { augmentPromptWithContext } from '@/lib/ai/xai-collections';
 
 export async function POST(request: Request) {
   try {
@@ -118,9 +119,13 @@ export async function POST(request: Request) {
       content: getMessageContent(msg),
     }));
 
+    // RAG: augment with retrieved context (no-op if disabled)
+    const lastUserContent = coreMessages.filter((m: { role: string }) => m.role === 'user').pop()?.content || '';
+    const systemPrompt = await augmentPromptWithContext(BOCA_BANKER_SYSTEM_PROMPT, lastUserContent);
+
     const result = streamText({
       model: xai('grok-3'),
-      system: BOCA_BANKER_SYSTEM_PROMPT,
+      system: systemPrompt,
       messages: coreMessages,
       onFinish: async ({ text }) => {
         // Save assistant response to database

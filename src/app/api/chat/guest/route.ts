@@ -3,6 +3,7 @@ import { xai } from '@ai-sdk/xai';
 import { logger } from '@/lib/logger';
 import { getGuestCount, createGuestCountCookie } from '@/lib/guest-chat/cookie';
 import { GUEST_SYSTEM_PROMPT, GUEST_SYSTEM_PROMPT_LEAD_CAPTURE } from '@/lib/ai/guest-system-prompt';
+import { augmentPromptWithContext } from '@/lib/ai/xai-collections';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 const LEAD_CAPTURE_THRESHOLD = 3;
@@ -50,9 +51,13 @@ export async function POST(request: Request) {
     }));
 
     // Use lead capture prompt on the 3rd message only, then revert to normal
-    const systemPrompt = count === LEAD_CAPTURE_THRESHOLD - 1
+    const basePrompt = count === LEAD_CAPTURE_THRESHOLD - 1
       ? GUEST_SYSTEM_PROMPT_LEAD_CAPTURE
       : GUEST_SYSTEM_PROMPT;
+
+    // RAG: augment with retrieved context (no-op if disabled)
+    const lastUserContent = coreMessages.filter((m: { role: string }) => m.role === 'user').pop()?.content || '';
+    const systemPrompt = await augmentPromptWithContext(basePrompt, lastUserContent);
 
     const result = streamText({
       model: xai('grok-3'),
