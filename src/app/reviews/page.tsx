@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Star, ChevronDown, Loader2, Send, CheckCircle2, MapPin, Home, Clock, BadgeCheck } from 'lucide-react'
+import { Star, ChevronDown, Loader2, Send, CheckCircle2, MapPin, Clock, BadgeCheck } from 'lucide-react'
+import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -234,7 +235,7 @@ export default function ReviewsPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl shadow-sm border-b border-gray-100">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           <Link href="/" className="flex items-center gap-2.5">
-            <Home className="w-7 h-7 text-amber-500" />
+            <BocaBankerAvatar size={32} />
             <span className="font-serif text-xl font-bold text-gray-900 hidden sm:block">
               Boca Banker
             </span>
@@ -258,10 +259,6 @@ export default function ReviewsPage() {
             <h1 className="font-serif text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
               Client Reviews
             </h1>
-            <p className="text-gray-500 text-sm max-w-lg mx-auto mb-6">
-              See what clients say about working with Charles Carmen Mayell,
-              Senior Loan Officer at Certified Home Loans
-            </p>
 
             {/* Rating summary */}
             {totalReviews > 0 && (
@@ -323,45 +320,8 @@ export default function ReviewsPage() {
             )}
           </div>
 
-          {/* Reviews grid */}
-          {loading && reviews.length === 0 ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
-            </div>
-          ) : (
-            <>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {reviews.map((review) => (
-                  <ReviewCard key={review.id} review={review} />
-                ))}
-              </div>
-
-              {hasMore && (
-                <div className="text-center mt-8">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      const next = page + 1
-                      setPage(next)
-                      fetchReviews(next, ratingFilter)
-                    }}
-                    disabled={loading}
-                    className="gap-2"
-                  >
-                    {loading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                    Load More Reviews
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-
           {/* Write a Review CTA + Form */}
-          <div className="mt-16" id="write-review">
+          <div className="mb-10" id="write-review">
             {submitted ? (
               <div className="bg-white rounded-2xl border border-emerald-200 shadow-sm p-8 text-center max-w-lg mx-auto">
                 <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
@@ -375,21 +335,12 @@ export default function ReviewsPage() {
               </div>
             ) : !showForm ? (
               <div className="text-center">
-                <div className="bg-gradient-to-r from-amber-50 to-sky-50 rounded-2xl border border-amber-100 p-8 max-w-lg mx-auto">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                    Had a great experience?
-                  </h2>
-                  <p className="text-sm text-gray-500 mb-4">
-                    We&apos;d love to hear about your experience working with
-                    Carmen. Your review helps others find great mortgage service.
-                  </p>
-                  <Button
-                    onClick={() => setShowForm(true)}
-                    className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
-                  >
-                    <Star className="w-4 h-4" /> Write a Review
-                  </Button>
-                </div>
+                <Button
+                  onClick={() => setShowForm(true)}
+                  className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
+                >
+                  <Star className="w-4 h-4" /> Write a Review
+                </Button>
               </div>
             ) : (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 max-w-2xl mx-auto">
@@ -613,6 +564,44 @@ export default function ReviewsPage() {
               </div>
             )}
           </div>
+
+          {/* Reviews grid */}
+          {loading && reviews.length === 0 ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {reviews.map((review) => (
+                  <ReviewCard key={review.id} review={review} />
+                ))}
+              </div>
+
+              {hasMore && (
+                <div className="text-center mt-8">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const next = page + 1
+                      setPage(next)
+                      fetchReviews(next, ratingFilter)
+                    }}
+                    disabled={loading}
+                    className="gap-2"
+                  >
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                    Load More Reviews
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+
         </div>
       </main>
     </div>
