@@ -60,9 +60,9 @@ export async function searchCollection(
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        collection_id: targetCollection,
-        retrieval_mode: 'hybrid',
         query,
+        source: { collection_ids: [targetCollection] },
+        retrieval_mode: { type: 'hybrid' },
         max_results: MAX_RESULTS,
       }),
       signal: controller.signal,
@@ -74,7 +74,13 @@ export async function searchCollection(
     }
 
     const data = await response.json()
-    return data.results || []
+    // API returns matches with chunk_content (not results/content)
+    const matches = data.matches || data.results || []
+    return matches.map((m: Record<string, unknown>) => ({
+      content: (m.chunk_content || m.content || '') as string,
+      score: (m.score ?? 0) as number,
+      document_id: (m.file_id || m.document_id || '') as string,
+    }))
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
       logger.warn('xai-collections', 'Search timed out')
@@ -175,14 +181,24 @@ export async function uploadDocument(
   collectionId: string,
   content: string,
   title?: string,
-  metadata?: Record<string, unknown>,
 ): Promise<unknown> {
+  const key = process.env.XAI_MANAGEMENT_API_KEY
+  if (!key) throw new Error('XAI_MANAGEMENT_API_KEY is not configured')
+
+  const formData = new FormData()
+  const filename = (title || 'document').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.md'
+  const blob = new Blob([content], { type: 'text/markdown' })
+
+  formData.append('name', filename)
+  formData.append('data', blob, filename)
+  formData.append('content_type', 'text/markdown')
+
   const response = await fetch(
     `${MANAGEMENT_API_BASE}/collections/${collectionId}/documents`,
     {
       method: 'POST',
-      headers: getManagementHeaders(),
-      body: JSON.stringify({ content, title, metadata }),
+      headers: { Authorization: `Bearer ${key}` },
+      body: formData,
     },
   )
   if (!response.ok) {

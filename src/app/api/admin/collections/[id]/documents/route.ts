@@ -30,7 +30,7 @@ export async function GET(
   }
 }
 
-// POST /api/admin/collections/[id]/documents — { content: string, title?: string, metadata?: object }
+// POST /api/admin/collections/[id]/documents — { content: string, title?: string }
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -46,12 +46,12 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { content, title, metadata } = await request.json()
+    const { content, title } = await request.json()
     if (!content || typeof content !== 'string') {
       return NextResponse.json({ error: 'content is required' }, { status: 400 })
     }
 
-    const document = await uploadDocument(collectionId, content, title, metadata)
+    const document = await uploadDocument(collectionId, content, title)
     return NextResponse.json({ document }, { status: 201 })
   } catch (error) {
     logger.error('admin-collections', 'Failed to upload document', error)
