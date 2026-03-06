@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth, ApiError } from '@/lib/api/auth'
+import { apiError } from '@/lib/api/response'
 import { db } from '@/db'
 import { costSegStudies, studyAssets, properties, clients } from '@/db/schema'
 import { logger } from '@/lib/logger'
 import { eq, and } from 'drizzle-orm'
-import { createClient } from '@/lib/supabase/server'
 
 export async function GET(
   request: NextRequest,
@@ -11,11 +12,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
 
     // Fetch the study with property and client info
     const studyRows = await db
@@ -54,7 +51,7 @@ export async function GET(
       .limit(1)
 
     if (studyRows.length === 0) {
-      return NextResponse.json({ error: 'Study not found' }, { status: 404 })
+      return apiError('Study not found', 404)
     }
 
     // Fetch study assets
@@ -78,11 +75,9 @@ export async function GET(
       assets,
     })
   } catch (error) {
+    if (error instanceof ApiError) return error.response
     logger.error('studies-api', 'Error fetching study', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch study' },
-      { status: 500 }
-    )
+    return apiError('Failed to fetch study')
   }
 }
 
@@ -92,11 +87,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
 
     const body = await request.json()
 
@@ -117,16 +108,14 @@ export async function PUT(
       .returning()
 
     if (!updated) {
-      return NextResponse.json({ error: 'Study not found' }, { status: 404 })
+      return apiError('Study not found', 404)
     }
 
     return NextResponse.json({ study: updated })
   } catch (error) {
+    if (error instanceof ApiError) return error.response
     logger.error('studies-api', 'Error updating study', error)
-    return NextResponse.json(
-      { error: 'Failed to update study' },
-      { status: 500 }
-    )
+    return apiError('Failed to update study')
   }
 }
 
@@ -136,11 +125,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
 
     // Delete associated assets first
     await db.delete(studyAssets).where(eq(studyAssets.studyId, id))
@@ -152,15 +137,13 @@ export async function DELETE(
       .returning()
 
     if (!deleted) {
-      return NextResponse.json({ error: 'Study not found' }, { status: 404 })
+      return apiError('Study not found', 404)
     }
 
     return NextResponse.json({ message: 'Study deleted successfully' })
   } catch (error) {
+    if (error instanceof ApiError) return error.response
     logger.error('studies-api', 'Error deleting study', error)
-    return NextResponse.json(
-      { error: 'Failed to delete study' },
-      { status: 500 }
-    )
+    return apiError('Failed to delete study')
   }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 import { reviewAdminUpdateSchema } from '@/lib/validation/schemas';
@@ -9,24 +10,14 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const { id } = await params;
     const body = await request.json();
     const parsed = reviewAdminUpdateSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: parsed.error.flatten() },
-        { status: 400 }
-      );
+      return apiError('Validation failed', 400);
     }
 
     const data = parsed.data;
@@ -55,7 +46,7 @@ export async function PUT(
 
     if (error || !updated) {
       logger.error('reviews-api', 'Supabase update error', error);
-      return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+      return apiError('Review not found', 404);
     }
 
     return NextResponse.json({
@@ -66,11 +57,9 @@ export async function PUT(
       responseDate: updated.response_date,
     });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('reviews-api', 'PUT /api/reviews/[id] error', error);
-    return NextResponse.json(
-      { error: 'Failed to update review' },
-      { status: 500 }
-    );
+    return apiError('Failed to update review');
   }
 }
 
@@ -79,14 +68,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const { id } = await params;
 
@@ -97,15 +79,13 @@ export async function DELETE(
 
     if (error) {
       logger.error('reviews-api', 'Supabase delete error', error);
-      return NextResponse.json({ error: 'Failed to delete review' }, { status: 500 });
+      return apiError('Failed to delete review', 500);
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('reviews-api', 'DELETE /api/reviews/[id] error', error);
-    return NextResponse.json(
-      { error: 'Failed to delete review' },
-      { status: 500 }
-    );
+    return apiError('Failed to delete review');
   }
 }

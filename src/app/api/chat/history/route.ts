@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { chatConversations, chatMessages } from '@/db/schema';
@@ -7,14 +8,7 @@ import { eq, desc, and } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const { searchParams } = new URL(request.url);
     const conversationId = searchParams.get('conversationId');
@@ -33,10 +27,7 @@ export async function GET(request: NextRequest) {
         );
 
       if (!conversation) {
-        return NextResponse.json(
-          { error: 'Conversation not found' },
-          { status: 404 }
-        );
+        return apiError('Conversation not found', 404);
       }
 
       const messages = await db
@@ -57,10 +48,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ conversations });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('chat-api', 'Chat history error', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return apiError('Internal server error');
   }
 }

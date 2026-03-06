@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 import { getCachedRates } from '@/lib/mortgage/rates';
 
 export async function GET(_request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     // Fetch rates (last 12 weeks for trend)
     const allRates = await getCachedRates();
@@ -112,10 +106,8 @@ export async function GET(_request: NextRequest) {
       loansFundedYTD,
     });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('mortgage-stats', 'GET /api/mortgage/stats error', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch mortgage stats' },
-      { status: 500 }
-    );
+    return apiError('Failed to fetch mortgage stats');
   }
 }

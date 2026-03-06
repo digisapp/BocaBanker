@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import {
@@ -13,14 +14,7 @@ import { eq, count, sql, desc, gte, and } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const userId = user.id;
 
@@ -217,10 +211,8 @@ export async function GET(request: NextRequest) {
       recentActivity,
     });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('dashboard-api', 'Dashboard stats error', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return apiError('Internal server error');
   }
 }

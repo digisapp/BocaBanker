@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 
@@ -43,14 +44,7 @@ function escapeCsvField(value: unknown): string {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await requireAuth();
 
     const searchParams = request.nextUrl.searchParams;
     const search = searchParams.get('search') ?? '';
@@ -92,7 +86,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       logger.error('leads-export', 'Supabase query error', error);
-      return NextResponse.json({ error: 'Failed to export leads' }, { status: 500 });
+      return apiError('Failed to export leads');
     }
 
     // Build CSV
@@ -113,7 +107,8 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('leads-export', 'GET /api/leads/export error', error);
-    return NextResponse.json({ error: 'Failed to export leads' }, { status: 500 });
+    return apiError('Failed to export leads');
   }
 }

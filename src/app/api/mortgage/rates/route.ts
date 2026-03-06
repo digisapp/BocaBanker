@@ -1,48 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { logger } from '@/lib/logger';
 import { getCachedRates } from '@/lib/mortgage/rates';
 
 export async function GET(_request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const rates = await getCachedRates();
     return NextResponse.json({ rates });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('mortgage-rates', 'GET /api/mortgage/rates error', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch rates' },
-      { status: 500 }
-    );
+    return apiError('Failed to fetch rates');
   }
 }
 
 export async function POST(_request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const rates = await getCachedRates(true); // force refresh
     return NextResponse.json({ rates, refreshed: true });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('mortgage-rates', 'POST /api/mortgage/rates error', error);
-    return NextResponse.json(
-      { error: 'Failed to refresh rates' },
-      { status: 500 }
-    );
+    return apiError('Failed to refresh rates');
   }
 }

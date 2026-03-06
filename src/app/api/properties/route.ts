@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth, ApiError } from '@/lib/api/auth'
+import { apiError } from '@/lib/api/response'
 import { db } from '@/db'
 import { properties, clients } from '@/db/schema'
 import { logger } from '@/lib/logger'
 import { eq, and, desc, sql, count } from 'drizzle-orm'
-import { createClient } from '@/lib/supabase/server'
 import { propertySchema } from '@/lib/validation/schemas'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
@@ -92,30 +89,21 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
+    if (error instanceof ApiError) return error.response
     logger.error('properties-api', 'Error fetching properties', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch properties' },
-      { status: 500 }
-    )
+    return apiError('Failed to fetch properties')
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
 
     const body = await request.json()
     const parsed = propertySchema.safeParse(body)
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: parsed.error.issues },
-        { status: 400 }
-      )
+      return apiError('Validation failed', 400)
     }
 
     const data = parsed.data
@@ -144,10 +132,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ property: newProperty }, { status: 201 })
   } catch (error) {
+    if (error instanceof ApiError) return error.response
     logger.error('properties-api', 'Error creating property', error)
-    return NextResponse.json(
-      { error: 'Failed to create property' },
-      { status: 500 }
-    )
+    return apiError('Failed to create property')
   }
 }

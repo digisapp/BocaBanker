@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAdmin, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { leads } from '@/db/schema';
-import { users } from '@/db/schema';
-import { eq } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
 
 // Property type mapping for ATTOM API
@@ -171,38 +170,13 @@ function mapAttomPropertyType(
 
 export async function POST(request: NextRequest) {
   try {
-    // Authenticate user
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Check admin role
-    const [dbUser] = await db
-      .select({ role: users.role })
-      .from(users)
-      .where(eq(users.id, user.id))
-      .limit(1);
-
-    if (!dbUser || dbUser.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Forbidden: admin access required' },
-        { status: 403 }
-      );
-    }
+    const user = await requireAdmin();
 
     const body: ScrapeRequestBody = await request.json();
     const { source } = body;
 
     if (!source || (source !== 'attom' && source !== 'county')) {
-      return NextResponse.json(
-        { error: 'Invalid source. Must be "attom" or "county".' },
-        { status: 400 }
-      );
+      return apiError('Invalid source. Must be "attom" or "county".', 400);
     }
 
     // -----------------------------------------------------------------------
@@ -220,10 +194,7 @@ export async function POST(request: NextRequest) {
       } = body;
 
       if (!attomApiKey) {
-        return NextResponse.json(
-          { error: 'attomApiKey is required for ATTOM source' },
-          { status: 400 }
-        );
+        return apiError('attomApiKey is required for ATTOM source', 400);
       }
 
       // Build ATTOM property type filter
@@ -395,12 +366,10 @@ export async function POST(request: NextRequest) {
       }
 
       if (filteredCounties.length === 0) {
-        return NextResponse.json(
-          {
-            error: 'No matching counties found. Supported counties: ' +
-              COUNTY_SOURCES.map((c) => c.name).join(', '),
-          },
-          { status: 400 }
+        return apiError(
+          'No matching counties found. Supported counties: ' +
+            COUNTY_SOURCES.map((c) => c.name).join(', '),
+          400
         );
       }
 
@@ -419,12 +388,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ error: 'Invalid source' }, { status: 400 });
+    return apiError('Invalid source', 400);
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('leads-scrape', 'POST /api/leads/scrape error', error);
-    return NextResponse.json(
-      { error: 'Failed to process scrape request' },
-      { status: 500 }
-    );
+    return apiError('Failed to process scrape request');
   }
 }

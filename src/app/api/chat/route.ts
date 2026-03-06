@@ -1,34 +1,19 @@
-import { streamText, stepCountIs, tool } from 'ai';
-import { xai } from '@ai-sdk/xai';
-import { createClient } from '@/lib/supabase/server';
-import { logger } from '@/lib/logger';
-import { db } from '@/db';
-import { chatMessages, chatConversations } from '@/db/schema';
-import { eq } from 'drizzle-orm';
-import { BOCA_BANKER_SYSTEM_PROMPT } from '@/lib/ai/boca-banker-prompt';
-import { augmentPromptWithContext } from '@/lib/ai/xai-collections';
-import {
-  calculateMortgage,
-  captureLeadSchema,
-  CAPTURE_LEAD_DESCRIPTION,
-  scheduleConsultation,
-} from '@/lib/ai/tools';
-import { createAuthLeadCapture } from '@/lib/ai/tool-executors';
+import { requireAuth, ApiError } from '@/lib/api/auth'
+import { apiError } from '@/lib/api/response'
+import { createChatStream, getMessageText } from '@/lib/api/chat-shared'
+import { createAuthLeadCapture } from '@/lib/ai/tool-executors'
+import { BOCA_BANKER_SYSTEM_PROMPT } from '@/lib/ai/boca-banker-prompt'
+import { logger } from '@/lib/logger'
+import { db } from '@/db'
+import { chatMessages, chatConversations } from '@/db/schema'
+import { eq } from 'drizzle-orm'
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await requireAuth()
+    const { messages, conversationId, isGuestHandoff } = await request.json()
 
-    if (!user) {
-      return new Response('Unauthorized', { status: 401 });
-    }
-
-    const { messages, conversationId, isGuestHandoff } = await request.json();
-
-    let activeConversationId = conversationId;
+    let activeConversationId = conversationId
 
     // Create a new conversation if none provided
     if (!activeConversationId) {
@@ -38,144 +23,101 @@ export async function POST(request: Request) {
           userId: user.id,
           title: 'New Conversation',
         })
-        .returning();
+        .returning()
 
-      activeConversationId = newConversation.id;
+      activeConversationId = newConversation.id
     }
-
-    // Extract text content from UIMessage parts or plain content
-    const getMessageContent = (msg: { content?: string; parts?: { type: string; text?: string }[] }): string => {
-      if (msg.parts) {
-        return msg.parts
-          .filter((p: { type: string }) => p.type === 'text')
-          .map((p: { text?: string }) => p.text || '')
-          .join('');
-      }
-      return msg.content || '';
-    };
 
     // Guest handoff: save ALL prior messages to the new conversation
     if (isGuestHandoff && messages.length > 0) {
       for (const msg of messages) {
         if (msg.role === 'user' || msg.role === 'assistant') {
-          const content = getMessageContent(msg);
+          const content = getMessageText(msg)
           if (content) {
             await db.insert(chatMessages).values({
               conversationId: activeConversationId,
               role: msg.role,
               content,
-            });
+            })
           }
         }
       }
 
       // Set title from first user message
-      const firstUserMsg = messages.find((m: { role: string }) => m.role === 'user');
+      const firstUserMsg = messages.find((m: { role: string }) => m.role === 'user')
       if (firstUserMsg) {
-        const content = getMessageContent(firstUserMsg);
-        const title = content.length > 60 ? content.substring(0, 60) + '...' : content;
+        const content = getMessageText(firstUserMsg)
+        const title = content.length > 60 ? content.substring(0, 60) + '...' : content
         await db
           .update(chatConversations)
           .set({ title, updatedAt: new Date() })
-          .where(eq(chatConversations.id, activeConversationId));
+          .where(eq(chatConversations.id, activeConversationId))
       }
     } else {
       // Get the latest user message
-      const lastUserMessage = messages[messages.length - 1];
+      const lastUserMessage = messages[messages.length - 1]
 
       // Save user message to database
       if (lastUserMessage && lastUserMessage.role === 'user') {
-        const userContent = getMessageContent(lastUserMessage);
+        const userContent = getMessageText(lastUserMessage)
 
         await db.insert(chatMessages).values({
           conversationId: activeConversationId,
           role: 'user',
           content: userContent,
-        });
+        })
 
         // Update conversation title from first user message
         const existingMessages = await db
           .select()
           .from(chatMessages)
-          .where(eq(chatMessages.conversationId, activeConversationId));
+          .where(eq(chatMessages.conversationId, activeConversationId))
 
-        // If this is the first user message, use it to set the title
-        const userMessages = existingMessages.filter((m) => m.role === 'user');
+        const userMessages = existingMessages.filter((m) => m.role === 'user')
         if (userMessages.length <= 1) {
           const title =
             userContent.length > 60
               ? userContent.substring(0, 60) + '...'
-              : userContent;
+              : userContent
 
           await db
             .update(chatConversations)
             .set({ title, updatedAt: new Date() })
-            .where(eq(chatConversations.id, activeConversationId));
+            .where(eq(chatConversations.id, activeConversationId))
         } else {
           await db
             .update(chatConversations)
             .set({ updatedAt: new Date() })
-            .where(eq(chatConversations.id, activeConversationId));
+            .where(eq(chatConversations.id, activeConversationId))
         }
       }
     }
 
-    // Convert UIMessage format to CoreMessage format for the AI SDK
-    const coreMessages = messages.map((msg: { role: string; content?: string; parts?: { type: string; text?: string }[] }) => ({
-      role: msg.role,
-      content: getMessageContent(msg),
-    }));
-
-    // RAG: augment with retrieved context (no-op if disabled)
-    const lastUserContent = coreMessages.filter((m: { role: string }) => m.role === 'user').pop()?.content || '';
-    const systemPrompt = await augmentPromptWithContext(BOCA_BANKER_SYSTEM_PROMPT, lastUserContent);
-
-    // Build capture_lead tool with user-specific executor
-    const captureLead = tool({
-      description: CAPTURE_LEAD_DESCRIPTION,
-      inputSchema: captureLeadSchema,
-      execute: createAuthLeadCapture(user.id),
-    });
-
-    const result = streamText({
-      model: xai('grok-4-1-fast-non-reasoning'),
-      system: systemPrompt,
-      messages: coreMessages,
-      tools: {
-        calculate_mortgage: calculateMortgage,
-        capture_lead: captureLead,
-        schedule_consultation: scheduleConsultation,
-      },
-      stopWhen: stepCountIs(5),
-      providerOptions: {
-        xai: {
-          searchParameters: {
-            mode: 'auto',
-            returnCitations: true,
-            maxSearchResults: 5,
-            sources: [{ type: 'web' }, { type: 'news' }],
-          },
-        },
-      },
+    const result = await createChatStream({
+      messages,
+      systemPrompt: BOCA_BANKER_SYSTEM_PROMPT,
+      captureLeadExecutor: createAuthLeadCapture(user.id),
+      maxSearchResults: 5,
+      searchSources: [{ type: 'web' }, { type: 'news' }],
       onFinish: async ({ text }) => {
-        // Save assistant response to database
         if (text) {
           await db.insert(chatMessages).values({
             conversationId: activeConversationId,
             role: 'assistant',
             content: text,
-          });
+          })
         }
       },
-    });
+    })
 
     return result.toUIMessageStreamResponse({
       headers: {
         'X-Conversation-Id': activeConversationId,
       },
-    });
+    })
   } catch (error) {
-    logger.error('chat-api', 'Chat API error', error);
-    return new Response('Internal Server Error', { status: 500 });
+    if (error instanceof ApiError) return error.response
+    logger.error('chat-api', 'Chat API error', error)
+    return apiError('Internal Server Error')
   }
 }

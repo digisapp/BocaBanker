@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 
@@ -33,14 +34,7 @@ function mapReview(r: Record<string, unknown>) {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const searchParams = request.nextUrl.searchParams;
     const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
@@ -73,7 +67,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       logger.error('reviews-admin-api', 'Supabase query error', error);
-      return NextResponse.json({ error: 'Failed to fetch reviews' }, { status: 500 });
+      return apiError('Failed to fetch reviews', 500);
     }
 
     // Get counts per status
@@ -95,10 +89,8 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('reviews-admin-api', 'GET /api/reviews/admin error', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch reviews' },
-      { status: 500 }
-    );
+    return apiError('Failed to fetch reviews');
   }
 }

@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 
 export async function GET(_request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const now = new Date();
     const yearStart = `${now.getFullYear()}-01-01`;
@@ -100,10 +94,8 @@ export async function GET(_request: NextRequest) {
       recentCommissions: recentCommissions.slice(0, 20),
     });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('commission-api', 'GET /api/mortgage/commission error', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch commission data' },
-      { status: 500 }
-    );
+    return apiError('Failed to fetch commission data');
   }
 }

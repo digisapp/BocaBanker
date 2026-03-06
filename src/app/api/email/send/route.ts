@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { sendEmail } from '@/lib/email/resend';
 import { logger } from '@/lib/logger';
 import {
@@ -10,23 +11,13 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const body = await request.json();
     const { to, subject, html, template, clientId, clientName, senderName, propertyAddress, studyName, totalSavings, customMessage } = body;
 
     if (!to || !subject) {
-      return NextResponse.json(
-        { error: 'to and subject are required' },
-        { status: 400 }
-      );
+      return apiError('to and subject are required', 400);
     }
 
     // If a template is specified but no HTML, generate from template
@@ -55,10 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!emailHtml) {
-      return NextResponse.json(
-        { error: 'html content or template is required' },
-        { status: 400 }
-      );
+      return apiError('html content or template is required', 400);
     }
 
     const result = await sendEmail({
@@ -71,18 +59,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || 'Failed to send email' },
-        { status: 500 }
-      );
+      return apiError(result.error || 'Failed to send email', 500);
     }
 
     return NextResponse.json({ success: true, resendId: result.resendId });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('email-api', 'Email send error', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return apiError('Internal server error');
   }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 import { sendEmail } from '@/lib/email/resend';
@@ -10,14 +11,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const { id } = await params;
 
@@ -30,14 +24,11 @@ export async function POST(
       .single();
 
     if (loanError || !loan) {
-      return NextResponse.json({ error: 'Loan not found' }, { status: 404 });
+      return apiError('Loan not found', 404);
     }
 
     if (!loan.borrower_email) {
-      return NextResponse.json(
-        { error: 'Borrower has no email address' },
-        { status: 400 }
-      );
+      return apiError('Borrower has no email address', 400);
     }
 
     // Get user settings for Arive link
@@ -50,10 +41,7 @@ export async function POST(
     const ariveLink = loan.arive_link || settings?.arive_link;
 
     if (!ariveLink) {
-      return NextResponse.json(
-        { error: 'No Arive link configured. Set it in Settings or on the loan.' },
-        { status: 400 }
-      );
+      return apiError('No Arive link configured. Set it in Settings or on the loan.', 400);
     }
 
     // Get user's name for the email
@@ -83,10 +71,7 @@ export async function POST(
     });
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || 'Failed to send email' },
-        { status: 500 }
-      );
+      return apiError(result.error || 'Failed to send email', 500);
     }
 
     // Update loan with Arive link sent timestamp
@@ -101,10 +86,8 @@ export async function POST(
 
     return NextResponse.json({ success: true, resendId: result.resendId });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('loans-api', 'POST /api/loans/[id]/send-arive-link error', error);
-    return NextResponse.json(
-      { error: 'Failed to send Arive link' },
-      { status: 500 }
-    );
+    return apiError('Failed to send Arive link');
   }
 }

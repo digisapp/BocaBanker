@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { clients } from '@/db/schema';
@@ -8,14 +9,7 @@ import { clientSchema } from '@/lib/validation/schemas';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const searchParams = request.nextUrl.searchParams;
     const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
@@ -86,33 +80,21 @@ export async function GET(request: NextRequest) {
       limit,
     });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('clients-api', 'GET /api/clients error', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch clients' },
-      { status: 500 }
-    );
+    return apiError('Failed to fetch clients');
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const body = await request.json();
     const parsed = clientSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: parsed.error.flatten() },
-        { status: 400 }
-      );
+      return apiError('Validation failed', 400);
     }
 
     const data = parsed.data;
@@ -147,10 +129,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(created, { status: 201 });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('clients-api', 'POST /api/clients error', error);
-    return NextResponse.json(
-      { error: 'Failed to create client' },
-      { status: 500 }
-    );
+    return apiError('Failed to create client');
   }
 }

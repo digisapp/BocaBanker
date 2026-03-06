@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { requireAuth, ApiError } from '@/lib/api/auth'
+import { apiError } from '@/lib/api/response'
 import { db } from '@/db'
 import { costSegStudies, properties, clients, studyAssets } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
@@ -32,12 +32,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
 
     // Fetch study with joins
     const [study] = await db
@@ -72,7 +67,7 @@ export async function GET(
       .limit(1)
 
     if (!study) {
-      return NextResponse.json({ error: 'Study not found' }, { status: 404 })
+      return apiError('Study not found', 404)
     }
 
     const results = study.results as {
@@ -90,7 +85,7 @@ export async function GET(
     } | null
 
     if (!results) {
-      return NextResponse.json({ error: 'Study has no results. Run the calculation first.' }, { status: 400 })
+      return apiError('Study has no results. Run the calculation first.', 400)
     }
 
     const clientName = [study.clientFirstName, study.clientLastName].filter(Boolean).join(' ')
@@ -274,7 +269,8 @@ export async function GET(
       },
     })
   } catch (error) {
+    if (error instanceof ApiError) return error.response
     logger.error('studies-api', 'Error exporting study report', error)
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    return apiError('Internal Server Error')
   }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 
@@ -40,14 +41,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const { id } = await params;
 
@@ -59,16 +53,14 @@ export async function GET(
       .single();
 
     if (error || !loan) {
-      return NextResponse.json({ error: 'Loan not found' }, { status: 404 });
+      return apiError('Loan not found', 404);
     }
 
     return NextResponse.json(mapLoan(loan));
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('loans-api', 'GET /api/loans/[id] error', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch loan' },
-      { status: 500 }
-    );
+    return apiError('Failed to fetch loan');
   }
 }
 
@@ -77,14 +69,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const { id } = await params;
     const body = await request.json();
@@ -98,7 +83,7 @@ export async function PUT(
       .single();
 
     if (!existing) {
-      return NextResponse.json({ error: 'Loan not found' }, { status: 404 });
+      return apiError('Loan not found', 404);
     }
 
     // Auto-calculate commission
@@ -141,16 +126,14 @@ export async function PUT(
 
     if (error) {
       logger.error('loans-api', 'Supabase update error', error);
-      return NextResponse.json({ error: 'Failed to update loan' }, { status: 500 });
+      return apiError('Failed to update loan', 500);
     }
 
     return NextResponse.json(mapLoan(updated));
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('loans-api', 'PUT /api/loans/[id] error', error);
-    return NextResponse.json(
-      { error: 'Failed to update loan' },
-      { status: 500 }
-    );
+    return apiError('Failed to update loan');
   }
 }
 
@@ -159,14 +142,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const { id } = await params;
 
@@ -178,15 +154,13 @@ export async function DELETE(
 
     if (error) {
       logger.error('loans-api', 'Supabase delete error', error);
-      return NextResponse.json({ error: 'Failed to delete loan' }, { status: 500 });
+      return apiError('Failed to delete loan', 500);
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('loans-api', 'DELETE /api/loans/[id] error', error);
-    return NextResponse.json(
-      { error: 'Failed to delete loan' },
-      { status: 500 }
-    );
+    return apiError('Failed to delete loan');
   }
 }

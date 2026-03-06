@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { requireAuth, ApiError } from '@/lib/api/auth'
+import { apiError } from '@/lib/api/response'
 import { db } from '@/db'
 import { users } from '@/db/schema'
 import { eq } from 'drizzle-orm'
@@ -7,12 +8,7 @@ import { logger } from '@/lib/logger'
 
 export async function GET() {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
 
     let [dbUser] = await db
       .select({ role: users.role, fullName: users.fullName })
@@ -40,7 +36,8 @@ export async function GET() {
       fullName: dbUser.fullName || null,
     })
   } catch (error) {
+    if (error instanceof ApiError) return error.response
     logger.error('auth-api', 'Error fetching user role', error)
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    return apiError('Internal Server Error')
   }
 }

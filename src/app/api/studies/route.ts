@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth, ApiError } from '@/lib/api/auth'
+import { apiError } from '@/lib/api/response'
 import { db } from '@/db'
 import { costSegStudies, properties, clients, studyAssets } from '@/db/schema'
 import { logger } from '@/lib/logger'
 import { eq, and, desc, sql, count } from 'drizzle-orm'
-import { createClient } from '@/lib/supabase/server'
 import { studySchema } from '@/lib/validation/schemas'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
@@ -80,31 +77,22 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
+    if (error instanceof ApiError) return error.response
     logger.error('studies-api', 'Error fetching studies', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch studies' },
-      { status: 500 }
-    )
+    return apiError('Failed to fetch studies')
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
 
     const body = await request.json()
     const { assets: assetsData, ...studyData } = body
 
     const parsed = studySchema.safeParse(studyData)
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: parsed.error.issues },
-        { status: 400 }
-      )
+      return apiError('Validation failed', 400)
     }
 
     const data = parsed.data
@@ -147,10 +135,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ study: newStudy }, { status: 201 })
   } catch (error) {
+    if (error instanceof ApiError) return error.response
     logger.error('studies-api', 'Error creating study', error)
-    return NextResponse.json(
-      { error: 'Failed to create study' },
-      { status: 500 }
-    )
+    return apiError('Failed to create study')
   }
 }

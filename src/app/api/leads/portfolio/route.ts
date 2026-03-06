@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 
@@ -27,14 +28,7 @@ interface PortfolioMember {
 
 export async function GET() {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await requireAuth();
 
     // Fetch all leads that have a member_name
     const { data: rows, error } = await supabaseAdmin
@@ -44,7 +38,7 @@ export async function GET() {
 
     if (error) {
       logger.error('portfolio-api', 'Supabase query error', error);
-      return NextResponse.json({ error: 'Failed to fetch portfolio data' }, { status: 500 });
+      return apiError('Failed to fetch portfolio data');
     }
 
     // Group by member_name
@@ -112,10 +106,8 @@ export async function GET() {
       },
     });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('portfolio-api', 'GET /api/leads/portfolio error', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch portfolio data' },
-      { status: 500 }
-    );
+    return apiError('Failed to fetch portfolio data');
   }
 }

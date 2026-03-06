@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { clients } from '@/db/schema';
@@ -11,22 +12,12 @@ interface ImportBody {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const body: ImportBody = await request.json();
 
     if (!body.clients || !Array.isArray(body.clients) || body.clients.length === 0) {
-      return NextResponse.json(
-        { error: 'No client data provided' },
-        { status: 400 }
-      );
+      return apiError('No client data provided', 400);
     }
 
     const errors: { row: number; message: string }[] = [];
@@ -99,10 +90,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ imported, errors });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('clients-api', 'POST /api/clients/import error', error);
-    return NextResponse.json(
-      { error: 'Failed to import clients' },
-      { status: 500 }
-    );
+    return apiError('Failed to import clients');
   }
 }

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth, ApiError } from '@/lib/api/auth'
+import { apiError } from '@/lib/api/response'
 import { db } from '@/db'
 import { properties, clients, costSegStudies } from '@/db/schema'
 import { logger } from '@/lib/logger'
 import { eq, and } from 'drizzle-orm'
-import { createClient } from '@/lib/supabase/server'
 import { propertySchema } from '@/lib/validation/schemas'
 
 export async function GET(
@@ -12,11 +13,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
 
     const result = await db
       .select({
@@ -53,7 +50,7 @@ export async function GET(
       .limit(1)
 
     if (result.length === 0) {
-      return NextResponse.json({ error: 'Property not found' }, { status: 404 })
+      return apiError('Property not found', 404)
     }
 
     // Fetch linked studies
@@ -81,11 +78,9 @@ export async function GET(
       studies,
     })
   } catch (error) {
+    if (error instanceof ApiError) return error.response
     logger.error('properties-api', 'Error fetching property', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch property' },
-      { status: 500 }
-    )
+    return apiError('Failed to fetch property')
   }
 }
 
@@ -95,20 +90,13 @@ export async function PUT(
 ) {
   try {
     const { id } = await params
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
 
     const body = await request.json()
     const parsed = propertySchema.safeParse(body)
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: parsed.error.issues },
-        { status: 400 }
-      )
+      return apiError('Validation failed', 400)
     }
 
     const data = parsed.data
@@ -144,16 +132,14 @@ export async function PUT(
       .returning()
 
     if (!updated) {
-      return NextResponse.json({ error: 'Property not found' }, { status: 404 })
+      return apiError('Property not found', 404)
     }
 
     return NextResponse.json({ property: updated })
   } catch (error) {
+    if (error instanceof ApiError) return error.response
     logger.error('properties-api', 'Error updating property', error)
-    return NextResponse.json(
-      { error: 'Failed to update property' },
-      { status: 500 }
-    )
+    return apiError('Failed to update property')
   }
 }
 
@@ -163,11 +149,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
 
     const [deleted] = await db
       .delete(properties)
@@ -175,15 +157,13 @@ export async function DELETE(
       .returning()
 
     if (!deleted) {
-      return NextResponse.json({ error: 'Property not found' }, { status: 404 })
+      return apiError('Property not found', 404)
     }
 
     return NextResponse.json({ message: 'Property deleted successfully' })
   } catch (error) {
+    if (error instanceof ApiError) return error.response
     logger.error('properties-api', 'Error deleting property', error)
-    return NextResponse.json(
-      { error: 'Failed to delete property' },
-      { status: 500 }
-    )
+    return apiError('Failed to delete property')
   }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { clients } from '@/db/schema';
@@ -21,14 +22,7 @@ function delay(ms: number): Promise<void> {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const body = await request.json();
     const {
@@ -40,10 +34,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!template || !subject) {
-      return NextResponse.json(
-        { error: 'template and subject are required' },
-        { status: 400 }
-      );
+      return apiError('template and subject are required', 400);
     }
 
     // Fetch recipients
@@ -79,10 +70,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (validRecipients.length === 0) {
-      return NextResponse.json(
-        { error: 'No valid recipients found' },
-        { status: 400 }
-      );
+      return apiError('No valid recipients found', 400);
     }
 
     const senderName = user.user_metadata?.full_name || 'Boca Banker';
@@ -141,10 +129,8 @@ export async function POST(request: NextRequest) {
       failed,
     });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('email-api', 'Bulk email error', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return apiError('Internal server error');
   }
 }

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth, ApiError } from '@/lib/api/auth'
+import { apiError } from '@/lib/api/response'
 import { db } from '@/db'
 import { costSegStudies, studyAssets, properties } from '@/db/schema'
 import { logger } from '@/lib/logger'
 import { eq, and } from 'drizzle-orm'
-import { createClient } from '@/lib/supabase/server'
 import { generateStudyReport } from '@/lib/cost-seg/report-generator'
 
 export async function POST(
@@ -12,11 +13,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
 
     // Load the study
     const studyRows = await db
@@ -26,7 +23,7 @@ export async function POST(
       .limit(1)
 
     if (studyRows.length === 0) {
-      return NextResponse.json({ error: 'Study not found' }, { status: 404 })
+      return apiError('Study not found', 404)
     }
 
     const study = studyRows[0]
@@ -42,10 +39,7 @@ export async function POST(
 
     const property = propertyRows[0]
     if (!property) {
-      return NextResponse.json(
-        { error: 'Property not found for this study' },
-        { status: 404 }
-      )
+      return apiError('Property not found for this study', 404)
     }
 
     // Load study assets
@@ -55,10 +49,7 @@ export async function POST(
       .where(eq(studyAssets.studyId, id))
 
     if (assets.length === 0) {
-      return NextResponse.json(
-        { error: 'No assets found for this study. Add assets before calculating.' },
-        { status: 400 }
-      )
+      return apiError('No assets found for this study. Add assets before calculating.', 400)
     }
 
     // Build report input
@@ -101,10 +92,8 @@ export async function POST(
       report,
     })
   } catch (error) {
+    if (error instanceof ApiError) return error.response
     logger.error('studies-api', 'Error calculating study', error)
-    return NextResponse.json(
-      { error: 'Failed to calculate study' },
-      { status: 500 }
-    )
+    return apiError('Failed to calculate study')
   }
 }

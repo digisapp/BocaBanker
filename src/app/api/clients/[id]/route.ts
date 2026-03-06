@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { clients } from '@/db/schema';
@@ -11,14 +12,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const { id } = await params;
 
@@ -28,16 +22,14 @@ export async function GET(
       .where(and(eq(clients.id, id), eq(clients.userId, user.id)));
 
     if (!client) {
-      return NextResponse.json({ error: 'Client not found' }, { status: 404 });
+      return apiError('Client not found', 404);
     }
 
     return NextResponse.json(client);
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('clients-api', 'GET /api/clients/[id] error', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch client' },
-      { status: 500 }
-    );
+    return apiError('Failed to fetch client');
   }
 }
 
@@ -46,24 +38,14 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const { id } = await params;
     const body = await request.json();
     const parsed = clientSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: parsed.error.flatten() },
-        { status: 400 }
-      );
+      return apiError('Validation failed', 400);
     }
 
     // Verify ownership
@@ -73,7 +55,7 @@ export async function PUT(
       .where(and(eq(clients.id, id), eq(clients.userId, user.id)));
 
     if (!existing) {
-      return NextResponse.json({ error: 'Client not found' }, { status: 404 });
+      return apiError('Client not found', 404);
     }
 
     const data = parsed.data;
@@ -108,11 +90,9 @@ export async function PUT(
 
     return NextResponse.json(updated);
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('clients-api', 'PUT /api/clients/[id] error', error);
-    return NextResponse.json(
-      { error: 'Failed to update client' },
-      { status: 500 }
-    );
+    return apiError('Failed to update client');
   }
 }
 
@@ -121,14 +101,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     const { id } = await params;
 
@@ -139,7 +112,7 @@ export async function DELETE(
       .where(and(eq(clients.id, id), eq(clients.userId, user.id)));
 
     if (!existing) {
-      return NextResponse.json({ error: 'Client not found' }, { status: 404 });
+      return apiError('Client not found', 404);
     }
 
     // Hard delete
@@ -149,10 +122,8 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('clients-api', 'DELETE /api/clients/[id] error', error);
-    return NextResponse.json(
-      { error: 'Failed to delete client' },
-      { status: 500 }
-    );
+    return apiError('Failed to delete client');
   }
 }

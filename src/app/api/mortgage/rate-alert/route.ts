@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { getCachedRates } from '@/lib/mortgage/rates';
 import { rateAlertTemplate } from '@/lib/email/templates';
@@ -13,14 +14,7 @@ import { logger } from '@/lib/logger';
  */
 export async function POST(_request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
 
     // Get user settings
     const { data: settings } = await supabaseAdmin
@@ -131,10 +125,8 @@ export async function POST(_request: NextRequest) {
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('rate-alert-api', 'POST /api/mortgage/rate-alert error', error);
-    return NextResponse.json(
-      { error: 'Failed to process rate alert' },
-      { status: 500 }
-    );
+    return apiError('Failed to process rate alert');
   }
 }

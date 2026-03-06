@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth, ApiError } from '@/lib/api/auth';
+import { apiError } from '@/lib/api/response';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 
@@ -46,14 +47,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await requireAuth();
 
     const { id } = await params;
 
@@ -64,16 +58,14 @@ export async function GET(
       .single();
 
     if (error || !lead) {
-      return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+      return apiError('Lead not found', 404);
     }
 
     return NextResponse.json(mapLead(lead));
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('leads-api', 'GET /api/leads/[id] error', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch lead' },
-      { status: 500 }
-    );
+    return apiError('Failed to fetch lead');
   }
 }
 
@@ -82,14 +74,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await requireAuth();
 
     const { id } = await params;
     const body = await request.json();
@@ -102,7 +87,7 @@ export async function PUT(
       .single();
 
     if (!existing) {
-      return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+      return apiError('Lead not found', 404);
     }
 
     const tagsArray = body.tags
@@ -143,16 +128,14 @@ export async function PUT(
 
     if (error) {
       logger.error('leads-api', 'Supabase update error', error);
-      return NextResponse.json({ error: 'Failed to update lead' }, { status: 500 });
+      return apiError('Failed to update lead');
     }
 
     return NextResponse.json(mapLead(updated));
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('leads-api', 'PUT /api/leads/[id] error', error);
-    return NextResponse.json(
-      { error: 'Failed to update lead' },
-      { status: 500 }
-    );
+    return apiError('Failed to update lead');
   }
 }
 
@@ -161,14 +144,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await requireAuth();
 
     const { id } = await params;
 
@@ -179,15 +155,13 @@ export async function DELETE(
 
     if (error) {
       logger.error('leads-api', 'Supabase delete error', error);
-      return NextResponse.json({ error: 'Failed to delete lead' }, { status: 500 });
+      return apiError('Failed to delete lead');
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('leads-api', 'DELETE /api/leads/[id] error', error);
-    return NextResponse.json(
-      { error: 'Failed to delete lead' },
-      { status: 500 }
-    );
+    return apiError('Failed to delete lead');
   }
 }
