@@ -34,8 +34,8 @@ export function LeadForm({
   onSubmit,
   isSubmitting = false,
 }: LeadFormProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<LeadInput>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(leadSchema) as any,
     defaultValues: {
       property_address: '',

@@ -39,8 +39,8 @@ export function LoanForm({
   isSubmitting = false,
   submitLabel = 'Create Loan',
 }: LoanFormProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<LoanInput>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(loanSchema) as any,
     defaultValues: {
       borrower_name: '',

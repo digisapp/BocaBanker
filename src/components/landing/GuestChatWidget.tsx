@@ -34,28 +34,19 @@ function getTextContent(message: UIMessage): string {
 }
 
 export default function GuestChatWidget() {
-  const [userMsgCount, setUserMsgCount] = useState(0);
-  const [showLeadCard, setShowLeadCard] = useState(false);
-  const [leadCaptured, setLeadCaptured] = useState(false);
+  const [userMsgCount, setUserMsgCount] = useState(() => {
+    if (typeof window === 'undefined') return 0;
+    const stored = localStorage.getItem(LS_COUNT_KEY);
+    return stored ? parseInt(stored, 10) || 0 : 0;
+  });
+  const [leadCaptured, setLeadCaptured] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(LS_LEAD_CAPTURED_KEY) === 'true';
+  });
   const [leadDismissed, setLeadDismissed] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Load persisted state on mount
-  useEffect(() => {
-    const stored = localStorage.getItem(LS_COUNT_KEY);
-    if (stored) {
-      const count = parseInt(stored, 10);
-      if (!isNaN(count)) setUserMsgCount(count);
-    }
-    if (localStorage.getItem(LS_LEAD_CAPTURED_KEY) === 'true') {
-      setLeadCaptured(true);
-    }
-    if (localStorage.getItem(LS_LEAD_DISMISSED_KEY) === 'true') {
-      setLeadDismissed(true);
-    }
-  }, []);
 
   const transport = useMemo(
     () => new DefaultChatTransport({ api: '/api/chat/guest' }),
@@ -73,6 +64,15 @@ export default function GuestChatWidget() {
 
   const isLoading = status === 'submitted' || status === 'streaming';
 
+  // Derive lead card visibility from state (no effect needed)
+  const showLeadCard =
+    status === 'ready' &&
+    userMsgCount >= LEAD_CARD_THRESHOLD &&
+    !leadCaptured &&
+    !leadDismissed &&
+    messages.length > 1 &&
+    messages[messages.length - 1]?.role === 'assistant';
+
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
@@ -88,21 +88,6 @@ export default function GuestChatWidget() {
     }
   }, [messages]);
 
-  // Show lead card after 3rd user message when AI finishes responding
-  useEffect(() => {
-    if (
-      status === 'ready' &&
-      userMsgCount >= LEAD_CARD_THRESHOLD &&
-      !leadCaptured &&
-      !leadDismissed &&
-      !showLeadCard &&
-      messages.length > 1 &&
-      messages[messages.length - 1]?.role === 'assistant'
-    ) {
-      setShowLeadCard(true);
-    }
-  }, [status, userMsgCount, leadCaptured, leadDismissed, showLeadCard, messages]);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const text = inputValue.trim();
@@ -117,7 +102,6 @@ export default function GuestChatWidget() {
   };
 
   const handleLeadDismiss = () => {
-    setShowLeadCard(false);
     setLeadDismissed(true);
     localStorage.setItem(LS_LEAD_DISMISSED_KEY, 'true');
   };
