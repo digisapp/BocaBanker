@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
 import GuestChatWidget from '@/components/landing/GuestChatWidget'
+import MobileChatButton from '@/components/landing/MobileChatButton'
 
 /* ─── Scroll Reveal ─── */
 function Reveal({
@@ -327,8 +328,8 @@ export default function Home() {
 
             </div>
 
-            {/* Live chat widget */}
-            <Reveal delay={200} className="flex-1 min-w-0 w-full lg:max-w-lg">
+            {/* Live chat widget (desktop only — mobile uses floating button) */}
+            <Reveal delay={200} className="hidden lg:block flex-1 min-w-0 w-full lg:max-w-lg">
               <div className="bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-500 rounded-[28px] p-3 shadow-2xl shadow-blue-500/25">
                 <GuestChatWidget />
               </div>
@@ -604,6 +605,9 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Mobile floating chat button + fullscreen overlay */}
+      <MobileChatButton />
     </div>
   )
 }

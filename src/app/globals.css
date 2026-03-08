@@ -269,6 +269,12 @@
 .animate-glow-breathe { animation: glow-breathe 4s ease-in-out infinite; }
 .animate-spin-slow { animation: spin-slow 30s linear infinite; }
 
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out 3; }
+
 /* ═══════════════════════════════════════════════
    SCROLL REVEAL TRANSITIONS
    ═══════════════════════════════════════════════ */

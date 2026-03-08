@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   Loader2,
   Landmark,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -52,6 +53,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
   >(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [guestHandoff, setGuestHandoff] = useState(initialGuestHandoff);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -186,6 +188,30 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
     setMessages([]);
   };
 
+  const deleteConversation = async (convId: string) => {
+    // First click: set pending. Second click: delete.
+    if (pendingDeleteId !== convId) {
+      setPendingDeleteId(convId);
+      return;
+    }
+    setPendingDeleteId(null);
+    try {
+      const res = await fetch('/api/chat/history', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId: convId }),
+      });
+      if (res.ok) {
+        if (activeConversationId === convId) {
+          startNewConversation();
+        }
+        await fetchConversations();
+      }
+    } catch (error) {
+      logger.error('ChatInterface', 'Failed to delete conversation', error);
+    }
+  };
+
   const handleChatSubmit = (message: string) => {
     sendMessage({ text: message });
   };
@@ -244,24 +270,44 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
               </div>
             ) : (
               conversations.map((conv) => (
-                <button
+                <div
                   key={conv.id}
-                  onClick={() => loadConversation(conv.id)}
                   className={cn(
-                    'w-full text-left px-3 py-2.5 rounded-lg transition-all text-sm',
+                    'group relative flex items-center rounded-lg transition-all text-sm',
                     'hover:bg-gray-100',
                     activeConversationId === conv.id
                       ? 'bg-white border border-gray-200 text-gray-900 shadow-sm'
                       : 'text-gray-500 hover:text-gray-900'
                   )}
                 >
-                  <div className="truncate font-medium text-xs">
-                    {conv.title}
-                  </div>
-                  <div className="text-[10px] text-gray-400 mt-0.5">
-                    {formatDate(conv.updatedAt)}
-                  </div>
-                </button>
+                  <button
+                    onClick={() => loadConversation(conv.id)}
+                    className="flex-1 text-left px-3 py-2.5 min-w-0"
+                  >
+                    <div className="truncate font-medium text-xs">
+                      {conv.title}
+                    </div>
+                    <div className="text-[10px] text-gray-400 mt-0.5">
+                      {formatDate(conv.updatedAt)}
+                    </div>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteConversation(conv.id);
+                    }}
+                    onBlur={() => setPendingDeleteId(null)}
+                    className={cn(
+                      'mr-1.5 flex h-6 w-6 items-center justify-center rounded transition-all flex-shrink-0',
+                      pendingDeleteId === conv.id
+                        ? 'text-red-500 bg-red-50 opacity-100'
+                        : 'text-gray-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100'
+                    )}
+                    title={pendingDeleteId === conv.id ? 'Click again to delete' : 'Delete conversation'}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
               ))
             )}
           </div>

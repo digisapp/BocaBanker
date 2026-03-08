@@ -46,7 +46,6 @@ export default function GuestChatWidget() {
   const [leadDismissed, setLeadDismissed] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const transport = useMemo(
     () => new DefaultChatTransport({ api: '/api/chat/guest' }),
@@ -188,7 +187,6 @@ export default function GuestChatWidget() {
       <div className="px-6 py-4 border-t border-gray-100">
         <form onSubmit={handleSubmit} className="flex items-center gap-3">
           <input
-            ref={inputRef}
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}

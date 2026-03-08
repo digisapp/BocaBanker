@@ -53,3 +53,39 @@ export async function GET(request: NextRequest) {
     return apiError('Internal server error');
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const user = await requireAuth();
+    const { conversationId } = await request.json();
+
+    if (!conversationId) {
+      return apiError('conversationId is required', 400);
+    }
+
+    // Verify ownership
+    const [conversation] = await db
+      .select({ id: chatConversations.id })
+      .from(chatConversations)
+      .where(
+        and(
+          eq(chatConversations.id, conversationId),
+          eq(chatConversations.userId, user.id)
+        )
+      );
+
+    if (!conversation) {
+      return apiError('Conversation not found', 404);
+    }
+
+    // Delete messages first (FK), then conversation
+    await db.delete(chatMessages).where(eq(chatMessages.conversationId, conversationId));
+    await db.delete(chatConversations).where(eq(chatConversations.id, conversationId));
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    if (error instanceof ApiError) return error.response;
+    logger.error('chat-api', 'Delete conversation error', error);
+    return apiError('Internal server error');
+  }
+}
