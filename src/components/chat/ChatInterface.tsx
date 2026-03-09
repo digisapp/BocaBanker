@@ -68,6 +68,15 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
           conversationId: activeConversationId,
           ...(guestHandoff ? { isGuestHandoff: true } : {}),
         }),
+        // Capture conversationId from response header without global fetch mutation
+        fetch: async (input, init) => {
+          const response = await window.fetch(input, init);
+          const convId = response.headers.get('X-Conversation-Id');
+          if (convId && !activeConversationId) {
+            setActiveConversationId(convId);
+          }
+          return response;
+        },
       }),
     [activeConversationId, guestHandoff]
   );
@@ -83,29 +92,6 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
       fetchConversations();
     },
   });
-
-  // Capture conversationId from response headers via a fetch wrapper
-  useEffect(() => {
-    if (activeConversationId) return;
-
-    const originalFetch = window.fetch;
-    window.fetch = async (...args) => {
-      const response = await originalFetch(...args);
-      const url = typeof args[0] === 'string' ? args[0] : (args[0] as Request)?.url;
-      if (url?.includes('/api/chat') && !url?.includes('/history') && !url?.includes('/guest')) {
-        const convId = response.headers.get('X-Conversation-Id');
-        if (convId) {
-          setActiveConversationId(convId);
-          window.fetch = originalFetch; // restore after capture
-        }
-      }
-      return response;
-    };
-
-    return () => {
-      window.fetch = originalFetch;
-    };
-  }, [activeConversationId]);
 
   const isLoading = status === 'submitted' || status === 'streaming';
 

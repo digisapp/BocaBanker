@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, numeric, integer, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, numeric, integer, jsonb, index } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import { users } from './users';
 import { clients } from './clients';
@@ -8,9 +8,9 @@ import { documents } from './documents';
 
 export const costSegStudies = pgTable('cost_seg_studies', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  propertyId: uuid('property_id').references(() => properties.id),
-  clientId: uuid('client_id').references(() => clients.id),
-  userId: uuid('user_id').references(() => users.id),
+  propertyId: uuid('property_id').references(() => properties.id, { onDelete: 'cascade' }),
+  clientId: uuid('client_id').references(() => clients.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
   studyName: text('study_name').notNull(),
   status: text('status', { enum: ['draft', 'in_progress', 'completed'] }).default('draft'),
   taxRate: numeric('tax_rate').notNull().default('37'),
@@ -24,7 +24,11 @@ export const costSegStudies = pgTable('cost_seg_studies', {
   notes: text('notes'),
   createdAt: timestamp('created_at').default(sql`now()`),
   updatedAt: timestamp('updated_at').default(sql`now()`),
-});
+}, (table) => [
+  index('cost_seg_studies_property_id_idx').on(table.propertyId),
+  index('cost_seg_studies_client_id_idx').on(table.clientId),
+  index('cost_seg_studies_user_id_idx').on(table.userId),
+]);
 
 export const costSegStudiesRelations = relations(costSegStudies, ({ one, many }) => ({
   property: one(properties, {

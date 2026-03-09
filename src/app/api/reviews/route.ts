@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 import { reviewSubmissionSchema } from '@/lib/validation/schemas';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 function mapReview(r: Record<string, unknown>) {
   return {
@@ -101,6 +102,16 @@ export async function GET(request: NextRequest) {
 // Public POST — submit a new review (pending moderation)
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 reviews per hour per IP
+    const ip = getClientIp(request);
+    const rl = rateLimit(`reviews:${ip}`, { maxRequests: 5, windowMs: 3_600_000 });
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: 'Too many submissions. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const parsed = reviewSubmissionSchema.safeParse(body);
 

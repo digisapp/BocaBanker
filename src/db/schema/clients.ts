@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, index } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import { users } from './users';
 import { properties } from './properties';
@@ -8,7 +8,7 @@ import { emailLogs } from './email-logs';
 
 export const clients = pgTable('clients', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid('user_id').references(() => users.id),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
   email: text('email'),
@@ -24,7 +24,9 @@ export const clients = pgTable('clients', {
   source: text('source'),
   createdAt: timestamp('created_at').default(sql`now()`),
   updatedAt: timestamp('updated_at').default(sql`now()`),
-});
+}, (table) => [
+  index('clients_user_id_idx').on(table.userId),
+]);
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({
   user: one(users, {

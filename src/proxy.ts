@@ -50,6 +50,9 @@ export async function proxy(request: NextRequest) {
     '/email',
     '/documents',
     '/settings',
+    '/mortgage',
+    '/leads',
+    '/review-management',
   ]
 
   const isProtected = protectedPrefixes.some(
@@ -86,6 +89,9 @@ export const config = {
     '/email/:path*',
     '/documents/:path*',
     '/settings/:path*',
+    '/mortgage/:path*',
+    '/leads/:path*',
+    '/review-management/:path*',
     '/login',
     '/reset-password',
   ],

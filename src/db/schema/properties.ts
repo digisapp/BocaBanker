@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, numeric, integer, date } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, numeric, integer, date, index } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import { users } from './users';
 import { clients } from './clients';
@@ -6,8 +6,8 @@ import { costSegStudies } from './cost-seg-studies';
 
 export const properties = pgTable('properties', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  clientId: uuid('client_id').references(() => clients.id),
-  userId: uuid('user_id').references(() => users.id),
+  clientId: uuid('client_id').references(() => clients.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
   address: text('address').notNull(),
   city: text('city'),
   state: text('state'),
@@ -32,7 +32,10 @@ export const properties = pgTable('properties', {
   loanOriginationDate: date('loan_origination_date'),
   createdAt: timestamp('created_at').default(sql`now()`),
   updatedAt: timestamp('updated_at').default(sql`now()`),
-});
+}, (table) => [
+  index('properties_client_id_idx').on(table.clientId),
+  index('properties_user_id_idx').on(table.userId),
+]);
 
 export const propertiesRelations = relations(properties, ({ one, many }) => ({
   client: one(clients, {

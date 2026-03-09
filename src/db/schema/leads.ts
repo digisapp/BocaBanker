@@ -6,6 +6,7 @@ import {
   integer,
   date,
   timestamp,
+  index,
 } from 'drizzle-orm/pg-core'
 import { relations, sql } from 'drizzle-orm'
 import { users } from './users'
@@ -14,7 +15,7 @@ export const leads = pgTable('leads', {
   id: uuid('id')
     .primaryKey()
     .default(sql`gen_random_uuid()`),
-  userId: uuid('user_id').references(() => users.id),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
 
   // Property info
   propertyAddress: text('property_address').notNull(),
@@ -82,7 +83,9 @@ export const leads = pgTable('leads', {
   convertedClientId: uuid('converted_client_id'),
   createdAt: timestamp('created_at').default(sql`now()`),
   updatedAt: timestamp('updated_at').default(sql`now()`),
-})
+}, (table) => [
+  index('leads_user_id_idx').on(table.userId),
+])
 
 export const leadsRelations = relations(leads, ({ one }) => ({
   user: one(users, { fields: [leads.userId], references: [users.id] }),

@@ -14,7 +14,7 @@ export const userSettings = pgTable('user_settings', {
     .primaryKey()
     .default(sql`gen_random_uuid()`),
   userId: uuid('user_id')
-    .references(() => users.id)
+    .references(() => users.id, { onDelete: 'cascade' })
     .unique(),
 
   // Arive
