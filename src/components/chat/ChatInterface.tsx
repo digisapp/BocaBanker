@@ -51,7 +51,10 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
   const [activeConversationId, setActiveConversationId] = useState<
     string | null
   >(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.innerWidth >= 768;
+  });
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [guestHandoff, setGuestHandoff] = useState(initialGuestHandoff);
@@ -175,6 +178,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
 
         setMessages(loadedMessages);
         setActiveConversationId(conversationId);
+        if (window.innerWidth < 768) setSidebarOpen(false);
       }
     } catch (error) {
       logger.error('ChatInterface', 'Failed to load conversation', error);
@@ -230,10 +234,19 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
 
   return (
     <div className="flex h-[calc(100vh-8rem)] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      {/* Sidebar backdrop (mobile) */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/20 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar - Conversation History */}
       <div
         className={cn(
           'border-r border-gray-200 bg-gray-50 transition-all duration-300 flex flex-col',
+          'fixed inset-y-0 left-0 z-40 md:relative md:z-auto',
           sidebarOpen ? 'w-72' : 'w-0 overflow-hidden'
         )}
       >

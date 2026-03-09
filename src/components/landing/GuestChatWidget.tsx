@@ -111,9 +111,9 @@ export default function GuestChatWidget() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl bg-white rounded-3xl shadow-xl shadow-black/5 border border-gray-100 overflow-hidden relative">
+    <div className="mx-auto max-w-2xl bg-white rounded-3xl shadow-xl shadow-black/5 border border-gray-100 overflow-hidden relative flex flex-col h-full">
       {/* Chat header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 bg-gray-50/50">
         <div className="flex items-center gap-3">
           <BocaBankerAvatar size={36} />
           <div>
@@ -127,7 +127,7 @@ export default function GuestChatWidget() {
       </div>
 
       {/* Messages */}
-      <div className="p-6 space-y-4 max-h-[400px] overflow-y-auto">
+      <div className="p-4 sm:p-6 space-y-4 flex-1 min-h-0 max-h-[400px] sm:max-h-[400px] overflow-y-auto">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -141,7 +141,7 @@ export default function GuestChatWidget() {
             )}
             <div
               className={cn(
-                'max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
+                'max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 text-sm leading-relaxed',
                 msg.role === 'user'
                   ? 'bg-sky-500 text-white rounded-br-md'
                   : 'bg-gray-100 text-gray-800 rounded-bl-md'
@@ -184,19 +184,19 @@ export default function GuestChatWidget() {
       </div>
 
       {/* Input */}
-      <div className="px-6 py-4 border-t border-gray-100">
-        <form onSubmit={handleSubmit} className="flex items-center gap-3">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-100">
+        <form onSubmit={handleSubmit} className="flex items-center gap-2 sm:gap-3">
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Ask Boca Banker anything..."
-            className="flex-1 bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+            placeholder="Ask anything..."
+            className="flex-1 bg-gray-50 rounded-xl px-3 sm:px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
           />
           <button
             type="submit"
             disabled={!inputValue.trim() || isLoading}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-white disabled:opacity-50 transition-opacity hover:opacity-90"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-white disabled:opacity-50 transition-opacity hover:opacity-90 flex-shrink-0"
           >
             <Send className="h-4 w-4" />
           </button>

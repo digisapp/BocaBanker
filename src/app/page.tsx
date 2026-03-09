@@ -304,22 +304,22 @@ export default function Home() {
         </div>
 
         <div className="relative z-10 mx-auto max-w-6xl">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          <div className="flex flex-col lg:flex-row items-center gap-6 sm:gap-10 lg:gap-16">
             {/* Text side */}
             <div className="flex-1 text-center lg:text-left">
               <Reveal>
                 <h1 className="font-serif font-bold tracking-tight text-gray-900 leading-[1.1]">
-                  <span className="block text-4xl sm:text-5xl md:text-6xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-500 bg-clip-text text-transparent">
+                  <span className="block text-3xl sm:text-4xl md:text-5xl lg:text-6xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-500 bg-clip-text text-transparent">
                     Boca Banker
                   </span>
-                  <span className="block text-lg sm:text-xl md:text-2xl text-gray-500 font-medium mt-2">
+                  <span className="block text-base sm:text-lg md:text-xl lg:text-2xl text-gray-500 font-medium mt-2">
                     South Florida&apos;s Mortgage &amp; Real Estate Finance Expert
                   </span>
                 </h1>
               </Reveal>
 
               <Reveal delay={200}>
-                <p className="mt-6 text-lg sm:text-xl text-gray-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
+                <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-gray-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
                   Your AI-powered mortgage specialist. He knows home loans, refinancing, and real estate finance
                   inside and out, never takes a coffee break, and has the best tan in fintech.
                 </p>
@@ -341,14 +341,14 @@ export default function Home() {
       {/* ══════════════════════════════════════
          STATS BAR
          ══════════════════════════════════════ */}
-      <section aria-label="Statistics" className="relative py-16 px-6 bg-white border-y border-gray-100">
+      <section aria-label="Statistics" className="relative py-10 sm:py-16 px-4 sm:px-6 bg-white border-y border-gray-100">
         <div className="mx-auto max-w-5xl">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
             {stats.map((s, i) => (
               <Reveal key={s.label} delay={i * 80}>
                 <div className="text-center">
                   <div className="text-2xl mb-1">{s.emoji}</div>
-                  <div className="text-3xl sm:text-4xl font-serif font-bold text-gray-900">
+                  <div className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-gray-900">
                     <CountUp target={s.value} suffix={s.suffix} prefix={s.prefix} />
                   </div>
                   <p className="mt-1 text-sm text-gray-500">{s.label}</p>
@@ -388,10 +388,10 @@ export default function Home() {
                 delay={i * 70}
               >
                 <div className={cn(
-                  'group h-full rounded-2xl border bg-white p-7 transition-all duration-300 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-1',
+                  'group h-full rounded-2xl border bg-white p-5 sm:p-6 md:p-7 transition-all duration-300 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-1',
                   f.border
                 )}>
-                  <div className={cn('inline-flex h-12 w-12 items-center justify-center rounded-xl mb-5 transition-transform duration-300 group-hover:scale-110', f.color)}>
+                  <div className={cn('inline-flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl mb-4 sm:mb-5 transition-transform duration-300 group-hover:scale-110', f.color)}>
                     <f.icon className="h-6 w-6" />
                   </div>
                   <h3 className="font-serif text-xl font-semibold text-gray-900 mb-2">
@@ -438,10 +438,10 @@ export default function Home() {
               <Reveal key={step.num} delay={i * 120}>
                 <div className="relative text-center flex flex-col items-center">
                   <div className="relative mb-5">
-                    <div className={cn('flex h-28 w-28 items-center justify-center rounded-3xl shadow-lg shadow-black/5 bg-white border border-gray-100')}>
-                      <step.icon className="h-10 w-10 text-gray-700" />
+                    <div className={cn('flex h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 items-center justify-center rounded-2xl sm:rounded-3xl shadow-lg shadow-black/5 bg-white border border-gray-100')}>
+                      <step.icon className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 text-gray-700" />
                     </div>
-                    <div className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-xs font-bold text-white shadow-md">
+                    <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-xs font-bold text-white shadow-md">
                       {step.num}
                     </div>
                   </div>
@@ -502,11 +502,11 @@ export default function Home() {
             ].map((faq, i) => (
               <Reveal key={faq.q} delay={i * 60}>
                 <details className="group rounded-2xl border border-gray-200 bg-white overflow-hidden">
-                  <summary className="flex items-center justify-between cursor-pointer px-6 py-5 text-left font-semibold text-gray-900 hover:bg-gray-50 transition-colors">
+                  <summary className="flex items-center justify-between cursor-pointer px-4 sm:px-6 py-4 sm:py-5 text-left font-semibold text-sm sm:text-base text-gray-900 hover:bg-gray-50 transition-colors">
                     <span>{faq.q}</span>
-                    <ChevronDown className="h-5 w-5 text-gray-400 shrink-0 ml-4 transition-transform group-open:rotate-180" />
+                    <ChevronDown className="h-5 w-5 text-gray-400 shrink-0 ml-2 sm:ml-4 transition-transform group-open:rotate-180" />
                   </summary>
-                  <div className="px-6 pb-5 text-sm leading-relaxed text-gray-500">
+                  <div className="px-4 sm:px-6 pb-4 sm:pb-5 text-sm leading-relaxed text-gray-500">
                     {faq.a}
                   </div>
                 </details>
@@ -545,7 +545,7 @@ export default function Home() {
             </p>
             <button
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="mt-8 inline-flex items-center gap-2 bg-white text-sky-700 font-bold text-base px-8 py-3.5 rounded-xl hover:bg-white/90 shadow-xl shadow-black/10 transition-opacity"
+              className="mt-8 inline-flex items-center gap-2 bg-white text-sky-700 font-bold text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl hover:bg-white/90 shadow-xl shadow-black/10 transition-opacity"
             >
               <MessageCircle className="h-5 w-5" />
               Chat Now

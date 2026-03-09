@@ -96,21 +96,21 @@ export default function InlineLeadCaptureCard({ onDismiss, onSuccess }: InlineLe
             placeholder="Your name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
           />
           <input
             type="text"
             placeholder="Property location (e.g. Miami, FL)"
             value={propertyLocation}
             onChange={(e) => setPropertyLocation(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
           />
           <input
             type="email"
             placeholder="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
           />
 
           {error && (
@@ -120,7 +120,7 @@ export default function InlineLeadCaptureCard({ onDismiss, onSuccess }: InlineLe
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold text-sm rounded-lg py-2 hover:opacity-90 disabled:opacity-50 transition-opacity"
+            className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold text-sm rounded-lg py-2.5 hover:opacity-90 disabled:opacity-50 transition-opacity"
           >
             {submitting ? (
               <Loader2 className="h-4 w-4 animate-spin mx-auto" />
@@ -132,7 +132,7 @@ export default function InlineLeadCaptureCard({ onDismiss, onSuccess }: InlineLe
           <button
             type="button"
             onClick={onDismiss}
-            className="block mx-auto text-xs text-gray-400 hover:text-gray-600 transition-colors pt-1"
+            className="block mx-auto text-xs text-gray-400 hover:text-gray-600 transition-colors py-2"
           >
             Maybe later
           </button>

@@ -47,7 +47,7 @@ function timeAgo(dateStr: string): string {
 export default function RecentActivity({ activities }: RecentActivityProps) {
   if (activities.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
         <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <Clock className="h-4 w-4 text-amber-600" />
           Recent Activity
@@ -60,12 +60,12 @@ export default function RecentActivity({ activities }: RecentActivityProps) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
       <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
         <Clock className="h-4 w-4 text-amber-600" />
         Recent Activity
       </h3>
-      <ScrollArea className="h-[320px] pr-3">
+      <ScrollArea className="h-[250px] sm:h-[320px] pr-3">
         <div className="space-y-1">
           {activities.map((activity) => {
             const Icon = ACTIVITY_ICONS[activity.type] || FileText;
