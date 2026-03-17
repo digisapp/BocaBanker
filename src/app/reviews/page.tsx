@@ -166,6 +166,10 @@ export default function ReviewsPage() {
   const [formError, setFormError] = useState('')
 
   const fetchReviews = useCallback(async (p: number, rating: number | null) => {
+    if (p === 1) {
+      setPage(1)
+      setReviews([])
+    }
     setLoading(true)
     const params = new URLSearchParams({ page: String(p), limit: '12' })
     if (rating) params.set('rating', String(rating))
@@ -182,8 +186,7 @@ export default function ReviewsPage() {
   }, [])
 
   useEffect(() => {
-    setPage(1)
-    setReviews([])
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching resets page on filter change
     fetchReviews(1, ratingFilter)
   }, [ratingFilter, fetchReviews])
 

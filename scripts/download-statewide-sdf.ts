@@ -139,8 +139,8 @@ function parseCsvLine(line: string): string[] {
 
 async function fetchFileList(apiUrl: string): Promise<{ name: string; url: string; size: number }[]> {
   const resp = await fetch(apiUrl, { headers: { Accept: 'application/json' } })
-  const data = await resp.json() as any
-  return (data.value || []).map((f: any) => ({
+  const data: { value?: { Name: string; ServerRelativeUrl: string; Length?: string }[] } = await resp.json()
+  return (data.value || []).map((f) => ({
     name: f.Name,
     url: BASE_URL + f.ServerRelativeUrl,
     size: parseInt(f.Length || '0', 10),

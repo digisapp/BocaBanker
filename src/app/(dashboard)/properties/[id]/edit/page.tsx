@@ -94,7 +94,7 @@ export default function EditPropertyPage() {
         } else {
           setError('Property not found');
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load property');
       } finally {
         setLoading(false);
@@ -144,7 +144,7 @@ export default function EditPropertyPage() {
         const errData = await res.json();
         setError(errData.error || 'Failed to save property');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to save property');
     } finally {
       setSaving(false);

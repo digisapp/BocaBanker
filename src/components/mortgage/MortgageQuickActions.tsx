@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 import {
   Plus,
   BarChart3,
-  Send,
   ListChecks,
   Settings,
   Calculator,

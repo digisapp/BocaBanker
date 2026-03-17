@@ -34,7 +34,7 @@ function mapReview(r: Record<string, unknown>) {
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth();
+    await requireAuth();
 
     const searchParams = request.nextUrl.searchParams;
     const page = Math.max(1, Number(searchParams.get('page') ?? '1'));

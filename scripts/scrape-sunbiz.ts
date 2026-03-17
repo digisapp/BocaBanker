@@ -5,7 +5,7 @@
  * Usage: npx tsx scripts/scrape-sunbiz.ts [--limit N] [--offset N] [--dry-run]
  */
 import 'dotenv/config'
-import puppeteer, { type Browser, type Page } from 'puppeteer'
+import puppeteer, { type Page } from 'puppeteer'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -42,7 +42,7 @@ function cleanSearchTerm(name: string): string {
 }
 
 // Parse "CITY, ST ZIP" or "CITY ST ZIP" format
-function parseCityStateZip(text: string): { city: string; state: string; zip: string } {
+export function parseCityStateZip(text: string): { city: string; state: string; zip: string } {
   const cleaned = text.trim()
   // Try "CITY, ST ZIP" or "CITY ST ZIP"
   const match = cleaned.match(/^(.+?)[,\s]+([A-Z]{2})\s+(\d{5}(?:-\d{4})?)/)

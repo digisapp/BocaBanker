@@ -452,8 +452,6 @@ export function calculateCombinedAnalysis(
   const buildingPeriod: 27.5 | 39 = residentialTypes.includes(propertyType.toLowerCase()) ? 27.5 : 39;
 
   let reclassifiedAmount = 0;
-  let buildingBasis = 0;
-
   for (const asset of allocation) {
     if (asset.recoveryPeriod === 0) continue; // Skip land
     const schedule = calculateDepreciation(
@@ -468,9 +466,6 @@ export function calculateCombinedAnalysis(
     }
     if (asset.recoveryPeriod <= 20) {
       reclassifiedAmount += asset.amount;
-    }
-    if (asset.recoveryPeriod === 27.5 || asset.recoveryPeriod === 39) {
-      buildingBasis += asset.amount;
     }
   }
 
@@ -528,7 +523,6 @@ export function calculateCombinedAnalysis(
   // Loan paydown scenario: apply Year 1 cost seg savings as lump-sum to principal
   // after the first year of the new loan
   const r = newRate > 0 ? newRate / 100 / 12 : 0;
-  const n = newTermYears * 12;
 
   // Track two loan balances: with and without the cost seg paydown
   let balanceWithout = loanAmount;

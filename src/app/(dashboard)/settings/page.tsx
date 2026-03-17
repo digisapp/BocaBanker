@@ -150,7 +150,7 @@ export default function SettingsPage() {
         passwordForm.reset();
         setTimeout(() => setPasswordSaved(false), 3000);
       }
-    } catch (err) {
+    } catch {
       setPasswordError('Failed to update password');
     } finally {
       setPasswordSaving(false);

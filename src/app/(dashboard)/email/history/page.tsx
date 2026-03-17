@@ -50,6 +50,7 @@ export default function EmailHistoryPage() {
 
   useEffect(() => {
     fetchHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchHistory reads page & statusFilter from closure
   }, [page, statusFilter]);
 
   async function fetchHistory() {

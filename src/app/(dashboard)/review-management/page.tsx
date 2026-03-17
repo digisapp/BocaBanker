@@ -96,6 +96,7 @@ export default function ReviewsManagementPage() {
   }, [page, statusFilter, search])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching is a valid use of setState in effect
     fetchReviews()
   }, [fetchReviews])
 

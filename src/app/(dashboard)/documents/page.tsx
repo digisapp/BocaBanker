@@ -6,13 +6,11 @@ import {
   Upload,
   FileText,
   Download,
-  Trash2,
   Loader2,
   CloudUpload,
   File,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -41,15 +39,6 @@ function formatFileSize(bytes: number | null): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function getFileIcon(type: string | null): string {
-  if (!type) return 'file';
-  if (type.includes('pdf')) return 'pdf';
-  if (type.includes('image')) return 'image';
-  if (type.includes('spreadsheet') || type.includes('csv') || type.includes('excel'))
-    return 'spreadsheet';
-  return 'file';
 }
 
 export default function DocumentsPage() {

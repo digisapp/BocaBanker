@@ -4,7 +4,7 @@ import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { clients } from '@/db/schema';
-import { eq, and, ilike, desc, asc, sql, count, or } from 'drizzle-orm';
+import { eq, and, ilike, desc, asc, count, or } from 'drizzle-orm';
 import { clientSchema } from '@/lib/validation/schemas';
 
 export async function GET(request: NextRequest) {

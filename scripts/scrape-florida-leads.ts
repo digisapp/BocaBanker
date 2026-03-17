@@ -19,7 +19,7 @@
  *   npx tsx scripts/scrape-florida-leads.ts
  */
 
-import { chromium, type Page } from 'playwright'
+import { chromium } from 'playwright'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -418,7 +418,7 @@ async function scrapeBroward(): Promise<Lead[]> {
           const parsed = JSON.parse(call.body)
           const items = parsed.d || parsed
           if (Array.isArray(items)) {
-            const real = items.filter((i: any) => i.folioNumber && i.folioNumber !== '0' && i.propertyAddress)
+            const real = items.filter((i: Record<string, string>) => i.folioNumber && i.folioNumber !== '0' && i.propertyAddress)
             console.log(`  API: ${items.length} items, ${real.length} with data`)
             for (const item of real) {
               const price = String(item.price || '').replace(/[^0-9.]/g, '')

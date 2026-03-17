@@ -4,7 +4,7 @@ import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { emailLogs, clients } from '@/db/schema';
-import { eq, desc, and, count, sql } from 'drizzle-orm';
+import { eq, desc, and, count } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
   try {

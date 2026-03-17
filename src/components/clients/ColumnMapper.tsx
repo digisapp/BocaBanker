@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -80,13 +80,9 @@ export function ColumnMapper({
   csvHeaders,
   onMappingComplete,
 }: ColumnMapperProps) {
-  const [mapping, setMapping] = useState<Record<string, string>>({})
-
-  // Auto-detect common mappings on mount
-  useEffect(() => {
+  const [mapping, setMapping] = useState<Record<string, string>>(() => {
     const autoMapping: Record<string, string> = {}
     const usedFields = new Set<string>()
-
     csvHeaders.forEach((header) => {
       const normalized = header.toLowerCase().trim()
       const match = AUTO_MAP[normalized]
@@ -95,9 +91,8 @@ export function ColumnMapper({
         usedFields.add(match)
       }
     })
-
-    setMapping(autoMapping)
-  }, [csvHeaders])
+    return autoMapping
+  })
 
   const handleFieldChange = (csvHeader: string, clientField: string) => {
     setMapping((prev) => {

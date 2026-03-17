@@ -1,7 +1,7 @@
 import { requireAuth, ApiError } from '@/lib/api/auth'
 import { apiError } from '@/lib/api/response'
 import { db } from '@/db'
-import { costSegStudies, properties, clients, studyAssets } from '@/db/schema'
+import { costSegStudies, properties, clients } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { logger } from '@/lib/logger'
 

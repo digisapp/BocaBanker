@@ -3,9 +3,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { logger } from '@/lib/logger'
 import { useRouter } from 'next/navigation'
-import { FileBarChart, Plus, Search } from 'lucide-react'
+import { FileBarChart, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,

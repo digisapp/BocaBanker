@@ -48,11 +48,11 @@ async function main() {
   console.log(`CSV headers: ${headers.join(', ')}`)
   console.log(`Total rows: ${lines.length - 1}\n`)
 
-  const rows: Record<string, any>[] = []
+  const rows: Record<string, string | number | null>[] = []
 
   for (let i = 1; i < lines.length; i++) {
     const cells = parseCsvLine(lines[i])
-    const row: Record<string, any> = {}
+    const row: Record<string, string | number | null> = {}
 
     // Initialize ALL keys so every row has identical shape (PostgREST requirement)
     for (const key of headers) {

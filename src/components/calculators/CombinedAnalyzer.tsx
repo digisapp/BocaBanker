@@ -16,7 +16,6 @@ import {
   DollarSign,
   TrendingUp,
   Clock,
-  Percent,
   ArrowRightLeft,
   Calculator,
   Banknote,

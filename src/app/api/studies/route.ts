@@ -4,7 +4,7 @@ import { apiError } from '@/lib/api/response'
 import { db } from '@/db'
 import { costSegStudies, properties, clients, studyAssets } from '@/db/schema'
 import { logger } from '@/lib/logger'
-import { eq, and, desc, sql, count } from 'drizzle-orm'
+import { eq, and, desc, count } from 'drizzle-orm'
 import { studySchema } from '@/lib/validation/schemas'
 
 export async function GET(request: NextRequest) {

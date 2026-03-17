@@ -9,7 +9,6 @@ import {
   FileBarChart,
   Play,
   Printer,
-  Pencil,
   Trash2,
   Loader2,
 } from 'lucide-react'
@@ -114,6 +113,7 @@ export default function StudyDetailPage() {
 
   useEffect(() => {
     if (id) fetchStudy()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchStudy depends on id which is already listed
   }, [id])
 
   async function handleCalculate() {
