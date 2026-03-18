@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { logger } from '@/lib/logger';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import type { UIMessage } from 'ai';
@@ -18,38 +17,37 @@ import {
   Trash2,
 } from 'lucide-react';
 import { cn, getTextContent } from '@/lib/utils';
-
-interface Conversation {
-  id: string;
-  title: string;
-  updatedAt: string;
-}
-
-interface StoredMessage {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  createdAt: string;
-}
-
+import { useConversations } from '@/hooks/useConversations';
+import { useMessageHistory } from '@/hooks/useMessageHistory';
 
 interface ChatInterfaceProps {
   initialGuestHandoff?: boolean;
 }
 
 export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProps) {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [activeConversationId, setActiveConversationId] = useState<
-    string | null
-  >(null);
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (typeof window === 'undefined') return true;
     return window.innerWidth >= 768;
   });
-  const [loadingHistory, setLoadingHistory] = useState(false);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [guestHandoff, setGuestHandoff] = useState(initialGuestHandoff);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const {
+    conversations,
+    pendingDeleteId,
+    setPendingDeleteId,
+    fetchConversations,
+    loadConversationMessages,
+    deleteConversation,
+  } = useConversations();
+
+  const {
+    activeConversationId,
+    setActiveConversationId,
+    loadingHistory,
+    loadConversation,
+    startNewConversation,
+  } = useMessageHistory();
 
   const transport = useMemo(
     () =>
@@ -69,7 +67,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
           return response;
         },
       }),
-    [activeConversationId, guestHandoff]
+    [activeConversationId, guestHandoff, setActiveConversationId]
   );
 
   const {
@@ -121,76 +119,27 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  const fetchConversations = useCallback(async () => {
-    try {
-      const res = await fetch('/api/chat/history');
-      if (res.ok) {
-        const data = await res.json();
-        setConversations(data.conversations || []);
-      }
-    } catch (error) {
-      logger.error('ChatInterface', 'Failed to fetch conversations', error);
-    }
-  }, []);
-
   useEffect(() => {
     fetchConversations();
   }, [fetchConversations]);
 
-  const loadConversation = async (conversationId: string) => {
-    setLoadingHistory(true);
-    try {
-      const res = await fetch(
-        `/api/chat/history?conversationId=${conversationId}`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        const loadedMessages: UIMessage[] = (data.messages || [])
-          .filter((m: StoredMessage) => m.role !== 'system')
-          .map((m: StoredMessage) => ({
-            id: m.id,
-            role: m.role as 'user' | 'assistant',
-            parts: [{ type: 'text' as const, text: m.content }],
-          }));
-
-        setMessages(loadedMessages);
-        setActiveConversationId(conversationId);
+  const handleLoadConversation = (conversationId: string) => {
+    loadConversation(
+      conversationId,
+      loadConversationMessages,
+      setMessages,
+      () => {
         if (window.innerWidth < 768) setSidebarOpen(false);
       }
-    } catch (error) {
-      logger.error('ChatInterface', 'Failed to load conversation', error);
-    } finally {
-      setLoadingHistory(false);
-    }
+    );
   };
 
-  const startNewConversation = () => {
-    setActiveConversationId(null);
-    setMessages([]);
+  const handleStartNew = () => {
+    startNewConversation(setMessages);
   };
 
-  const deleteConversation = async (convId: string) => {
-    // First click: set pending. Second click: delete.
-    if (pendingDeleteId !== convId) {
-      setPendingDeleteId(convId);
-      return;
-    }
-    setPendingDeleteId(null);
-    try {
-      const res = await fetch('/api/chat/history', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId: convId }),
-      });
-      if (res.ok) {
-        if (activeConversationId === convId) {
-          startNewConversation();
-        }
-        await fetchConversations();
-      }
-    } catch (error) {
-      logger.error('ChatInterface', 'Failed to delete conversation', error);
-    }
+  const handleDelete = (convId: string) => {
+    deleteConversation(convId, activeConversationId, handleStartNew);
   };
 
   const handleChatSubmit = (message: string) => {
@@ -238,7 +187,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
           <Button
             variant="ghost"
             size="icon-xs"
-            onClick={startNewConversation}
+            onClick={handleStartNew}
             className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
             title="New conversation"
           >
@@ -271,7 +220,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
                   )}
                 >
                   <button
-                    onClick={() => loadConversation(conv.id)}
+                    onClick={() => handleLoadConversation(conv.id)}
                     className="flex-1 text-left px-3 py-2.5 min-w-0"
                   >
                     <div className="truncate font-medium text-xs">
@@ -284,7 +233,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      deleteConversation(conv.id);
+                      handleDelete(conv.id);
                     }}
                     onBlur={() => setPendingDeleteId(null)}
                     className={cn(
