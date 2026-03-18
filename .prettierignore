@@ -1,0 +1,8 @@
+.next
+node_modules
+drizzle
+scripts/output
+coverage
+dist
+build
+*.min.js
