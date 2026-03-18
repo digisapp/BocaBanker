@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, timestamp, index } from 'drizzle-orm/pg-core';
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { users } from './users';
 import { clients } from './clients';
 
@@ -17,14 +17,3 @@ export const emailLogs = pgTable('email_logs', {
   index('email_logs_user_id_idx').on(table.userId),
   index('email_logs_client_id_idx').on(table.clientId),
 ]);
-
-export const emailLogsRelations = relations(emailLogs, ({ one }) => ({
-  user: one(users, {
-    fields: [emailLogs.userId],
-    references: [users.id],
-  }),
-  client: one(clients, {
-    fields: [emailLogs.clientId],
-    references: [clients.id],
-  }),
-}));

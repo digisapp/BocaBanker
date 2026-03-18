@@ -1,8 +1,7 @@
 import { pgTable, uuid, text, timestamp, numeric, integer, date, index } from 'drizzle-orm/pg-core';
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { users } from './users';
 import { clients } from './clients';
-import { costSegStudies } from './cost-seg-studies';
 import { PROPERTY_PROPERTY_TYPES } from '@/constants/property-types';
 
 export const properties = pgTable('properties', {
@@ -37,15 +36,3 @@ export const properties = pgTable('properties', {
   index('properties_client_id_idx').on(table.clientId),
   index('properties_user_id_idx').on(table.userId),
 ]);
-
-export const propertiesRelations = relations(properties, ({ one, many }) => ({
-  client: one(clients, {
-    fields: [properties.clientId],
-    references: [clients.id],
-  }),
-  user: one(users, {
-    fields: [properties.userId],
-    references: [users.id],
-  }),
-  costSegStudies: many(costSegStudies),
-}));

@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, timestamp, numeric, integer, boolean, index } from 'drizzle-orm/pg-core';
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { costSegStudies } from './cost-seg-studies';
 
 export const studyAssets = pgTable('study_assets', {
@@ -17,10 +17,3 @@ export const studyAssets = pgTable('study_assets', {
 }, (table) => [
   index('study_assets_study_id_idx').on(table.studyId),
 ]);
-
-export const studyAssetsRelations = relations(studyAssets, ({ one }) => ({
-  study: one(costSegStudies, {
-    fields: [studyAssets.studyId],
-    references: [costSegStudies.id],
-  }),
-}));

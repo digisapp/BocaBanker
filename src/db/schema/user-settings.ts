@@ -6,7 +6,7 @@ import {
   boolean,
   timestamp,
 } from 'drizzle-orm/pg-core'
-import { relations, sql } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import { users } from './users'
 
 export const userSettings = pgTable('user_settings', {
@@ -29,6 +29,3 @@ export const userSettings = pgTable('user_settings', {
   updatedAt: timestamp('updated_at').default(sql`now()`),
 })
 
-export const userSettingsRelations = relations(userSettings, ({ one }) => ({
-  user: one(users, { fields: [userSettings.userId], references: [users.id] }),
-}))

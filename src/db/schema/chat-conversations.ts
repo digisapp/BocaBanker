@@ -1,7 +1,6 @@
 import { pgTable, uuid, text, timestamp, index } from 'drizzle-orm/pg-core';
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { users } from './users';
-import { chatMessages } from './chat-messages';
 
 export const chatConversations = pgTable('chat_conversations', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -12,11 +11,3 @@ export const chatConversations = pgTable('chat_conversations', {
 }, (table) => [
   index('chat_conversations_user_id_idx').on(table.userId),
 ]);
-
-export const chatConversationsRelations = relations(chatConversations, ({ one, many }) => ({
-  user: one(users, {
-    fields: [chatConversations.userId],
-    references: [users.id],
-  }),
-  messages: many(chatMessages),
-}));

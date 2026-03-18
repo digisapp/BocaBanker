@@ -8,7 +8,7 @@ import {
   timestamp,
   index,
 } from 'drizzle-orm/pg-core'
-import { relations, sql } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import { users } from './users'
 import { LEAD_PROPERTY_TYPES } from '@/constants/property-types'
 
@@ -79,6 +79,3 @@ export const leads = pgTable('leads', {
   index('leads_user_id_idx').on(table.userId),
 ])
 
-export const leadsRelations = relations(leads, ({ one }) => ({
-  user: one(users, { fields: [leads.userId], references: [users.id] }),
-}))

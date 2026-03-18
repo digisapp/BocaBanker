@@ -1,10 +1,6 @@
 import { pgTable, uuid, text, timestamp, index } from 'drizzle-orm/pg-core';
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { users } from './users';
-import { properties } from './properties';
-import { costSegStudies } from './cost-seg-studies';
-import { documents } from './documents';
-import { emailLogs } from './email-logs';
 
 export const clients = pgTable('clients', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -27,14 +23,3 @@ export const clients = pgTable('clients', {
 }, (table) => [
   index('clients_user_id_idx').on(table.userId),
 ]);
-
-export const clientsRelations = relations(clients, ({ one, many }) => ({
-  user: one(users, {
-    fields: [clients.userId],
-    references: [users.id],
-  }),
-  properties: many(properties),
-  costSegStudies: many(costSegStudies),
-  documents: many(documents),
-  emailLogs: many(emailLogs),
-}));

@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, timestamp, index } from 'drizzle-orm/pg-core';
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { chatConversations } from './chat-conversations';
 
 export const chatMessages = pgTable('chat_messages', {
@@ -11,10 +11,3 @@ export const chatMessages = pgTable('chat_messages', {
 }, (table) => [
   index('chat_messages_conversation_id_idx').on(table.conversationId),
 ]);
-
-export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
-  conversation: one(chatConversations, {
-    fields: [chatMessages.conversationId],
-    references: [chatConversations.id],
-  }),
-}));
