@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { logger } from '@/lib/logger'
+import { formatCurrency } from '@/lib/utils'
 import {
   DollarSign,
   TrendingUp,
@@ -43,14 +44,6 @@ interface CommissionData {
     lenderName: string | null
   }[]
 }
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value)
 
 const monthNames: Record<string, string> = {}
 for (let m = 0; m < 12; m++) {

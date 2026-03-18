@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { logger } from '@/lib/logger'
+import { formatCurrency } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import {
   Landmark,
@@ -71,18 +72,6 @@ const loanTypeLabels: Record<string, string> = {
   heloc: 'HELOC',
   commercial: 'Comm',
   other: 'Other',
-}
-
-const formatCurrency = (value: string | number | null) => {
-  if (!value) return '--'
-  const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) return '--'
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num)
 }
 
 type SortKey = 'borrowerName' | 'loanAmount' | 'status' | 'loanType' | 'createdAt' | 'estimatedClosingDate'
@@ -332,7 +321,7 @@ export default function LoansPage() {
                       {loan.propertyAddress || '--'}
                     </TableCell>
                     <TableCell className="text-sm font-medium text-gray-900">
-                      {formatCurrency(loan.loanAmount)}
+                      {formatCurrency(loan.loanAmount, '--')}
                     </TableCell>
                     <TableCell className="text-sm text-gray-700">
                       {loan.loanType ? loanTypeLabels[loan.loanType] ?? loan.loanType : '--'}
@@ -345,7 +334,7 @@ export default function LoansPage() {
                     </TableCell>
                     <TableCell className="text-sm text-gray-700">
                       {loan.commissionAmount
-                        ? formatCurrency(loan.commissionAmount)
+                        ? formatCurrency(loan.commissionAmount, '--')
                         : loan.commissionBps
                           ? `${loan.commissionBps} bps`
                           : '--'}

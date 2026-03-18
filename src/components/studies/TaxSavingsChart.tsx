@@ -10,25 +10,7 @@ import {
   ResponsiveContainer,
   ReferenceDot,
 } from 'recharts'
-
-function formatCurrency(value: number): string {
-  if (value >= 1_000_000) {
-    return `$${(value / 1_000_000).toFixed(1)}M`
-  }
-  if (value >= 1_000) {
-    return `$${(value / 1_000).toFixed(0)}K`
-  }
-  return `$${value.toFixed(0)}`
-}
-
-function formatCurrencyFull(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value)
-}
+import { formatCurrency, formatCurrencyCompact } from '@/lib/utils'
 
 interface TaxSavingsData {
   year: number
@@ -63,14 +45,14 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
           <div className="h-2.5 w-2.5 rounded-full bg-amber-500" />
           <span className="text-xs text-gray-500">Cumulative:</span>
           <span className="text-xs font-medium text-amber-600">
-            {formatCurrencyFull(item.cumulativeSavings)}
+            {formatCurrency(item.cumulativeSavings)}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <div className="h-2.5 w-2.5 rounded-full bg-yellow-500" />
           <span className="text-xs text-gray-500">Annual:</span>
           <span className="text-xs font-medium text-gray-900">
-            {formatCurrencyFull(item.savings)}
+            {formatCurrency(item.savings)}
           </span>
         </div>
       </div>
@@ -119,7 +101,7 @@ export default function TaxSavingsChart({ data, maxYears = 20 }: TaxSavingsChart
             tickLine={false}
           />
           <YAxis
-            tickFormatter={formatCurrency}
+            tickFormatter={formatCurrencyCompact}
             tick={{ fill: '#6B7280', fontSize: 11 }}
             axisLine={false}
             tickLine={false}

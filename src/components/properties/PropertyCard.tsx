@@ -3,18 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { Building2, MapPin, Ruler } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-
-function formatCurrency(value: number | string | null | undefined): string {
-  if (value === null || value === undefined) return '$0'
-  const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) return '$0'
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num)
-}
+import { formatCurrency } from '@/lib/utils'
 
 function formatNumber(value: number | null | undefined): string {
   if (value === null || value === undefined) return '0'

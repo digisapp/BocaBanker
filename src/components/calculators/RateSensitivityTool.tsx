@@ -34,6 +34,7 @@ import {
   calculateRateSensitivity,
   type RateSensitivityResult,
 } from '@/lib/mortgage/calculations';
+import { formatCurrency } from '@/lib/utils';
 
 const LOAN_TERMS = [
   { value: '10', label: '10 Years' },
@@ -42,15 +43,6 @@ const LOAN_TERMS = [
   { value: '25', label: '25 Years' },
   { value: '30', label: '30 Years' },
 ];
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 interface RateSensitivityToolProps {
   initialValues?: Record<string, string>;

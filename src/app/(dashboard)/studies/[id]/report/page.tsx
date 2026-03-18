@@ -3,24 +3,13 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { logger } from '@/lib/logger'
+import { formatCurrency } from '@/lib/utils'
 import { ArrowLeft, Printer, Download, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import AssetBreakdownChart from '@/components/studies/AssetBreakdownChart'
 import DepreciationChart from '@/components/studies/DepreciationChart'
 import TaxSavingsChart from '@/components/studies/TaxSavingsChart'
-
-function formatCurrency(value: number | string | null | undefined): string {
-  if (value === null || value === undefined) return '$0'
-  const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) return '$0'
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num)
-}
 
 interface StudyDetail {
   id: string

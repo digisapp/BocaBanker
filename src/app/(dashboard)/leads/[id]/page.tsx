@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { logger } from '@/lib/logger'
+import { formatCurrency } from '@/lib/utils'
 import {
   ArrowLeft,
   Pencil,
@@ -100,18 +101,6 @@ const priorityColorMap: Record<string, string> = {
   high: 'bg-red-50 text-red-600 border-red-200',
   medium: 'bg-amber-50 text-amber-600 border-amber-200',
   low: 'bg-gray-100 text-gray-500 border-gray-200',
-}
-
-const formatCurrency = (value: string | number | null) => {
-  if (!value) return '--'
-  const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) return '--'
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num)
 }
 
 const formatDate = (value: string | null) => {
@@ -584,7 +573,7 @@ export default function LeadDetailPage() {
           <InfoRow
             icon={<DollarSign className="h-4 w-4" />}
             label="Sale Price"
-            value={formatCurrency(lead.salePrice)}
+            value={formatCurrency(lead.salePrice, '--')}
           />
           <InfoRow
             icon={<Calendar className="h-4 w-4" />}

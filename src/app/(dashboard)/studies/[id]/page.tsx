@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { logger } from '@/lib/logger'
+import { formatCurrency } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
   ArrowLeft,
@@ -28,18 +29,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import StudyResults from '@/components/studies/StudyResults'
 import { RoleGate } from '@/components/shared/RoleGate'
-
-function formatCurrency(value: number | string | null | undefined): string {
-  if (value === null || value === undefined) return '-'
-  const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) return '-'
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num)
-}
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Draft',
@@ -291,7 +280,7 @@ export default function StudyDetailPage() {
             <div>
               <span className="text-xs text-gray-400">Purchase Price</span>
               <p className="text-sm font-medium text-gray-900 mt-1">
-                {formatCurrency(study.purchasePrice)}
+                {formatCurrency(study.purchasePrice, '-')}
               </p>
             </div>
             <div>
@@ -332,7 +321,7 @@ export default function StudyDetailPage() {
                       </p>
                     </div>
                     <p className="text-sm font-medium text-gray-900">
-                      {formatCurrency(asset.costBasis)}
+                      {formatCurrency(asset.costBasis, '-')}
                     </p>
                   </div>
                 ))}

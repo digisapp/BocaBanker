@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { logger } from '@/lib/logger'
+import { formatCurrency } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import {
   Target,
@@ -144,18 +145,6 @@ const propertyTypeBadgeColor: Record<string, string> = {
   multifamily: 'bg-violet-50 text-violet-600 border-violet-200',
   'mixed-use': 'bg-teal-50 text-teal-600 border-teal-200',
   other: 'bg-gray-50 text-gray-500 border-gray-200',
-}
-
-const formatCurrency = (value: string | number | null) => {
-  if (!value) return '--'
-  const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) return '--'
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num)
 }
 
 const formatDate = (value: string | null) => {
@@ -552,14 +541,14 @@ export default function LeadsPage() {
                 <TrendingUp className="h-4 w-4 text-emerald-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Avg Sale Price</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.avgSalePrice)}</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.avgSalePrice, '--')}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
                 <DollarSign className="h-4 w-4 text-amber-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Total Value</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalValue)}</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalValue, '--')}</p>
             </div>
           </div>
 
@@ -678,7 +667,7 @@ export default function LeadsPage() {
                           </TableCell>
                           <TableCell>
                             <span className="text-gray-700 font-medium">
-                              {formatCurrency(lead.salePrice)}
+                              {formatCurrency(lead.salePrice, '--')}
                             </span>
                           </TableCell>
                           <TableCell>
@@ -946,7 +935,7 @@ export default function LeadsPage() {
                 <DollarSign className="h-4 w-4 text-amber-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Total Value</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(portfolioStats.totalValue)}</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrency(portfolioStats.totalValue, '--')}</p>
             </div>
           </div>
 
@@ -1043,7 +1032,7 @@ export default function LeadsPage() {
                             </TableCell>
                             <TableCell>
                               <span className="text-gray-700 font-medium">
-                                {formatCurrency(portfolio.totalValue)}
+                                {formatCurrency(portfolio.totalValue, '--')}
                               </span>
                             </TableCell>
                             <TableCell>
@@ -1134,7 +1123,7 @@ export default function LeadsPage() {
                                             </Badge>
                                           )}
                                           <span className="text-sm font-medium text-gray-700 w-28 text-right">
-                                            {formatCurrency(prop.salePrice)}
+                                            {formatCurrency(prop.salePrice, '--')}
                                           </span>
                                           <span className="text-xs text-gray-500 w-24 text-right">
                                             {formatDate(prop.saleDate)}

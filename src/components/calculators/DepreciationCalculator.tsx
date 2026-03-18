@@ -32,6 +32,7 @@ import {
 import { calculateDepreciation } from '@/lib/cost-seg/depreciation';
 import type { MacrsRecoveryPeriod } from '@/lib/cost-seg/macrs-tables';
 import type { DepreciationScheduleItem } from '@/types';
+import { formatCurrency } from '@/lib/utils';
 
 const RECOVERY_PERIODS: { value: string; label: string }[] = [
   { value: '5', label: '5-Year Personal Property' },
@@ -40,15 +41,6 @@ const RECOVERY_PERIODS: { value: string; label: string }[] = [
   { value: '27.5', label: '27.5-Year Residential Rental' },
   { value: '39', label: '39-Year Nonresidential' },
 ];
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 export default function DepreciationCalculator() {
   const [assetValue, setAssetValue] = useState('');

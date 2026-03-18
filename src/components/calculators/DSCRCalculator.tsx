@@ -26,6 +26,7 @@ import {
   calculateDSCR,
   type DSCRResult,
 } from '@/lib/mortgage/calculations';
+import { formatCurrency } from '@/lib/utils';
 
 const LOAN_TERMS = [
   { value: '10', label: '10 Years' },
@@ -41,15 +42,6 @@ const RATING_COLORS: Record<string, string> = {
   weak: 'bg-amber-50 text-amber-700 border-amber-200',
   insufficient: 'bg-red-50 text-red-700 border-red-200',
 };
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 interface DSCRCalculatorProps {
   initialValues?: Record<string, string>;

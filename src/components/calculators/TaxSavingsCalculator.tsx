@@ -26,6 +26,7 @@ import { calculateDepreciation, calculateStraightLineDepreciation } from '@/lib/
 import { calculateTaxSavings } from '@/lib/cost-seg/tax-savings';
 import { calculateNPV } from '@/lib/cost-seg/npv';
 import type { MacrsRecoveryPeriod } from '@/lib/cost-seg/macrs-tables';
+import { formatCurrency } from '@/lib/utils';
 
 const PROPERTY_TYPES = [
   'commercial',
@@ -37,15 +38,6 @@ const PROPERTY_TYPES = [
   'healthcare',
   'multifamily',
 ];
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 interface SavingsResult {
   firstYearSavings: number;

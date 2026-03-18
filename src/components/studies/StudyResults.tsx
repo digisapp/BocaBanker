@@ -4,18 +4,7 @@ import { DollarSign, TrendingUp, Percent, Calculator } from 'lucide-react'
 import AssetBreakdownChart from './AssetBreakdownChart'
 import DepreciationChart from './DepreciationChart'
 import TaxSavingsChart from './TaxSavingsChart'
-
-function formatCurrency(value: number | string | null | undefined): string {
-  if (value === null || value === undefined) return '$0'
-  const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) return '$0'
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num)
-}
+import { formatCurrency } from '@/lib/utils'
 
 interface StudyResultsProps {
   results: {

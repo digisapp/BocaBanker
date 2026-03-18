@@ -35,6 +35,7 @@ import {
   calculateRefinanceAnalysis,
   type RefinanceResult,
 } from '@/lib/mortgage/calculations';
+import { formatCurrency } from '@/lib/utils';
 
 const TERM_OPTIONS = [
   { value: '10', label: '10 Years' },
@@ -43,15 +44,6 @@ const TERM_OPTIONS = [
   { value: '25', label: '25 Years' },
   { value: '30', label: '30 Years' },
 ];
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 interface RefinanceAnalyzerProps {
   initialValues?: Record<string, string>;

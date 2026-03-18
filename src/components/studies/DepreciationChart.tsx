@@ -10,25 +10,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
-
-function formatCurrency(value: number): string {
-  if (value >= 1_000_000) {
-    return `$${(value / 1_000_000).toFixed(1)}M`
-  }
-  if (value >= 1_000) {
-    return `$${(value / 1_000).toFixed(0)}K`
-  }
-  return `$${value.toFixed(0)}`
-}
-
-function formatCurrencyFull(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value)
-}
+import { formatCurrency, formatCurrencyCompact } from '@/lib/utils'
 
 interface DepreciationData {
   year: number
@@ -65,7 +47,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
           />
           <span className="text-xs text-gray-500">{entry.name}:</span>
           <span className="text-xs font-medium text-gray-900">
-            {formatCurrencyFull(entry.value)}
+            {formatCurrency(entry.value)}
           </span>
         </div>
       ))}
@@ -92,7 +74,7 @@ export default function DepreciationChart({ data, maxYears = 20 }: DepreciationC
             tickLine={false}
           />
           <YAxis
-            tickFormatter={formatCurrency}
+            tickFormatter={formatCurrencyCompact}
             tick={{ fill: '#6B7280', fontSize: 11 }}
             axisLine={false}
             tickLine={false}

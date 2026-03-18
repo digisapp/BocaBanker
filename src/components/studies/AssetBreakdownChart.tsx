@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
+import { formatCurrency } from '@/lib/utils'
 
 const CATEGORY_COLORS: Record<string, string> = {
   personal_property_5yr: '#F59E0B',
@@ -25,15 +26,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   building_27_5yr: '27.5-Year',
   building_39yr: '39-Year',
   land: 'Land',
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value)
 }
 
 interface AssetBreakdownData {

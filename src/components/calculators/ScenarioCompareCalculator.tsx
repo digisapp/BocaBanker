@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Calculator, Star } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
 
 interface ScenarioResult {
   type: string
@@ -125,14 +126,6 @@ export default function ScenarioCompareCalculator({
 
     setResults(scenarios)
   }
-
-  const formatCurrency = (n: number) =>
-    new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(n)
 
   return (
     <div className="space-y-6">

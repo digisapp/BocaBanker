@@ -5,7 +5,7 @@ import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import type { UIMessage } from 'ai';
 import { Send } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, getTextContent } from '@/lib/utils';
 import BocaBankerAvatar from './BocaBankerAvatar';
 import InlineLeadCaptureCard from './InlineLeadCaptureCard';
 
@@ -26,12 +26,6 @@ const GREETING_MESSAGE: UIMessage = {
   ],
 };
 
-function getTextContent(message: UIMessage): string {
-  return message.parts
-    .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
-    .map((p) => p.text)
-    .join('');
-}
 
 export default function GuestChatWidget() {
   const [userMsgCount, setUserMsgCount] = useState(() => {

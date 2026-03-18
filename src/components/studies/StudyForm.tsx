@@ -25,15 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { getDefaultAllocation, ASSET_CLASSES, type AllocationBreakdown } from '@/lib/cost-seg/asset-classes'
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value)
-}
+import { formatCurrency } from '@/lib/utils'
 
 interface PropertyOption {
   id: string

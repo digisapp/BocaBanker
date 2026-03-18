@@ -25,6 +25,7 @@ import { getDefaultAllocation } from '@/lib/cost-seg/asset-classes';
 import { calculateBonusDepreciation } from '@/lib/cost-seg/bonus-depreciation';
 import { calculateStraightLineDepreciation } from '@/lib/cost-seg/depreciation';
 import type { MacrsRecoveryPeriod } from '@/lib/cost-seg/macrs-tables';
+import { formatCurrency } from '@/lib/utils';
 
 const PROPERTY_TYPES = [
   'commercial',
@@ -36,15 +37,6 @@ const PROPERTY_TYPES = [
   'healthcare',
   'multifamily',
 ];
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 interface BonusResult {
   reclassifiedPercentage: number;

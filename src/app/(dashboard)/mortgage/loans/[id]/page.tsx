@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { logger } from '@/lib/logger'
+import { formatCurrency } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
   ArrowLeft,
@@ -79,18 +80,6 @@ const loanTypeLabels: Record<string, string> = {
   heloc: 'HELOC',
   commercial: 'Commercial',
   other: 'Other',
-}
-
-const formatCurrency = (value: string | number | null) => {
-  if (!value) return '--'
-  const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) return '--'
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num)
 }
 
 const formatDate = (value: string | null) => {
@@ -623,7 +612,7 @@ export default function LoanDetailPage() {
           <InfoRow
             icon={<DollarSign className="h-4 w-4" />}
             label="Purchase Price"
-            value={formatCurrency(loan.purchasePrice)}
+            value={formatCurrency(loan.purchasePrice, '--')}
           />
         </div>
       </div>
@@ -638,7 +627,7 @@ export default function LoanDetailPage() {
           <InfoRow
             icon={<DollarSign className="h-4 w-4" />}
             label="Loan Amount"
-            value={formatCurrency(loan.loanAmount)}
+            value={formatCurrency(loan.loanAmount, '--')}
           />
           <InfoRow
             icon={<Landmark className="h-4 w-4" />}
@@ -693,7 +682,7 @@ export default function LoanDetailPage() {
             <InfoRow
               icon={<DollarSign className="h-4 w-4" />}
               label="Commission Amount"
-              value={formatCurrency(loan.commissionAmount)}
+              value={formatCurrency(loan.commissionAmount, '--')}
             />
           </div>
         </div>

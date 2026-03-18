@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { logger } from '@/lib/logger'
+import { formatCurrency } from '@/lib/utils'
 import {
   TrendingUp,
   TrendingDown,
@@ -46,15 +47,6 @@ interface RecentLoan {
   loanAmount: string | null
   status: string | null
   loanType: string | null
-}
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value)
 }
 
 const formatCompact = (value: number) => {

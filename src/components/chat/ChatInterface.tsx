@@ -17,7 +17,7 @@ import {
   Landmark,
   Trash2,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, getTextContent } from '@/lib/utils';
 
 interface Conversation {
   id: string;
@@ -32,15 +32,6 @@ interface StoredMessage {
   createdAt: string;
 }
 
-function getTextContent(message: UIMessage): string {
-  if (message.parts) {
-    return message.parts
-      .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
-      .map((p) => p.text)
-      .join('');
-  }
-  return '';
-}
 
 interface ChatInterfaceProps {
   initialGuestHandoff?: boolean;

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { logger } from '@/lib/logger'
+import { formatCurrency } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import { FileBarChart, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -22,18 +23,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-
-function formatCurrency(value: number | string | null | undefined): string {
-  if (value === null || value === undefined) return '-'
-  const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) return '-'
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num)
-}
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Draft',
@@ -220,10 +209,10 @@ export default function StudiesPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right text-sm font-medium text-gray-900">
-                    {formatCurrency(study.totalFirstYearDeduction)}
+                    {formatCurrency(study.totalFirstYearDeduction, '-')}
                   </TableCell>
                   <TableCell className="text-right text-sm font-medium text-[#10B981]">
-                    {formatCurrency(study.totalTaxSavings)}
+                    {formatCurrency(study.totalTaxSavings, '-')}
                   </TableCell>
                   <TableCell className="text-sm text-gray-400">
                     {new Date(study.createdAt).toLocaleDateString()}

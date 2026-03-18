@@ -4,18 +4,7 @@ import { db } from '@/db'
 import { costSegStudies, properties, clients } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { logger } from '@/lib/logger'
-
-function formatCurrency(value: number | string | null | undefined): string {
-  if (value === null || value === undefined) return '$0'
-  const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) return '$0'
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num)
-}
+import { formatCurrency } from '@/lib/utils'
 
 const CATEGORY_LABELS: Record<string, string> = {
   personal_property_5yr: '5-Year Personal Property',
