@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { MapPin, DollarSign, Building2, Loader2 } from 'lucide-react'
+import { PROPERTY_PROPERTY_TYPES, propertyTypeOptions } from '@/constants/property-types'
 
 const propertyFormSchema = propertySchema.extend({
   client_id: z.string().optional().or(z.literal('')),
@@ -31,18 +32,7 @@ const propertyFormSchema = propertySchema.extend({
 
 type PropertyFormValues = z.infer<typeof propertyFormSchema>
 
-const PROPERTY_TYPES = [
-  { value: 'commercial', label: 'Commercial' },
-  { value: 'residential', label: 'Residential' },
-  { value: 'mixed_use', label: 'Mixed Use' },
-  { value: 'industrial', label: 'Industrial' },
-  { value: 'retail', label: 'Retail' },
-  { value: 'office', label: 'Office' },
-  { value: 'warehouse', label: 'Warehouse' },
-  { value: 'hotel', label: 'Hotel' },
-  { value: 'multifamily', label: 'Multifamily' },
-  { value: 'other', label: 'Other' },
-] as const
+const PROPERTY_TYPES = propertyTypeOptions(PROPERTY_PROPERTY_TYPES)
 
 interface ClientOption {
   id: string

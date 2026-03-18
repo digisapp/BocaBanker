@@ -4,6 +4,7 @@ import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { leads } from '@/db/schema';
 import { logger } from '@/lib/logger';
+import type { LeadPropertyType } from '@/constants/property-types';
 
 // Property type mapping for ATTOM API
 const ATTOM_PROPERTY_TYPE_MAP: Record<string, string> = {
@@ -154,7 +155,7 @@ interface AttomSaleRecord {
 function mapAttomPropertyType(
   propType?: string,
   propSubType?: string
-): 'industrial' | 'office' | 'retail' | 'multifamily' | 'mixed-use' | 'hospitality' | 'healthcare' | 'other' {
+): LeadPropertyType {
   const type = (propType || '').toUpperCase();
   const subType = (propSubType || '').toUpperCase();
 

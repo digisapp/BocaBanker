@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { PROPERTY_PROPERTY_TYPES } from '@/constants/property-types'
 
 export const propertySchema = z.object({
   address: z
@@ -18,19 +19,9 @@ export const propertySchema = z.object({
     .string()
     .min(1, 'ZIP code is required')
     .regex(/^\d{5}(-\d{4})?$/, 'Please enter a valid ZIP code'),
-  property_type: z.enum(
-    [
-      'commercial',
-      'residential',
-      'mixed-use',
-      'industrial',
-      'retail',
-      'hospitality',
-      'healthcare',
-      'multifamily',
-    ],
-    { message: 'Property type is required' }
-  ),
+  property_type: z.enum(PROPERTY_PROPERTY_TYPES, {
+    message: 'Property type is required',
+  }),
   purchase_price: z
     .number({ message: 'Purchase price is required' })
     .positive('Purchase price must be positive'),

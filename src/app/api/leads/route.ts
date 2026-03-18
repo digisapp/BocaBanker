@@ -1,23 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
-import { supabaseAdmin } from '@/lib/supabase/admin';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { leads } from '@/db/schema';
+import { eq, and, ilike, or, gte, lte, desc, asc, count } from 'drizzle-orm';
 import { leadSchema } from '@/lib/validation/schemas';
-
-// Map camelCase sort keys to snake_case DB columns
-const SORT_COLUMNS: Record<string, string> = {
-  propertyAddress: 'property_address',
-  buyerName: 'buyer_name',
-  salePrice: 'sale_price',
-  saleDate: 'sale_date',
-  status: 'status',
-  priority: 'priority',
-  propertyType: 'property_type',
-  createdAt: 'created_at',
-};
 
 export async function GET(request: NextRequest) {
   try {
@@ -39,103 +27,93 @@ export async function GET(request: NextRequest) {
     const order = searchParams.get('order') ?? 'desc';
 
     const offset = (page - 1) * limit;
-    const sortColumn = SORT_COLUMNS[sort] || 'created_at';
-    const ascending = order === 'asc';
 
-    // Use Supabase REST API (HTTP) instead of postgres-js to avoid serverless connection issues
-    let query = supabaseAdmin
-      .from('leads')
-      .select('*', { count: 'exact' });
+    // Build where conditions
+    const conditions = [];
 
     if (search) {
-      // Sanitize search input — escape special PostgREST/SQL chars
-      const s = search.replace(/[%_\\]/g, (c) => `\\${c}`);
-      query = query.or(
-        `property_address.ilike.%${s}%,buyer_name.ilike.%${s}%,buyer_company.ilike.%${s}%,property_city.ilike.%${s}%,property_county.ilike.%${s}%`
+      conditions.push(
+        or(
+          ilike(leads.propertyAddress, `%${search}%`),
+          ilike(leads.buyerName, `%${search}%`),
+          ilike(leads.buyerCompany, `%${search}%`),
+          ilike(leads.propertyCity, `%${search}%`),
+          ilike(leads.propertyCounty, `%${search}%`)
+        )!
       );
     }
 
     if (status && status !== 'all') {
-      query = query.eq('status', status);
+      conditions.push(eq(leads.status, status as typeof leads.status.enumValues[number]));
     }
 
     if (propertyType && propertyType !== 'all') {
-      query = query.eq('property_type', propertyType);
+      conditions.push(eq(leads.propertyType, propertyType as typeof leads.propertyType.enumValues[number]));
     }
 
     if (priority && priority !== 'all') {
-      query = query.eq('priority', priority);
+      conditions.push(eq(leads.priority, priority as typeof leads.priority.enumValues[number]));
     }
 
     if (minPrice) {
-      query = query.gte('sale_price', minPrice);
+      conditions.push(gte(leads.salePrice, minPrice));
     }
 
     if (maxPrice) {
-      query = query.lte('sale_price', maxPrice);
+      conditions.push(lte(leads.salePrice, maxPrice));
     }
 
     if (dateFrom) {
-      query = query.gte('sale_date', dateFrom);
+      conditions.push(gte(leads.saleDate, dateFrom));
     }
 
     if (dateTo) {
-      query = query.lte('sale_date', dateTo);
+      conditions.push(lte(leads.saleDate, dateTo));
     }
 
     if (member) {
-      query = query.eq('member_name', member);
+      conditions.push(eq(leads.memberName, member));
     }
 
-    query = query
-      .order(sortColumn, { ascending })
-      .range(offset, offset + limit - 1);
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    const { data: rows, count: total, error } = await query;
+    // Determine sort column
+    const getSortColumn = (key: string) => {
+      switch (key) {
+        case 'propertyAddress': return leads.propertyAddress;
+        case 'buyerName': return leads.buyerName;
+        case 'salePrice': return leads.salePrice;
+        case 'saleDate': return leads.saleDate;
+        case 'status': return leads.status;
+        case 'priority': return leads.priority;
+        case 'propertyType': return leads.propertyType;
+        default: return leads.createdAt;
+      }
+    };
 
-    if (error) {
-      logger.error('leads-api', 'Supabase query error', error);
-      return apiError('Failed to fetch leads');
-    }
+    const sortColumn = getSortColumn(sort);
+    const orderFn = order === 'asc' ? asc : desc;
 
-    // Map snake_case DB rows to camelCase for frontend
-    const leadRows = (rows || []).map((r: Record<string, unknown>) => ({
-      id: r.id,
-      userId: r.user_id,
-      propertyAddress: r.property_address,
-      propertyCity: r.property_city,
-      propertyCounty: r.property_county,
-      propertyState: r.property_state,
-      propertyZip: r.property_zip,
-      propertyType: r.property_type,
-      salePrice: r.sale_price,
-      saleDate: r.sale_date,
-      parcelId: r.parcel_id,
-      buyerName: r.buyer_name,
-      buyerCompany: r.buyer_company,
-      buyerEmail: r.buyer_email,
-      buyerPhone: r.buyer_phone,
-      sellerName: r.seller_name,
-      memberName: r.member_name,
-      memberAddress: r.member_address,
-      memberCity: r.member_city,
-      memberState: r.member_state,
-      memberZip: r.member_zip,
-      sunbizDocNumber: r.sunbiz_doc_number,
-      squareFootage: r.square_footage,
-      yearBuilt: r.year_built,
-      status: r.status,
-      priority: r.priority,
-      source: r.source,
-      notes: r.notes,
-      tags: r.tags,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
-    }));
+    // Query leads and total count
+    const [leadRows, totalResult] = await Promise.all([
+      db
+        .select()
+        .from(leads)
+        .where(whereClause)
+        .orderBy(orderFn(sortColumn))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ total: count() })
+        .from(leads)
+        .where(whereClause),
+    ]);
+
+    const total = totalResult[0]?.total ?? 0;
 
     return NextResponse.json({
       leads: leadRows,
-      total: total ?? 0,
+      total,
       page,
       limit,
     });

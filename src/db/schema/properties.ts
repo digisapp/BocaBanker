@@ -3,6 +3,7 @@ import { relations, sql } from 'drizzle-orm';
 import { users } from './users';
 import { clients } from './clients';
 import { costSegStudies } from './cost-seg-studies';
+import { PROPERTY_PROPERTY_TYPES } from '@/constants/property-types';
 
 export const properties = pgTable('properties', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -13,7 +14,7 @@ export const properties = pgTable('properties', {
   state: text('state'),
   zip: text('zip'),
   propertyType: text('property_type', {
-    enum: ['commercial', 'residential', 'mixed-use', 'industrial', 'retail', 'hospitality', 'healthcare', 'multifamily'],
+    enum: PROPERTY_PROPERTY_TYPES,
   }).notNull(),
   purchasePrice: numeric('purchase_price').notNull(),
   purchaseDate: date('purchase_date'),

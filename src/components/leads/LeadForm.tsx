@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Loader2 } from 'lucide-react'
+import { LEAD_PROPERTY_TYPES, PROPERTY_TYPE_LABELS } from '@/constants/property-types'
 
 interface LeadFormProps {
   defaultValues?: Partial<LeadInput>
@@ -178,14 +179,11 @@ export function LeadForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className="bg-white border-gray-200">
-                      <SelectItem value="industrial">Industrial</SelectItem>
-                      <SelectItem value="office">Office</SelectItem>
-                      <SelectItem value="retail">Retail</SelectItem>
-                      <SelectItem value="multifamily">Multifamily</SelectItem>
-                      <SelectItem value="mixed-use">Mixed-Use</SelectItem>
-                      <SelectItem value="hospitality">Hospitality</SelectItem>
-                      <SelectItem value="healthcare">Healthcare</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      {LEAD_PROPERTY_TYPES.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {PROPERTY_TYPE_LABELS[type]}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

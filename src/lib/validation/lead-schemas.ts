@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { LEAD_PROPERTY_TYPES } from '@/constants/property-types'
 
 export const leadSchema = z.object({
   property_address: z
@@ -9,19 +10,9 @@ export const leadSchema = z.object({
   property_county: z.string().max(100).optional().or(z.literal('')),
   property_state: z.string().max(2).optional().or(z.literal('')),
   property_zip: z.string().max(10).optional().or(z.literal('')),
-  property_type: z.enum(
-    [
-      'industrial',
-      'office',
-      'retail',
-      'multifamily',
-      'mixed-use',
-      'hospitality',
-      'healthcare',
-      'other',
-    ],
-    { message: 'Property type is required' }
-  ),
+  property_type: z.enum(LEAD_PROPERTY_TYPES, {
+    message: 'Property type is required',
+  }),
   sale_price: z.number().positive('Sale price must be positive').optional(),
   sale_date: z.string().optional().or(z.literal('')),
   parcel_id: z.string().max(50).optional().or(z.literal('')),

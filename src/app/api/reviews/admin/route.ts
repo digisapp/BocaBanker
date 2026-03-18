@@ -1,36 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { db } from '@/db';
+import { reviews } from '@/db/schema';
+import { eq, and, ilike, or, desc, count } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
-
-function mapReview(r: Record<string, unknown>) {
-  return {
-    id: r.id,
-    reviewerName: r.reviewer_name,
-    reviewerEmail: r.reviewer_email,
-    reviewerCity: r.reviewer_city,
-    reviewerState: r.reviewer_state,
-    rating: r.rating,
-    title: r.title,
-    body: r.body,
-    loanStatus: r.loan_status,
-    loanType: r.loan_type,
-    interestRateExperience: r.interest_rate_experience,
-    closedOnTime: r.closed_on_time,
-    feesExperience: r.fees_experience,
-    loanTerm: r.loan_term,
-    loanProgram: r.loan_program,
-    isFirstTimeBuyer: r.is_first_time_buyer,
-    isSelfEmployed: r.is_self_employed,
-    status: r.status,
-    responseText: r.response_text,
-    responseDate: r.response_date,
-    reviewDate: r.review_date,
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
-  };
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -44,48 +18,56 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * limit;
 
-    let query = supabaseAdmin
-      .from('reviews')
-      .select('*', { count: 'exact' });
+    // Build where conditions
+    const conditions = [];
 
     if (status && status !== 'all') {
-      query = query.eq('status', status);
+      conditions.push(eq(reviews.status, status as 'pending' | 'approved' | 'rejected'));
     }
 
     if (search) {
-      const s = search.replace(/[%_\\]/g, (c) => `\\${c}`);
-      query = query.or(
-        `reviewer_name.ilike.%${s}%,title.ilike.%${s}%,body.ilike.%${s}%`
+      conditions.push(
+        or(
+          ilike(reviews.reviewerName, `%${search}%`),
+          ilike(reviews.title, `%${search}%`),
+          ilike(reviews.body, `%${search}%`)
+        )!
       );
     }
 
-    query = query
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+    const finalWhere = conditions.length > 0 ? and(...conditions) : undefined;
 
-    const { data: rows, count: total, error } = await query;
-
-    if (error) {
-      logger.error('reviews-admin-api', 'Supabase query error', error);
-      return apiError('Failed to fetch reviews', 500);
-    }
+    // Query reviews and total count
+    const [reviewRows, totalResult] = await Promise.all([
+      db
+        .select()
+        .from(reviews)
+        .where(finalWhere)
+        .orderBy(desc(reviews.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ total: count() })
+        .from(reviews)
+        .where(finalWhere),
+    ]);
 
     // Get counts per status
-    const [pendingRes, approvedRes, rejectedRes] = await Promise.all([
-      supabaseAdmin.from('reviews').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-      supabaseAdmin.from('reviews').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
-      supabaseAdmin.from('reviews').select('id', { count: 'exact', head: true }).eq('status', 'rejected'),
+    const [pendingResult, approvedResult, rejectedResult] = await Promise.all([
+      db.select({ total: count() }).from(reviews).where(eq(reviews.status, 'pending')),
+      db.select({ total: count() }).from(reviews).where(eq(reviews.status, 'approved')),
+      db.select({ total: count() }).from(reviews).where(eq(reviews.status, 'rejected')),
     ]);
 
     return NextResponse.json({
-      reviews: (rows || []).map((r: Record<string, unknown>) => mapReview(r)),
-      total: total ?? 0,
+      reviews: reviewRows,
+      total: totalResult[0]?.total ?? 0,
       page,
       limit,
       stats: {
-        pending: pendingRes.count ?? 0,
-        approved: approvedRes.count ?? 0,
-        rejected: rejectedRes.count ?? 0,
+        pending: pendingResult[0]?.total ?? 0,
+        approved: approvedResult[0]?.total ?? 0,
+        rejected: rejectedResult[0]?.total ?? 0,
       },
     });
   } catch (error) {

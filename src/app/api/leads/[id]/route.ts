@@ -1,46 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { db } from '@/db';
+import { leads } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
-
-// Map snake_case DB row to camelCase for frontend
-function mapLead(r: Record<string, unknown>) {
-  return {
-    id: r.id,
-    userId: r.user_id,
-    propertyAddress: r.property_address,
-    propertyCity: r.property_city,
-    propertyCounty: r.property_county,
-    propertyState: r.property_state,
-    propertyZip: r.property_zip,
-    propertyType: r.property_type,
-    salePrice: r.sale_price,
-    saleDate: r.sale_date,
-    parcelId: r.parcel_id,
-    buyerName: r.buyer_name,
-    buyerCompany: r.buyer_company,
-    buyerEmail: r.buyer_email,
-    buyerPhone: r.buyer_phone,
-    sellerName: r.seller_name,
-    memberName: r.member_name,
-    memberAddress: r.member_address,
-    memberCity: r.member_city,
-    memberState: r.member_state,
-    memberZip: r.member_zip,
-    sunbizDocNumber: r.sunbiz_doc_number,
-    squareFootage: r.square_footage,
-    yearBuilt: r.year_built,
-    status: r.status,
-    priority: r.priority,
-    source: r.source,
-    notes: r.notes,
-    tags: r.tags,
-    convertedClientId: r.converted_client_id ?? null,
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
-  };
-}
 
 export async function GET(
   _request: NextRequest,
@@ -51,17 +15,16 @@ export async function GET(
 
     const { id } = await params;
 
-    const { data: lead, error } = await supabaseAdmin
-      .from('leads')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const [lead] = await db
+      .select()
+      .from(leads)
+      .where(eq(leads.id, id));
 
-    if (error || !lead) {
+    if (!lead) {
       return apiError('Lead not found', 404);
     }
 
-    return NextResponse.json(mapLead(lead));
+    return NextResponse.json(lead);
   } catch (error) {
     if (error instanceof ApiError) return error.response;
     logger.error('leads-api', 'GET /api/leads/[id] error', error);
@@ -80,11 +43,10 @@ export async function PUT(
     const body = await request.json();
 
     // Verify lead exists
-    const { data: existing } = await supabaseAdmin
-      .from('leads')
-      .select('id')
-      .eq('id', id)
-      .single();
+    const [existing] = await db
+      .select({ id: leads.id })
+      .from(leads)
+      .where(eq(leads.id, id));
 
     if (!existing) {
       return apiError('Lead not found', 404);
@@ -96,42 +58,40 @@ export async function PUT(
           : body.tags)
       : [];
 
-    const { data: updated, error } = await supabaseAdmin
-      .from('leads')
-      .update({
-        property_address: body.property_address ?? body.propertyAddress,
-        property_city: body.property_city ?? body.propertyCity ?? null,
-        property_county: body.property_county ?? body.propertyCounty ?? null,
-        property_state: body.property_state ?? body.propertyState ?? 'FL',
-        property_zip: body.property_zip ?? body.propertyZip ?? null,
-        property_type: body.property_type ?? body.propertyType,
-        sale_price: body.sale_price ?? body.salePrice ?? null,
-        sale_date: body.sale_date ?? body.saleDate ?? null,
-        parcel_id: body.parcel_id ?? body.parcelId ?? null,
-        buyer_name: body.buyer_name ?? body.buyerName ?? null,
-        buyer_company: body.buyer_company ?? body.buyerCompany ?? null,
-        buyer_email: body.buyer_email ?? body.buyerEmail ?? null,
-        buyer_phone: body.buyer_phone ?? body.buyerPhone ?? null,
-        seller_name: body.seller_name ?? body.sellerName ?? null,
-        square_footage: body.square_footage ?? body.squareFootage ?? null,
-        year_built: body.year_built ?? body.yearBuilt ?? null,
+    const [updated] = await db
+      .update(leads)
+      .set({
+        propertyAddress: body.property_address ?? body.propertyAddress,
+        propertyCity: body.property_city ?? body.propertyCity ?? null,
+        propertyCounty: body.property_county ?? body.propertyCounty ?? null,
+        propertyState: body.property_state ?? body.propertyState ?? 'FL',
+        propertyZip: body.property_zip ?? body.propertyZip ?? null,
+        propertyType: body.property_type ?? body.propertyType,
+        salePrice: body.sale_price ?? body.salePrice ?? null,
+        saleDate: body.sale_date ?? body.saleDate ?? null,
+        parcelId: body.parcel_id ?? body.parcelId ?? null,
+        buyerName: body.buyer_name ?? body.buyerName ?? null,
+        buyerCompany: body.buyer_company ?? body.buyerCompany ?? null,
+        buyerEmail: body.buyer_email ?? body.buyerEmail ?? null,
+        buyerPhone: body.buyer_phone ?? body.buyerPhone ?? null,
+        sellerName: body.seller_name ?? body.sellerName ?? null,
+        squareFootage: body.square_footage ?? body.squareFootage ?? null,
+        yearBuilt: body.year_built ?? body.yearBuilt ?? null,
         status: body.status,
         priority: body.priority,
         source: body.source ?? null,
         notes: body.notes ?? null,
         tags: tagsArray,
-        updated_at: new Date().toISOString(),
+        updatedAt: new Date(),
       })
-      .eq('id', id)
-      .select()
-      .single();
+      .where(eq(leads.id, id))
+      .returning();
 
-    if (error) {
-      logger.error('leads-api', 'Supabase update error', error);
+    if (!updated) {
       return apiError('Failed to update lead');
     }
 
-    return NextResponse.json(mapLead(updated));
+    return NextResponse.json(updated);
   } catch (error) {
     if (error instanceof ApiError) return error.response;
     logger.error('leads-api', 'PUT /api/leads/[id] error', error);
@@ -148,15 +108,9 @@ export async function DELETE(
 
     const { id } = await params;
 
-    const { error } = await supabaseAdmin
-      .from('leads')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      logger.error('leads-api', 'Supabase delete error', error);
-      return apiError('Failed to delete lead');
-    }
+    await db
+      .delete(leads)
+      .where(eq(leads.id, id));
 
     return NextResponse.json({ success: true });
   } catch (error) {

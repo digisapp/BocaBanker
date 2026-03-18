@@ -1,22 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
-import { supabaseAdmin } from '@/lib/supabase/admin';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { loans } from '@/db/schema';
+import { eq, and, ilike, or, desc, asc, count } from 'drizzle-orm';
 import { loanSchema } from '@/lib/validation/schemas';
-
-const SORT_COLUMNS: Record<string, string> = {
-  borrowerName: 'borrower_name',
-  propertyAddress: 'property_address',
-  loanAmount: 'loan_amount',
-  loanType: 'loan_type',
-  status: 'status',
-  interestRate: 'interest_rate',
-  estimatedClosingDate: 'estimated_closing_date',
-  createdAt: 'created_at',
-};
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,73 +21,68 @@ export async function GET(request: NextRequest) {
     const order = searchParams.get('order') ?? 'desc';
 
     const offset = (page - 1) * limit;
-    const sortColumn = SORT_COLUMNS[sort] || 'created_at';
-    const ascending = order === 'asc';
 
-    let query = supabaseAdmin
-      .from('loans')
-      .select('*', { count: 'exact' })
-      .eq('user_id', user.id);
+    // Build where conditions
+    const conditions = [eq(loans.userId, user.id)];
 
     if (search) {
-      const s = search.replace(/[%_\\]/g, (c) => `\\${c}`);
-      query = query.or(
-        `borrower_name.ilike.%${s}%,property_address.ilike.%${s}%,borrower_email.ilike.%${s}%,lender_name.ilike.%${s}%`
+      conditions.push(
+        or(
+          ilike(loans.borrowerName, `%${search}%`),
+          ilike(loans.propertyAddress, `%${search}%`),
+          ilike(loans.borrowerEmail, `%${search}%`),
+          ilike(loans.lenderName, `%${search}%`)
+        )!
       );
     }
 
     if (status && status !== 'all') {
-      query = query.eq('status', status);
+      conditions.push(eq(loans.status, status as typeof loans.status.enumValues[number]));
     }
 
     if (loanType && loanType !== 'all') {
-      query = query.eq('loan_type', loanType);
+      conditions.push(eq(loans.loanType, loanType as typeof loans.loanType.enumValues[number]));
     }
 
-    query = query
-      .order(sortColumn, { ascending })
-      .range(offset, offset + limit - 1);
+    const whereClause = and(...conditions);
 
-    const { data: rows, count: total, error } = await query;
+    // Determine sort column
+    const getSortColumn = (key: string) => {
+      switch (key) {
+        case 'borrowerName': return loans.borrowerName;
+        case 'propertyAddress': return loans.propertyAddress;
+        case 'loanAmount': return loans.loanAmount;
+        case 'loanType': return loans.loanType;
+        case 'status': return loans.status;
+        case 'interestRate': return loans.interestRate;
+        case 'estimatedClosingDate': return loans.estimatedClosingDate;
+        default: return loans.createdAt;
+      }
+    };
 
-    if (error) {
-      logger.error('loans-api', 'Supabase query error', error);
-      return apiError('Failed to fetch loans', 500);
-    }
+    const sortColumn = getSortColumn(sort);
+    const orderFn = order === 'asc' ? asc : desc;
 
-    const loanRows = (rows || []).map((r: Record<string, unknown>) => ({
-      id: r.id,
-      userId: r.user_id,
-      borrowerName: r.borrower_name,
-      borrowerEmail: r.borrower_email,
-      borrowerPhone: r.borrower_phone,
-      propertyAddress: r.property_address,
-      propertyCity: r.property_city,
-      propertyState: r.property_state,
-      propertyZip: r.property_zip,
-      purchasePrice: r.purchase_price,
-      loanAmount: r.loan_amount,
-      loanType: r.loan_type,
-      interestRate: r.interest_rate,
-      term: r.term,
-      status: r.status,
-      ariveLink: r.arive_link,
-      ariveLinkSentAt: r.arive_link_sent_at,
-      estimatedClosingDate: r.estimated_closing_date,
-      actualClosingDate: r.actual_closing_date,
-      commissionBps: r.commission_bps,
-      commissionAmount: r.commission_amount,
-      lenderId: r.lender_id,
-      lenderName: r.lender_name,
-      leadId: r.lead_id,
-      notes: r.notes,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
-    }));
+    // Query loans and total count
+    const [loanRows, totalResult] = await Promise.all([
+      db
+        .select()
+        .from(loans)
+        .where(whereClause)
+        .orderBy(orderFn(sortColumn))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ total: count() })
+        .from(loans)
+        .where(whereClause),
+    ]);
+
+    const total = totalResult[0]?.total ?? 0;
 
     return NextResponse.json({
       loans: loanRows,
-      total: total ?? 0,
+      total,
       page,
       limit,
     });

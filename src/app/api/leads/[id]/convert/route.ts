@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { db } from '@/db';
+import { leads, clients, properties } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
 
 // Map lead property type to client/property type
@@ -30,13 +32,12 @@ export async function POST(
     const { id } = await params;
 
     // Fetch the lead
-    const { data: lead, error: leadErr } = await supabaseAdmin
-      .from('leads')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const [lead] = await db
+      .select()
+      .from(leads)
+      .where(eq(leads.id, id));
 
-    if (leadErr || !lead) {
+    if (!lead) {
       return apiError('Lead not found', 404);
     }
 
@@ -45,7 +46,7 @@ export async function POST(
     }
 
     // Parse buyer name into first/last — prefer LLC member name if available
-    const contactName = (lead.member_name || lead.buyer_name || '').trim();
+    const contactName = (lead.memberName || lead.buyerName || '').trim();
     const nameParts = contactName.split(/\s+/);
     const firstName = nameParts[0] || 'Unknown';
     const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'Unknown';
@@ -53,76 +54,77 @@ export async function POST(
     // Build notes with LLC/member info
     const notesParts: string[] = [];
     if (lead.notes) notesParts.push(lead.notes);
-    if (lead.member_name) notesParts.push(`LLC Member: ${lead.member_name}`);
-    if (lead.sunbiz_doc_number) notesParts.push(`Sunbiz Doc#: ${lead.sunbiz_doc_number}`);
-    if (lead.seller_name) notesParts.push(`Seller: ${lead.seller_name}`);
-    if (lead.parcel_id) notesParts.push(`Parcel ID: ${lead.parcel_id}`);
-    if (lead.deed_book_page) notesParts.push(`Deed Book/Page: ${lead.deed_book_page}`);
+    if (lead.memberName) notesParts.push(`LLC Member: ${lead.memberName}`);
+    if (lead.sunbizDocNumber) notesParts.push(`Sunbiz Doc#: ${lead.sunbizDocNumber}`);
+    if (lead.sellerName) notesParts.push(`Seller: ${lead.sellerName}`);
+    if (lead.parcelId) notesParts.push(`Parcel ID: ${lead.parcelId}`);
+    if (lead.deedBookPage) notesParts.push(`Deed Book/Page: ${lead.deedBookPage}`);
     const combinedNotes = notesParts.length > 0 ? notesParts.join('\n') : null;
 
     // Create client from buyer info
-    const { data: client, error: clientErr } = await supabaseAdmin
-      .from('clients')
-      .insert({
-        user_id: user.id,
-        first_name: firstName,
-        last_name: lastName,
-        email: lead.buyer_email || null,
-        phone: lead.buyer_phone || null,
-        company: lead.buyer_company || null,
-        address: lead.member_address || lead.property_address,
-        city: lead.member_city || lead.property_city || null,
-        state: lead.member_state || lead.property_state || null,
-        zip: lead.member_zip || lead.property_zip || null,
+    const [client] = await db
+      .insert(clients)
+      .values({
+        userId: user.id,
+        firstName,
+        lastName,
+        email: lead.buyerEmail || null,
+        phone: lead.buyerPhone || null,
+        company: lead.buyerCompany || null,
+        address: lead.memberAddress || lead.propertyAddress,
+        city: lead.memberCity || lead.propertyCity || null,
+        state: lead.memberState || lead.propertyState || null,
+        zip: lead.memberZip || lead.propertyZip || null,
         status: 'active',
         source: lead.source || 'lead-conversion',
         tags: lead.tags ?? [],
         notes: combinedNotes,
       })
-      .select()
-      .single();
+      .returning();
 
-    if (clientErr || !client) {
-      logger.error('leads-api', 'Failed to create client', clientErr);
+    if (!client) {
+      logger.error('leads-api', 'Failed to create client');
       return apiError('Failed to create client');
     }
 
     // Create property from property info
-    const { data: property, error: propErr } = await supabaseAdmin
-      .from('properties')
-      .insert({
-        user_id: user.id,
-        client_id: client.id,
-        address: lead.property_address,
-        city: lead.property_city || null,
-        state: lead.property_state || null,
-        zip: lead.property_zip || null,
-        property_type: mapPropertyType(lead.property_type),
-        purchase_price: lead.sale_price ?? '0',
-        purchase_date: lead.sale_date || null,
-        building_value: lead.building_value || null,
-        land_value: lead.land_value || null,
-        square_footage: lead.square_footage || null,
-        year_built: lead.year_built || null,
-      })
-      .select()
-      .single();
+    let propertyId: string | undefined;
+    try {
+      const [property] = await db
+        .insert(properties)
+        .values({
+          userId: user.id,
+          clientId: client.id,
+          address: lead.propertyAddress,
+          city: lead.propertyCity || null,
+          state: lead.propertyState || null,
+          zip: lead.propertyZip || null,
+          propertyType: mapPropertyType(lead.propertyType) as typeof properties.propertyType.enumValues[number],
+          purchasePrice: lead.salePrice ?? '0',
+          purchaseDate: lead.saleDate || null,
+          buildingValue: lead.buildingValue || null,
+          landValue: lead.landValue || null,
+          squareFootage: lead.squareFootage || null,
+          yearBuilt: lead.yearBuilt || null,
+        })
+        .returning();
 
-    if (propErr) {
-      logger.error('leads-api', 'Failed to create property', propErr);
+      propertyId = property?.id;
+    } catch (propError) {
+      logger.error('leads-api', 'Failed to create property', propError);
     }
 
     // Update lead status to converted and link to client
-    await supabaseAdmin
-      .from('leads')
-      .update({
+    await db
+      .update(leads)
+      .set({
         status: 'converted',
-        converted_client_id: client.id,
-        updated_at: new Date().toISOString(),
+        convertedClientId: client.id,
+        updatedAt: new Date(),
       })
-      .eq('id', id);
+      .where(eq(leads.id, id));
 
-    return NextResponse.json({ clientId: client.id, propertyId: property?.id });
+    return NextResponse.json({ clientId: client.id, propertyId });
   } catch (error) {
     if (error instanceof ApiError) return error.response;
     logger.error('leads-api', 'POST /api/leads/[id]/convert error', error);

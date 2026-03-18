@@ -1,5 +1,6 @@
 import { tool } from 'ai'
 import { z } from 'zod'
+import { LEAD_PROPERTY_TYPES } from '@/constants/property-types'
 
 // ─── Mortgage Calculator Tool ───────────────────────────────────────
 
@@ -84,16 +85,7 @@ export const captureLeadSchema = z.object({
     .optional()
     .describe('State abbreviation (e.g., FL)'),
   propertyType: z
-    .enum([
-      'industrial',
-      'office',
-      'retail',
-      'multifamily',
-      'mixed-use',
-      'hospitality',
-      'healthcare',
-      'other',
-    ])
+    .enum(LEAD_PROPERTY_TYPES)
     .optional()
     .describe('Type of property'),
   salePrice: z

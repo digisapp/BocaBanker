@@ -10,6 +10,7 @@ import {
 } from 'drizzle-orm/pg-core'
 import { relations, sql } from 'drizzle-orm'
 import { users } from './users'
+import { LEAD_PROPERTY_TYPES } from '@/constants/property-types'
 
 export const leads = pgTable('leads', {
   id: uuid('id')
@@ -24,16 +25,7 @@ export const leads = pgTable('leads', {
   propertyState: text('property_state').default('FL'),
   propertyZip: text('property_zip'),
   propertyType: text('property_type', {
-    enum: [
-      'industrial',
-      'office',
-      'retail',
-      'multifamily',
-      'mixed-use',
-      'hospitality',
-      'healthcare',
-      'other',
-    ],
+    enum: LEAD_PROPERTY_TYPES,
   }).notNull(),
 
   // Transaction details

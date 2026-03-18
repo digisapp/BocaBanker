@@ -4,6 +4,7 @@ import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { leads } from '@/db/schema';
+import { LEAD_PROPERTY_TYPES, type LeadPropertyType } from '@/constants/property-types';
 
 interface ImportBody {
   leads: Record<string, string>[];
@@ -36,12 +37,8 @@ export async function POST(request: NextRequest) {
 
       // Validate property type if provided
       const rawPropertyType = (row.property_type ?? '').trim().toLowerCase();
-      const validPropertyTypes = [
-        'industrial', 'office', 'retail', 'multifamily',
-        'mixed-use', 'hospitality', 'healthcare', 'other',
-      ];
-      const propertyType = validPropertyTypes.includes(rawPropertyType)
-        ? (rawPropertyType as 'industrial' | 'office' | 'retail' | 'multifamily' | 'mixed-use' | 'hospitality' | 'healthcare' | 'other')
+      const propertyType = (LEAD_PROPERTY_TYPES as readonly string[]).includes(rawPropertyType)
+        ? (rawPropertyType as LeadPropertyType)
         : 'other';
 
       // Validate email format if provided

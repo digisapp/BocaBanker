@@ -1,36 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { db } from '@/db';
+import { leads } from '@/db/schema';
+import { eq, and, ilike, or, desc } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
 
 const CSV_COLUMNS = [
-  { key: 'property_address', label: 'Property Address' },
-  { key: 'property_city', label: 'City' },
-  { key: 'property_county', label: 'County' },
-  { key: 'property_state', label: 'State' },
-  { key: 'property_zip', label: 'Zip' },
-  { key: 'property_type', label: 'Property Type' },
-  { key: 'sale_price', label: 'Sale Price' },
-  { key: 'sale_date', label: 'Sale Date' },
-  { key: 'buyer_name', label: 'Buyer Name' },
-  { key: 'buyer_company', label: 'Buyer Company' },
-  { key: 'buyer_email', label: 'Email' },
-  { key: 'buyer_phone', label: 'Phone' },
-  { key: 'seller_name', label: 'Seller Name' },
-  { key: 'member_name', label: 'LLC Member' },
-  { key: 'member_address', label: 'Member Address' },
-  { key: 'member_city', label: 'Member City' },
-  { key: 'member_state', label: 'Member State' },
-  { key: 'member_zip', label: 'Member Zip' },
-  { key: 'square_footage', label: 'Sq Ft' },
-  { key: 'year_built', label: 'Year Built' },
+  { key: 'propertyAddress', label: 'Property Address' },
+  { key: 'propertyCity', label: 'City' },
+  { key: 'propertyCounty', label: 'County' },
+  { key: 'propertyState', label: 'State' },
+  { key: 'propertyZip', label: 'Zip' },
+  { key: 'propertyType', label: 'Property Type' },
+  { key: 'salePrice', label: 'Sale Price' },
+  { key: 'saleDate', label: 'Sale Date' },
+  { key: 'buyerName', label: 'Buyer Name' },
+  { key: 'buyerCompany', label: 'Buyer Company' },
+  { key: 'buyerEmail', label: 'Email' },
+  { key: 'buyerPhone', label: 'Phone' },
+  { key: 'sellerName', label: 'Seller Name' },
+  { key: 'memberName', label: 'LLC Member' },
+  { key: 'memberAddress', label: 'Member Address' },
+  { key: 'memberCity', label: 'Member City' },
+  { key: 'memberState', label: 'Member State' },
+  { key: 'memberZip', label: 'Member Zip' },
+  { key: 'squareFootage', label: 'Sq Ft' },
+  { key: 'yearBuilt', label: 'Year Built' },
   { key: 'status', label: 'Status' },
   { key: 'priority', label: 'Priority' },
   { key: 'source', label: 'Source' },
   { key: 'notes', label: 'Notes' },
   { key: 'tags', label: 'Tags' },
-  { key: 'created_at', label: 'Created' },
+  { key: 'createdAt', label: 'Created' },
 ];
 
 function escapeCsvField(value: unknown): string {
@@ -53,46 +55,48 @@ export async function GET(request: NextRequest) {
     const priority = searchParams.get('priority') ?? '';
     const member = searchParams.get('member') ?? '';
 
-    // Build query — fetch all matching rows (no pagination)
-    const selectColumns = CSV_COLUMNS.map((c) => c.key).join(',');
-    let query = supabaseAdmin.from('leads').select(selectColumns);
+    // Build where conditions
+    const conditions = [];
 
     if (search) {
-      const s = search.replace(/[%_\\]/g, (c) => `\\${c}`);
-      query = query.or(
-        `property_address.ilike.%${s}%,buyer_name.ilike.%${s}%,buyer_company.ilike.%${s}%,property_city.ilike.%${s}%,property_county.ilike.%${s}%`
+      conditions.push(
+        or(
+          ilike(leads.propertyAddress, `%${search}%`),
+          ilike(leads.buyerName, `%${search}%`),
+          ilike(leads.buyerCompany, `%${search}%`),
+          ilike(leads.propertyCity, `%${search}%`),
+          ilike(leads.propertyCounty, `%${search}%`)
+        )!
       );
     }
 
     if (status && status !== 'all') {
-      query = query.eq('status', status);
+      conditions.push(eq(leads.status, status as typeof leads.status.enumValues[number]));
     }
 
     if (propertyType && propertyType !== 'all') {
-      query = query.eq('property_type', propertyType);
+      conditions.push(eq(leads.propertyType, propertyType as typeof leads.propertyType.enumValues[number]));
     }
 
     if (priority && priority !== 'all') {
-      query = query.eq('priority', priority);
+      conditions.push(eq(leads.priority, priority as typeof leads.priority.enumValues[number]));
     }
 
     if (member) {
-      query = query.eq('member_name', member);
+      conditions.push(eq(leads.memberName, member));
     }
 
-    query = query.order('created_at', { ascending: false });
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    const { data: rows, error } = await query;
-
-    if (error) {
-      logger.error('leads-export', 'Supabase query error', error);
-      return apiError('Failed to export leads');
-    }
+    const rows = await db
+      .select()
+      .from(leads)
+      .where(whereClause)
+      .orderBy(desc(leads.createdAt));
 
     // Build CSV
     const header = CSV_COLUMNS.map((c) => c.label).join(',');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const lines = ((rows || []) as any[]).map((row: Record<string, unknown>) =>
+    const lines = rows.map((row: Record<string, unknown>) =>
       CSV_COLUMNS.map((c) => escapeCsvField(row[c.key])).join(',')
     );
     const csv = [header, ...lines].join('\n');

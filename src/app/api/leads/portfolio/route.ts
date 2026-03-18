@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { db } from '@/db';
+import { leads } from '@/db/schema';
+import { isNotNull } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
 
 interface PortfolioMember {
@@ -31,57 +33,66 @@ export async function GET() {
     await requireAuth();
 
     // Fetch all leads that have a member_name
-    const { data: rows, error } = await supabaseAdmin
-      .from('leads')
-      .select('id, member_name, member_address, member_city, member_state, member_zip, property_address, property_city, sale_price, sale_date, buyer_name, property_type, status')
-      .not('member_name', 'is', null);
-
-    if (error) {
-      logger.error('portfolio-api', 'Supabase query error', error);
-      return apiError('Failed to fetch portfolio data');
-    }
+    const rows = await db
+      .select({
+        id: leads.id,
+        memberName: leads.memberName,
+        memberAddress: leads.memberAddress,
+        memberCity: leads.memberCity,
+        memberState: leads.memberState,
+        memberZip: leads.memberZip,
+        propertyAddress: leads.propertyAddress,
+        propertyCity: leads.propertyCity,
+        salePrice: leads.salePrice,
+        saleDate: leads.saleDate,
+        buyerName: leads.buyerName,
+        propertyType: leads.propertyType,
+        status: leads.status,
+      })
+      .from(leads)
+      .where(isNotNull(leads.memberName));
 
     // Group by member_name
     const memberMap = new Map<string, PortfolioMember>();
 
-    for (const r of rows || []) {
-      const name = r.member_name as string;
+    for (const r of rows) {
+      const name = r.memberName as string;
       const existing = memberMap.get(name);
 
       const property = {
-        id: r.id as string,
-        propertyAddress: r.property_address as string | null,
-        propertyCity: r.property_city as string | null,
-        salePrice: r.sale_price as string | null,
-        saleDate: r.sale_date as string | null,
-        buyerName: r.buyer_name as string | null,
-        propertyType: r.property_type as string | null,
-        status: r.status as string | null,
+        id: r.id,
+        propertyAddress: r.propertyAddress,
+        propertyCity: r.propertyCity,
+        salePrice: r.salePrice,
+        saleDate: r.saleDate,
+        buyerName: r.buyerName,
+        propertyType: r.propertyType,
+        status: r.status,
       };
 
-      const price = r.sale_price ? parseFloat(r.sale_price as string) : 0;
+      const price = r.salePrice ? parseFloat(r.salePrice) : 0;
 
       if (existing) {
         existing.propertyCount++;
         existing.totalValue += isNaN(price) ? 0 : price;
         existing.properties.push(property);
-        if (r.sale_date && (!existing.latestPurchase || r.sale_date > existing.latestPurchase)) {
-          existing.latestPurchase = r.sale_date as string;
+        if (r.saleDate && (!existing.latestPurchase || r.saleDate > existing.latestPurchase)) {
+          existing.latestPurchase = r.saleDate;
         }
-        if (r.property_city && !existing.cities.includes(r.property_city as string)) {
-          existing.cities.push(r.property_city as string);
+        if (r.propertyCity && !existing.cities.includes(r.propertyCity)) {
+          existing.cities.push(r.propertyCity);
         }
       } else {
         memberMap.set(name, {
           memberName: name,
-          memberAddress: r.member_address as string | null,
-          memberCity: r.member_city as string | null,
-          memberState: r.member_state as string | null,
-          memberZip: r.member_zip as string | null,
+          memberAddress: r.memberAddress,
+          memberCity: r.memberCity,
+          memberState: r.memberState,
+          memberZip: r.memberZip,
           propertyCount: 1,
           totalValue: isNaN(price) ? 0 : price,
-          latestPurchase: r.sale_date as string | null,
-          cities: r.property_city ? [r.property_city as string] : [],
+          latestPurchase: r.saleDate,
+          cities: r.propertyCity ? [r.propertyCity] : [],
           properties: [property],
         });
       }

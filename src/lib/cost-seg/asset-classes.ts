@@ -5,6 +5,8 @@
  * along with typical reclassification percentages by property type.
  */
 
+import type { CostSegPropertyType } from '@/constants/property-types'
+
 export interface AssetClass {
   category: string;
   recoveryPeriod: number;
@@ -60,7 +62,7 @@ export const ASSET_CLASSES: AssetClass[] = [
  * Values are percentages of total property value allocated to each asset class.
  * These represent industry averages from engineering-based cost segregation studies.
  */
-export const TYPICAL_RECLASSIFICATION: Record<string, Record<string, number>> = {
+export const TYPICAL_RECLASSIFICATION: Record<CostSegPropertyType, Record<string, number>> = {
   commercial: {
     personal_property_5yr: 8,
     personal_property_7yr: 7,
@@ -140,7 +142,7 @@ export function getDefaultAllocation(
   propertyType: string,
   totalValue: number
 ): AllocationBreakdown[] {
-  const normalizedType = propertyType.toLowerCase();
+  const normalizedType = propertyType.toLowerCase() as CostSegPropertyType;
   const percentages = TYPICAL_RECLASSIFICATION[normalizedType];
 
   if (!percentages) {

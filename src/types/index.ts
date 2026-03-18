@@ -2,6 +2,8 @@
  * Shared TypeScript types for Boca Banker
  */
 
+import type { PropertyPropertyType, LeadPropertyType } from '@/constants/property-types'
+
 // ---------------------------------------------------------------------------
 // Database entity types
 // ---------------------------------------------------------------------------
@@ -34,15 +36,7 @@ export interface Property {
   city: string | null;
   state: string | null;
   zip: string | null;
-  propertyType:
-    | 'commercial'
-    | 'residential'
-    | 'mixed-use'
-    | 'industrial'
-    | 'retail'
-    | 'hospitality'
-    | 'healthcare'
-    | 'multifamily';
+  propertyType: PropertyPropertyType;
   purchasePrice: string;
   purchaseDate: string | null;
   buildingValue: string | null;
@@ -140,15 +134,7 @@ export interface Lead {
   propertyCounty: string | null;
   propertyState: string | null;
   propertyZip: string | null;
-  propertyType:
-    | 'industrial'
-    | 'office'
-    | 'retail'
-    | 'multifamily'
-    | 'mixed-use'
-    | 'hospitality'
-    | 'healthcare'
-    | 'other';
+  propertyType: LeadPropertyType;
   salePrice: string | null;
   saleDate: string | null;
   parcelId: string | null;

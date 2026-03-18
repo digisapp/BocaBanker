@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { db } from '@/db';
+import { loans, userSettings, users } from '@/db/schema';
+import { eq, and } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
 import { sendEmail } from '@/lib/email/resend';
 import { ariveLinkTemplate } from '@/lib/email/templates';
@@ -16,54 +18,53 @@ export async function POST(
     const { id } = await params;
 
     // Fetch the loan
-    const { data: loan, error: loanError } = await supabaseAdmin
-      .from('loans')
-      .select('*')
-      .eq('id', id)
-      .eq('user_id', user.id)
-      .single();
+    const [loan] = await db
+      .select()
+      .from(loans)
+      .where(and(eq(loans.id, id), eq(loans.userId, user.id)));
 
-    if (loanError || !loan) {
+    if (!loan) {
       return apiError('Loan not found', 404);
     }
 
-    if (!loan.borrower_email) {
+    if (!loan.borrowerEmail) {
       return apiError('Borrower has no email address', 400);
     }
 
     // Get user settings for Arive link
-    const { data: settings } = await supabaseAdmin
-      .from('user_settings')
-      .select('arive_link, arive_company_name')
-      .eq('user_id', user.id)
-      .single();
+    const [settings] = await db
+      .select({
+        ariveLink: userSettings.ariveLink,
+        ariveCompanyName: userSettings.ariveCompanyName,
+      })
+      .from(userSettings)
+      .where(eq(userSettings.userId, user.id));
 
-    const ariveLink = loan.arive_link || settings?.arive_link;
+    const ariveLink = loan.ariveLink || settings?.ariveLink;
 
     if (!ariveLink) {
       return apiError('No Arive link configured. Set it in Settings or on the loan.', 400);
     }
 
     // Get user's name for the email
-    const { data: userData } = await supabaseAdmin
-      .from('users')
-      .select('full_name')
-      .eq('id', user.id)
-      .single();
+    const [userData] = await db
+      .select({ fullName: users.fullName })
+      .from(users)
+      .where(eq(users.id, user.id));
 
-    const senderName = userData?.full_name || 'Your Mortgage Broker';
-    const companyName = settings?.arive_company_name || 'Boca Banker';
+    const senderName = userData?.fullName || 'Your Mortgage Broker';
+    const companyName = settings?.ariveCompanyName || 'Boca Banker';
 
     const html = ariveLinkTemplate({
-      borrowerName: loan.borrower_name,
+      borrowerName: loan.borrowerName,
       senderName,
       companyName,
       ariveLink,
-      propertyAddress: loan.property_address,
+      propertyAddress: loan.propertyAddress,
     });
 
     const result = await sendEmail({
-      to: loan.borrower_email,
+      to: loan.borrowerEmail,
       subject: `Start Your Mortgage Application - ${companyName}`,
       html,
       userId: user.id,
@@ -75,14 +76,14 @@ export async function POST(
     }
 
     // Update loan with Arive link sent timestamp
-    await supabaseAdmin
-      .from('loans')
-      .update({
-        arive_link: ariveLink,
-        arive_link_sent_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+    await db
+      .update(loans)
+      .set({
+        ariveLink,
+        ariveLinkSentAt: new Date(),
+        updatedAt: new Date(),
       })
-      .eq('id', id);
+      .where(eq(loans.id, id));
 
     return NextResponse.json({ success: true, resendId: result.resendId });
   } catch (error) {
