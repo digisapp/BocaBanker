@@ -6,6 +6,7 @@ const serverSchema = z.object({
   XAI_API_KEY: z.string().min(1, 'XAI_API_KEY is required'),
   RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY is required'),
   RESEND_FROM_EMAIL: z.string().email('RESEND_FROM_EMAIL must be a valid email'),
+  RESEND_WEBHOOK_SECRET: z.string().optional(),
   GUEST_CHAT_SECRET: z.string().min(16, 'GUEST_CHAT_SECRET must be at least 16 characters'),
   NEXT_PUBLIC_SUPABASE_URL: z.url('NEXT_PUBLIC_SUPABASE_URL must be a valid URL'),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1, 'NEXT_PUBLIC_SUPABASE_ANON_KEY is required'),

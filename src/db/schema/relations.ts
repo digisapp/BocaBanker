@@ -8,6 +8,8 @@ import { chatConversations } from './chat-conversations';
 import { chatMessages } from './chat-messages';
 import { documents } from './documents';
 import { emailLogs } from './email-logs';
+import { receivedEmails } from './received-emails';
+import { emails } from './emails';
 import { leads } from './leads';
 import { loans } from './loans';
 import { userSettings } from './user-settings';
@@ -120,4 +122,30 @@ export const loansRelations = relations(loans, ({ one }) => ({
 
 export const userSettingsRelations = relations(userSettings, ({ one }) => ({
   user: one(users, { fields: [userSettings.userId], references: [users.id] }),
+}));
+
+export const receivedEmailsRelations = relations(receivedEmails, ({ one }) => ({
+  user: one(users, {
+    fields: [receivedEmails.userId],
+    references: [users.id],
+  }),
+  client: one(clients, {
+    fields: [receivedEmails.clientId],
+    references: [clients.id],
+  }),
+}));
+
+export const emailsRelations = relations(emails, ({ one }) => ({
+  user: one(users, {
+    fields: [emails.userId],
+    references: [users.id],
+  }),
+  client: one(clients, {
+    fields: [emails.clientId],
+    references: [clients.id],
+  }),
+  inReplyTo: one(emails, {
+    fields: [emails.inReplyToId],
+    references: [emails.id],
+  }),
 }));

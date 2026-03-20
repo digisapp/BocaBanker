@@ -36,6 +36,20 @@
       "when": 1773182251283,
       "tag": "0004_fantastic_darwin",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1773981098934,
+      "tag": "0005_add-received-emails",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1773981630737,
+      "tag": "0006_add-unified-emails",
+      "breakpoints": true
     }
   ]
 }

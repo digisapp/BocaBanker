@@ -126,6 +126,42 @@ export interface EmailLog {
   sentAt: string;
 }
 
+export interface ReceivedEmail {
+  id: string;
+  userId: string | null;
+  clientId: string | null;
+  fromEmail: string;
+  fromName: string | null;
+  toEmail: string;
+  subject: string;
+  bodyHtml: string | null;
+  bodyText: string | null;
+  resendId: string | null;
+  inReplyToResendId: string | null;
+  isRead: boolean;
+  receivedAt: string;
+}
+
+export interface Email {
+  id: string;
+  userId: string | null;
+  clientId: string | null;
+  direction: 'inbound' | 'outbound';
+  fromEmail: string;
+  fromName: string | null;
+  toEmail: string;
+  subject: string;
+  bodyHtml: string | null;
+  bodyText: string | null;
+  template: string | null;
+  status: 'sent' | 'delivered' | 'bounced' | 'failed' | 'received' | 'read' | 'replied';
+  resendId: string | null;
+  threadId: string | null;
+  inReplyToId: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
 export interface Lead {
   id: string;
   userId: string;
