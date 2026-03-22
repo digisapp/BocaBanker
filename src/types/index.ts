@@ -150,6 +150,10 @@ export interface Email {
   fromEmail: string;
   fromName: string | null;
   toEmail: string;
+  toName: string | null;
+  replyTo: string | null;
+  cc: string | null;
+  bcc: string | null;
   subject: string;
   bodyHtml: string | null;
   bodyText: string | null;
@@ -158,8 +162,18 @@ export interface Email {
   resendId: string | null;
   threadId: string | null;
   inReplyToId: string | null;
+  sentBy: string | null;
   isRead: boolean;
+  metadata: Record<string, unknown> | null;
   createdAt: string;
+  readAt: string | null;
+  repliedAt: string | null;
+  aiDraftHtml: string | null;
+  aiDraftText: string | null;
+  aiCategory: string | null;
+  aiConfidence: number | null;
+  aiProcessedAt: string | null;
+  aiSummary: string | null;
 }
 
 export interface Lead {

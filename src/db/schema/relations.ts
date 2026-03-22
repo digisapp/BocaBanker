@@ -139,13 +139,20 @@ export const emailsRelations = relations(emails, ({ one }) => ({
   user: one(users, {
     fields: [emails.userId],
     references: [users.id],
+    relationName: 'emailOwner',
   }),
   client: one(clients, {
     fields: [emails.clientId],
     references: [clients.id],
   }),
+  sentByUser: one(users, {
+    fields: [emails.sentBy],
+    references: [users.id],
+    relationName: 'emailSender',
+  }),
   inReplyTo: one(emails, {
     fields: [emails.inReplyToId],
     references: [emails.id],
+    relationName: 'emailReplyTo',
   }),
 }));

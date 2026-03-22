@@ -4,12 +4,42 @@ import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { emails, clients } from '@/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, or } from 'drizzle-orm';
+
+const emailSelectFields = {
+  id: emails.id,
+  direction: emails.direction,
+  fromEmail: emails.fromEmail,
+  fromName: emails.fromName,
+  toEmail: emails.toEmail,
+  subject: emails.subject,
+  bodyHtml: emails.bodyHtml,
+  bodyText: emails.bodyText,
+  status: emails.status,
+  isRead: emails.isRead,
+  resendId: emails.resendId,
+  threadId: emails.threadId,
+  inReplyToId: emails.inReplyToId,
+  template: emails.template,
+  createdAt: emails.createdAt,
+  readAt: emails.readAt,
+  repliedAt: emails.repliedAt,
+  clientId: emails.clientId,
+  clientFirstName: clients.firstName,
+  clientLastName: clients.lastName,
+  clientEmail: clients.email,
+  aiDraftHtml: emails.aiDraftHtml,
+  aiDraftText: emails.aiDraftText,
+  aiCategory: emails.aiCategory,
+  aiConfidence: emails.aiConfidence,
+  aiSummary: emails.aiSummary,
+  aiProcessedAt: emails.aiProcessedAt,
+};
 
 /**
  * GET /api/email/inbox/[id]
  *
- * Fetch a single email with its full thread, mark as read.
+ * Fetch a single email with thread and AI data. Marks as read.
  */
 export async function GET(
   _request: NextRequest,
@@ -20,26 +50,7 @@ export async function GET(
     const { id } = await params;
 
     const [email] = await db
-      .select({
-        id: emails.id,
-        direction: emails.direction,
-        fromEmail: emails.fromEmail,
-        fromName: emails.fromName,
-        toEmail: emails.toEmail,
-        subject: emails.subject,
-        bodyHtml: emails.bodyHtml,
-        bodyText: emails.bodyText,
-        status: emails.status,
-        isRead: emails.isRead,
-        resendId: emails.resendId,
-        threadId: emails.threadId,
-        inReplyToId: emails.inReplyToId,
-        createdAt: emails.createdAt,
-        clientId: emails.clientId,
-        clientFirstName: clients.firstName,
-        clientLastName: clients.lastName,
-        clientEmail: clients.email,
-      })
+      .select(emailSelectFields)
       .from(emails)
       .leftJoin(clients, eq(emails.clientId, clients.id))
       .where(and(eq(emails.id, id), eq(emails.userId, user.id)))
@@ -53,44 +64,29 @@ export async function GET(
     if (!email.isRead) {
       await db
         .update(emails)
-        .set({ isRead: true, status: email.status === 'received' ? 'read' : email.status })
+        .set({
+          isRead: true,
+          status: email.status === 'received' ? 'read' : email.status,
+          readAt: new Date(),
+        })
         .where(eq(emails.id, id));
     }
 
-    // Fetch thread (all emails in the same thread)
-    let thread: typeof email[] = [];
+    // Fetch thread
     const threadId = email.threadId || id;
-
     const threadEmails = await db
-      .select({
-        id: emails.id,
-        direction: emails.direction,
-        fromEmail: emails.fromEmail,
-        fromName: emails.fromName,
-        toEmail: emails.toEmail,
-        subject: emails.subject,
-        bodyHtml: emails.bodyHtml,
-        bodyText: emails.bodyText,
-        status: emails.status,
-        isRead: emails.isRead,
-        resendId: emails.resendId,
-        threadId: emails.threadId,
-        inReplyToId: emails.inReplyToId,
-        createdAt: emails.createdAt,
-        clientId: emails.clientId,
-        clientFirstName: clients.firstName,
-        clientLastName: clients.lastName,
-        clientEmail: clients.email,
-      })
+      .select(emailSelectFields)
       .from(emails)
       .leftJoin(clients, eq(emails.clientId, clients.id))
       .where(and(
         eq(emails.userId, user.id),
-        eq(emails.threadId, threadId),
+        or(eq(emails.id, threadId), eq(emails.threadId, threadId)),
       ))
       .orderBy(desc(emails.createdAt));
 
-    thread = threadEmails.length > 0 ? threadEmails : [{ ...email, isRead: true }];
+    const thread = threadEmails.length > 0
+      ? threadEmails
+      : [{ ...email, isRead: true }];
 
     return NextResponse.json({
       ...email,
@@ -100,13 +96,15 @@ export async function GET(
     });
   } catch (error) {
     if (error instanceof ApiError) return error.response;
-    logger.error('email-api', 'Inbox email fetch error', error);
+    logger.error('email-api', 'Email fetch error', error);
     return apiError('Internal server error');
   }
 }
 
 /**
  * DELETE /api/email/inbox/[id]
+ *
+ * Delete single email with thread reference cleanup.
  */
 export async function DELETE(
   _request: NextRequest,
@@ -116,6 +114,10 @@ export async function DELETE(
     const user = await requireAdmin();
     const { id } = await params;
 
+    // Clear thread references
+    await db.update(emails).set({ threadId: null }).where(eq(emails.threadId, id));
+    await db.update(emails).set({ inReplyToId: null }).where(eq(emails.inReplyToId, id));
+
     await db
       .delete(emails)
       .where(and(eq(emails.id, id), eq(emails.userId, user.id)));
@@ -123,7 +125,7 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     if (error instanceof ApiError) return error.response;
-    logger.error('email-api', 'Inbox email delete error', error);
+    logger.error('email-api', 'Email delete error', error);
     return apiError('Internal server error');
   }
 }

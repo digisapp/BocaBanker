@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Webhook } from 'svix';
 import { db } from '@/db';
 import { emails, emailLogs, clients } from '@/db/schema';
 import { logger } from '@/lib/logger';
 import { eq, ilike, or, and, desc } from 'drizzle-orm';
-import crypto from 'crypto';
+import {
+  classifyAndDraftReply,
+  storeClassification,
+  sendAutoReply,
+} from '@/lib/ai/ai-email';
+import { getResend } from '@/lib/email/resend';
 
 // ── Spam filtering ─────────────────────────────────────────────────
 
@@ -16,87 +22,50 @@ const SPAM_KEYWORDS = [
 ];
 
 const SPAM_SENDER_PATTERNS = [
-  /noreply@/i,
-  /no-reply@/i,
-  /mailer-daemon@/i,
-  /postmaster@/i,
-  /bounce@/i,
-  /notifications?@/i,
-  /newsletter@/i,
-  /marketing@/i,
+  /noreply@/i, /no-reply@/i, /mailer-daemon@/i, /postmaster@/i,
+  /bounce@/i, /notifications?@/i, /newsletter@/i, /marketing@/i,
   /promo(tions?)?@/i,
 ];
 
 function isSpam(fromEmail: string, subject: string, bodyText: string | null): boolean {
-  // Check sender patterns
-  if (SPAM_SENDER_PATTERNS.some((pattern) => pattern.test(fromEmail))) {
-    return true;
-  }
-
-  // Check subject + body for spam keywords
+  if (SPAM_SENDER_PATTERNS.some((p) => p.test(fromEmail))) return true;
   const content = `${subject} ${bodyText || ''}`.toLowerCase();
-  const spamHits = SPAM_KEYWORDS.filter((kw) => content.includes(kw));
-  if (spamHits.length >= 2) {
-    return true;
-  }
-
-  return false;
+  const hits = SPAM_KEYWORDS.filter((kw) => content.includes(kw));
+  return hits.length >= 2;
 }
 
-// ── Subject normalization for thread matching ──────────────────────
+// ── Subject normalization ──────────────────────────────────────────
 
 function normalizeSubject(subject: string): string {
-  // Strip Re:, Fwd:, FW:, RE: prefixes (possibly repeated)
   return subject.replace(/^(re|fwd|fw):\s*/gi, '').trim().toLowerCase();
-}
-
-// ── Webhook signature verification ─────────────────────────────────
-
-function verifyWebhookSignature(
-  payload: string,
-  signature: string | null,
-  secret: string
-): boolean {
-  if (!signature) return false;
-
-  const parts = signature.split(',');
-  const timestampPart = parts.find((p) => p.startsWith('t='));
-  const signaturePart = parts.find((p) => p.startsWith('v1='));
-
-  if (!timestampPart || !signaturePart) return false;
-
-  const timestamp = timestampPart.slice(2);
-  const expectedSig = signaturePart.slice(3);
-
-  const signedContent = `${timestamp}.${payload}`;
-  const computedSig = crypto
-    .createHmac('sha256', secret)
-    .update(signedContent)
-    .digest('hex');
-
-  return crypto.timingSafeEqual(
-    Buffer.from(computedSig),
-    Buffer.from(expectedSig)
-  );
 }
 
 // ── Webhook handler ────────────────────────────────────────────────
 
-/**
- * POST /api/email/webhook
- *
- * Resend webhook — handles inbound emails and delivery status updates.
- * Public endpoint verified via webhook signature.
- */
 export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.text();
     const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
 
+    // Verify Svix signature
     if (webhookSecret) {
-      const signature = request.headers.get('svix-signature');
-      if (!verifyWebhookSignature(rawBody, signature, webhookSecret)) {
-        logger.error('email-webhook', 'Invalid webhook signature');
+      const svixId = request.headers.get('svix-id');
+      const svixTimestamp = request.headers.get('svix-timestamp');
+      const svixSignature = request.headers.get('svix-signature');
+
+      if (!svixId || !svixTimestamp || !svixSignature) {
+        return NextResponse.json({ error: 'Missing Svix headers' }, { status: 401 });
+      }
+
+      try {
+        const wh = new Webhook(webhookSecret);
+        wh.verify(rawBody, {
+          'svix-id': svixId,
+          'svix-timestamp': svixTimestamp,
+          'svix-signature': svixSignature,
+        });
+      } catch {
+        logger.error('email-webhook', 'Svix signature verification failed');
         return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
       }
     }
@@ -110,10 +79,11 @@ export async function POST(request: NextRequest) {
         from: fromRaw,
         to: toEmails,
         subject,
-        html,
-        text: bodyText,
-        email_id: resendId,
+        html: webhookHtml,
+        text: webhookText,
+        email_id: resendEmailId,
         headers,
+        cc,
       } = data;
 
       // Parse "Name <email>" format
@@ -128,15 +98,32 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // ── Spam filtering ────────────────────────────────────────────
-      if (isSpam(parsedFromEmail, subject || '', bodyText || null)) {
-        logger.info('email-webhook', `Spam filtered: ${parsedFromEmail} — "${subject}"`);
+      // Fetch full email body from Resend API (webhook only sends metadata)
+      let fullHtml = webhookHtml || null;
+      let fullText = webhookText || null;
+
+      if (resendEmailId) {
+        try {
+          const resend = getResend();
+          const fullEmail = await resend.emails.get(resendEmailId);
+          if (fullEmail.data) {
+            fullHtml = (fullEmail.data as unknown as Record<string, unknown>).html as string || fullHtml;
+            fullText = (fullEmail.data as unknown as Record<string, unknown>).text as string || fullText;
+          }
+        } catch (fetchErr) {
+          logger.error('email-webhook', 'Failed to fetch full email body', fetchErr);
+        }
+      }
+
+      // Spam filter
+      if (isSpam(parsedFromEmail, subject || '', fullText)) {
+        logger.info('email-webhook', `Spam filtered: ${parsedFromEmail}`);
         return NextResponse.json({ success: true, filtered: 'spam' });
       }
 
       const toAddress = Array.isArray(toEmails) ? toEmails[0] : toEmails;
 
-      // Try to match sender to an existing client
+      // Match sender to existing client
       const matchedClients = await db
         .select({ id: clients.id, userId: clients.userId })
         .from(clients)
@@ -144,15 +131,14 @@ export async function POST(request: NextRequest) {
         .limit(1);
       const matchedClient = matchedClients[0] || null;
 
-      // ── Thread detection ──────────────────────────────────────────
-      // Priority: 1) In-Reply-To/References headers → 2) Subject match → 3) Sender match
+      // ── Thread detection (3 tiers) ────────────────────────────────
       let threadId: string | null = null;
       let inReplyToId: string | null = null;
 
       const inReplyToHeader = headers?.['in-reply-to'] || headers?.['In-Reply-To'] || null;
       const referencesHeader = headers?.['references'] || headers?.['References'] || null;
 
-      // Strategy 1: In-Reply-To / References headers
+      // Tier 1: In-Reply-To / References headers
       if (inReplyToHeader || referencesHeader) {
         const headerIds = [inReplyToHeader, referencesHeader]
           .filter(Boolean)
@@ -161,41 +147,31 @@ export async function POST(request: NextRequest) {
           ?.map((id) => id.slice(1, -1)) || [];
 
         if (headerIds.length > 0) {
-          const originalEmails = await db
+          const originals = await db
             .select({ id: emails.id, threadId: emails.threadId })
             .from(emails)
-            .where(
-              or(...headerIds.map((hid) => eq(emails.resendId, hid)))
-            )
+            .where(or(...headerIds.map((hid) => eq(emails.resendId, hid))))
             .limit(1);
 
-          if (originalEmails[0]) {
-            inReplyToId = originalEmails[0].id;
-            threadId = originalEmails[0].threadId || originalEmails[0].id;
+          if (originals[0]) {
+            inReplyToId = originals[0].id;
+            threadId = originals[0].threadId || originals[0].id;
           }
         }
       }
 
-      // Strategy 2: Subject-based fallback (strip Re:/Fwd: and match)
+      // Tier 2: Subject match
       if (!threadId && subject) {
         const normalized = normalizeSubject(subject);
         if (normalized.length > 0) {
-          // Find outbound email with matching normalized subject sent to this sender
-          const subjectMatches = await db
+          const candidates = await db
             .select({ id: emails.id, threadId: emails.threadId, subject: emails.subject })
             .from(emails)
-            .where(
-              and(
-                eq(emails.direction, 'outbound'),
-                eq(emails.toEmail, parsedFromEmail),
-              )
-            )
+            .where(and(eq(emails.direction, 'outbound'), eq(emails.toEmail, parsedFromEmail)))
             .orderBy(desc(emails.createdAt))
             .limit(10);
 
-          const match = subjectMatches.find(
-            (e) => normalizeSubject(e.subject) === normalized
-          );
+          const match = candidates.find((e) => normalizeSubject(e.subject) === normalized);
           if (match) {
             inReplyToId = match.id;
             threadId = match.threadId || match.id;
@@ -203,52 +179,82 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Strategy 3: Sender email match (most recent outbound to them)
+      // Tier 3: Sender match
       if (!threadId && parsedFromEmail) {
-        const recentOutbound = await db
+        const [recent] = await db
           .select({ id: emails.id, threadId: emails.threadId })
           .from(emails)
-          .where(
-            and(
-              eq(emails.direction, 'outbound'),
-              eq(emails.toEmail, parsedFromEmail),
-            )
-          )
+          .where(and(eq(emails.direction, 'outbound'), eq(emails.toEmail, parsedFromEmail)))
           .orderBy(desc(emails.createdAt))
           .limit(1);
 
-        if (recentOutbound[0]) {
-          inReplyToId = recentOutbound[0].id;
-          threadId = recentOutbound[0].threadId || recentOutbound[0].id;
+        if (recent) {
+          inReplyToId = recent.id;
+          threadId = recent.threadId || recent.id;
         }
       }
 
-      // Update original email status to 'replied'
+      // Update original email status
       if (inReplyToId) {
         await db
           .update(emails)
-          .set({ status: 'replied' })
+          .set({ status: 'replied', repliedAt: new Date() })
           .where(eq(emails.id, inReplyToId));
       }
 
-      await db.insert(emails).values({
+      // Insert inbound email
+      const [inserted] = await db.insert(emails).values({
         userId: matchedClient?.userId || null,
         clientId: matchedClient?.id || null,
         direction: 'inbound',
         fromEmail: parsedFromEmail,
         fromName: parsedFromName,
         toEmail: toAddress,
+        cc: cc || null,
         subject: subject || '(no subject)',
-        bodyHtml: html || null,
-        bodyText: bodyText || null,
+        bodyHtml: fullHtml,
+        bodyText: fullText,
         status: 'received',
-        resendId: resendId || null,
+        resendId: resendEmailId || null,
         threadId,
         inReplyToId,
         isRead: false,
-      });
+      }).returning({ id: emails.id });
 
-      logger.info('email-webhook', `Inbound email from ${parsedFromEmail}, thread: ${threadId || 'new'}`);
+      logger.info('email-webhook', `Inbound from ${parsedFromEmail}, thread: ${threadId || 'new'}`);
+
+      // ── Async AI classification (non-blocking) ────────────────────
+      if (inserted?.id) {
+        classifyAndDraftReply(
+          parsedFromEmail,
+          parsedFromName,
+          subject || '(no subject)',
+          fullText,
+          fullHtml,
+        )
+          .then(async (classification) => {
+            await storeClassification(inserted.id, classification);
+            logger.info('ai-email', `Classified ${inserted.id}: ${classification.category} (${classification.confidence})`);
+
+            // Auto-reply if conditions met
+            if (classification.autoSendable) {
+              await sendAutoReply(inserted.id, {
+                fromEmail: parsedFromEmail,
+                fromName: parsedFromName,
+                subject: subject || '(no subject)',
+                bodyHtml: fullHtml,
+                bodyText: fullText,
+                userId: matchedClient?.userId || null,
+                clientId: matchedClient?.id || null,
+                threadId,
+              }, classification);
+            }
+          })
+          .catch((err) => {
+            logger.error('ai-email', 'AI classification failed', err);
+          });
+      }
+
       return NextResponse.json({ success: true });
     }
 
@@ -258,24 +264,17 @@ export async function POST(request: NextRequest) {
       if (resendId) {
         const newStatus = type === 'email.delivered' ? 'delivered' : 'bounced';
 
-        await db
-          .update(emails)
-          .set({ status: newStatus })
-          .where(eq(emails.resendId, resendId));
+        await db.update(emails).set({ status: newStatus }).where(eq(emails.resendId, resendId));
+        await db.update(emailLogs).set({ status: newStatus }).where(eq(emailLogs.resendId, resendId));
 
-        await db
-          .update(emailLogs)
-          .set({ status: newStatus })
-          .where(eq(emailLogs.resendId, resendId));
-
-        logger.info('email-webhook', `Email ${resendId} status: ${newStatus}`);
+        logger.info('email-webhook', `Email ${resendId}: ${newStatus}`);
       }
       return NextResponse.json({ success: true });
     }
 
     return NextResponse.json({ success: true, ignored: true });
   } catch (error) {
-    logger.error('email-webhook', 'Webhook processing error', error);
+    logger.error('email-webhook', 'Webhook error', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

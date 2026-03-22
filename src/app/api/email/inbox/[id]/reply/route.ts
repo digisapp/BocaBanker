@@ -10,7 +10,8 @@ import { eq, and } from 'drizzle-orm';
 /**
  * POST /api/email/inbox/[id]/reply
  *
- * Reply to an email. Includes threading and quoted original.
+ * Reply to an email with quoted original and optional attachments.
+ * Body: { html, subject?, attachments?: [{ content, filename, contentType? }] }
  */
 export async function POST(
   request: NextRequest,
@@ -26,7 +27,6 @@ export async function POST(
       return apiError('Reply body (html) is required', 400);
     }
 
-    // Fetch the original email
     const [originalEmail] = await db
       .select()
       .from(emails)
@@ -44,7 +44,7 @@ export async function POST(
         ? originalEmail.subject
         : `Re: ${originalEmail.subject}`);
 
-    // Build reply HTML with quoted original
+    // Build reply with quoted original
     const quotedOriginal = originalEmail.bodyHtml || originalEmail.bodyText || '';
     const fullHtml = `
       ${html}
@@ -63,10 +63,9 @@ export async function POST(
       </div>
     `.trim();
 
-    // Determine thread ID
     const threadId = originalEmail.threadId || originalEmail.id;
 
-    // Send reply via Resend
+    // Send via Resend with attachments if provided
     const result = await sendEmail({
       to: originalEmail.fromEmail,
       subject: replySubject,
@@ -82,10 +81,10 @@ export async function POST(
       return apiError(result.error || 'Failed to send reply', 500);
     }
 
-    // Update original email status to 'replied'
+    // Update original email status
     await db
       .update(emails)
-      .set({ status: 'replied' })
+      .set({ status: 'replied', repliedAt: new Date() })
       .where(eq(emails.id, id));
 
     return NextResponse.json({ success: true, resendId: result.resendId });

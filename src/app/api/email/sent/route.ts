@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
     const user = await requireAdmin();
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '30');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '30') || 30));
     const statusFilter = searchParams.get('status');
     const search = searchParams.get('search')?.trim();
 

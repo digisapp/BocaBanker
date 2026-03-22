@@ -14,4 +14,5 @@ export * from './loans';
 export * from './user-settings';
 export * from './mortgage-rates';
 export * from './reviews';
+export * from './platform-settings';
 export * from './relations';
