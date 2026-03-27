@@ -129,7 +129,7 @@ function ReviewCard({ review }: { review: Review }) {
 
       {review.responseText && (
         <div className="mt-4 bg-amber-50 rounded-xl p-4 border border-amber-100">
-          <p className="text-xs font-semibold text-amber-700 mb-1">Response from Carmen</p>
+          <p className="text-xs font-semibold text-amber-700 mb-1">Response from Boca Banker</p>
           <p className="text-sm text-amber-900/80 leading-relaxed">{review.responseText}</p>
         </div>
       )}
@@ -464,7 +464,7 @@ export default function ReviewsPage() {
                           body: e.target.value,
                         }))
                       }
-                      placeholder="Tell others about your experience working with Carmen..."
+                      placeholder="Tell others about your experience working with Boca Banker..."
                       rows={5}
                     />
                   </div>

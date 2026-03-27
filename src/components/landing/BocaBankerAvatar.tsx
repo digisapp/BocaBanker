@@ -29,8 +29,8 @@ export default function BocaBankerAvatar({ className, size = 200 }: AvatarProps)
         }}
       >
         <Image
-          src="/carmen-profile.png"
-          alt="Charles Carmen Mayell - Boca Banker"
+          src="/boca-banker-profile.png"
+          alt="Boca Banker"
           width={size}
           height={size}
           className="rounded-full object-cover w-full h-full"

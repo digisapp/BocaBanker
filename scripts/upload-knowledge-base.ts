@@ -1,7 +1,7 @@
 #!/usr/bin/env npx tsx
 /**
  * Upload knowledge base documents to the xAI collection for RAG retrieval.
- * Each document covers a specific topic that Carmen (Boca Banker) needs
+ * Each document covers a specific topic that Boca Banker needs
  * to give accurate, personalized answers beyond the system prompt.
  *
  * Usage: npx tsx scripts/upload-knowledge-base.ts
@@ -31,7 +31,7 @@ const documents: KBDocument[] = [
     title: 'Boca Banker Company Profile',
     content: `# Boca Banker — Company Profile
 
-Boca Banker is South Florida's trusted mortgage and real estate finance platform, headquartered in Boca Raton, Florida. The platform is powered by the expertise of Charles Carmen Mayell, a veteran banker with over 40 years of experience in commercial banking, real estate finance, mortgage lending, refinancing, cost segregation analysis, and tax strategy.
+Boca Banker is South Florida's trusted mortgage and real estate finance platform, headquartered in Boca Raton, Florida. The platform is powered by the expertise of Boca Banker, a veteran banker with over 40 years of experience in commercial banking, real estate finance, mortgage lending, refinancing, cost segregation analysis, and tax strategy.
 
 ## Key Statistics
 - Over $2 billion in loans closed throughout career
@@ -57,7 +57,7 @@ Boca Banker is South Florida's trusted mortgage and real estate finance platform
 - For personalized service, schedule a consultation through the platform
 
 ## What Makes Boca Banker Different
-Carmen takes a relationship-first approach. He's not just closing loans — he's helping clients make smart long-term financial decisions. His deep local market knowledge of South Florida, combined with 40 years of experience across every market cycle, means clients get advice rooted in real-world experience, not just algorithms.`,
+Boca Banker takes a relationship-first approach. He's not just closing loans — he's helping clients make smart long-term financial decisions. His deep local market knowledge of South Florida, combined with 40 years of experience across every market cycle, means clients get advice rooted in real-world experience, not just algorithms.`,
     metadata: { category: 'company', topic: 'profile' },
   },
 
@@ -488,7 +488,7 @@ Boca Banker also serves as a tool for loan officers and mortgage brokers:
 ## Getting Started
 1. **Free chat**: Available immediately at bocabanker.com — no account needed
 2. **Create account**: Sign up for full platform access including chat history and CRM tools
-3. **Schedule consultation**: Request a one-on-one with Carmen for complex scenarios
+3. **Schedule consultation**: Request a one-on-one with Boca Banker for complex scenarios
 4. **Apply for a loan**: When ready, submit your application through the Arive platform link`,
     metadata: { category: 'platform', topic: 'features' },
   },
@@ -543,7 +543,7 @@ Boca Banker also serves as a tool for loan officers and mortgage brokers:
 5. Credit pulls within a 14–45 day window count as a single inquiry for scoring purposes
 
 ## Important Note
-Boca Banker provides live rate information through web search when asked. For the most current rates, simply ask "What are today's mortgage rates?" in the chat. Carmen will search for the latest data and provide context based on your specific situation.`,
+Boca Banker provides live rate information through web search when asked. For the most current rates, simply ask "What are today's mortgage rates?" in the chat. Boca Banker will search for the latest data and provide context based on your specific situation.`,
     metadata: { category: 'mortgages', topic: 'rates-guidance' },
   },
 
@@ -612,7 +612,7 @@ Florida significantly strengthened condo regulations after the Champlain Towers 
 
   {
     title: 'Client Reviews and Testimonials Summary',
-    content: `# Client Reviews & Testimonials — Boca Banker / Carmen Mayell
+    content: `# Client Reviews & Testimonials — Boca Banker
 
 ## Overview
 - **Total verified reviews**: 61+
@@ -622,22 +622,22 @@ Florida significantly strengthened condo regulations after the Champlain Towers 
 ## Common Themes in Client Reviews
 
 ### Exceptional Communication
-Clients consistently praise Carmen's responsiveness and communication style. He explains complex financial concepts in clear, understandable terms and keeps clients informed throughout the entire process. Multiple reviewers note that he responds quickly to calls and emails, even outside normal business hours.
+Clients consistently praise Boca Banker's responsiveness and communication style. He explains complex financial concepts in clear, understandable terms and keeps clients informed throughout the entire process. Multiple reviewers note that he responds quickly to calls and emails, even outside normal business hours.
 
 ### Deep Market Knowledge
-Reviewers highlight Carmen's unmatched knowledge of the South Florida market. His 40+ years of experience in Boca Raton gives him insights that newer loan officers simply cannot match — from understanding neighborhood-specific property values to knowing which lenders offer the best terms for specific property types.
+Reviewers highlight Boca Banker's unmatched knowledge of the South Florida market. His 40+ years of experience in Boca Raton gives him insights that newer loan officers simply cannot match — from understanding neighborhood-specific property values to knowing which lenders offer the best terms for specific property types.
 
 ### Personal Touch
-A recurring theme is that Carmen treats every client like family, not a transaction. He takes the time to understand each client's unique financial situation and goals, then crafts a customized strategy. Clients appreciate that he's genuinely invested in their long-term financial well-being, not just closing a deal.
+A recurring theme is that Boca Banker treats every client like family, not a transaction. He takes the time to understand each client's unique financial situation and goals, then crafts a customized strategy. Clients appreciate that he's genuinely invested in their long-term financial well-being, not just closing a deal.
 
 ### Problem-Solving Ability
-Several reviews mention Carmen's ability to get deals done when others couldn't. His extensive network of lenders and industry contacts, combined with creative problem-solving, means he can find solutions for complex situations — self-employed borrowers, unique property types, tight timelines, and challenging credit profiles.
+Several reviews mention Boca Banker's ability to get deals done when others couldn't. His extensive network of lenders and industry contacts, combined with creative problem-solving, means he can find solutions for complex situations — self-employed borrowers, unique property types, tight timelines, and challenging credit profiles.
 
 ### Competitive Rates
-Clients frequently note that Carmen secured rates that were lower than what competitors offered. His relationships with multiple lenders allow him to shop for the best available terms, and his reputation in the industry often results in preferential pricing.
+Clients frequently note that Boca Banker secured rates that were lower than what competitors offered. His relationships with multiple lenders allow him to shop for the best available terms, and his reputation in the industry often results in preferential pricing.
 
 ## Types of Clients Served
-Based on review data, Carmen serves a diverse client base:
+Based on review data, Boca Banker serves a diverse client base:
 - First-time homebuyers
 - Experienced real estate investors
 - Self-employed business owners
@@ -660,7 +660,7 @@ Based on review data, Carmen serves a diverse client base:
 
 ## Client Satisfaction Indicators
 - Many reviewers are repeat clients or referrals from previous clients
-- Multiple reviews mention Carmen helping through difficult or stressful financial situations
+- Multiple reviews mention Boca Banker helping through difficult or stressful financial situations
 - Several clients note they've referred friends and family members
 - Consistent praise across all property types and loan programs
 - Reviews span many years, showing sustained quality of service`,

@@ -477,11 +477,11 @@ export default function Home() {
             {[
               {
                 q: 'What mortgage options are available in South Florida?',
-                a: 'South Florida offers a wide range of lending options including conventional loans, FHA/VA, jumbo loans for high-value properties, DSCR loans for investors, and commercial financing. Carmen specializes in finding the right fit for each client \u2014 whether you\u2019re a first-time buyer, seasoned investor, or looking to refinance.',
+                a: 'South Florida offers a wide range of lending options including conventional loans, FHA/VA, jumbo loans for high-value properties, DSCR loans for investors, and commercial financing. Boca Banker specializes in finding the right fit for each client \u2014 whether you\u2019re a first-time buyer, seasoned investor, or looking to refinance.',
               },
               {
-                q: 'What makes Carmen different from other loan officers?',
-                a: 'With 40+ years of banking experience in South Florida and a perfect 5-star rating from 61+ client reviews, Carmen combines deep local market knowledge with a genuinely personal approach. He\u2019s not just closing loans \u2014 he\u2019s building long-term relationships and helping clients make smart financial decisions for their future.',
+                q: 'What makes Boca Banker different from other loan officers?',
+                a: 'With 40+ years of banking experience in South Florida and a perfect 5-star rating from 61+ client reviews, Boca Banker combines deep local market knowledge with a genuinely personal approach. He\u2019s not just closing loans \u2014 he\u2019s building long-term relationships and helping clients make smart financial decisions for their future.',
               },
               {
                 q: 'How does Boca Banker work?',
