@@ -46,7 +46,7 @@ function escapeCsvField(value: unknown): string {
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAuth();
+    const user = await requireAuth();
 
     const searchParams = request.nextUrl.searchParams;
     const search = searchParams.get('search') ?? '';
@@ -55,8 +55,8 @@ export async function GET(request: NextRequest) {
     const priority = searchParams.get('priority') ?? '';
     const member = searchParams.get('member') ?? '';
 
-    // Build where conditions
-    const conditions = [];
+    // Build where conditions — always scope to the authenticated user
+    const conditions = [eq(leads.userId, user.id)];
 
     if (search) {
       conditions.push(

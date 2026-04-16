@@ -1,3 +1,5 @@
+import * as Sentry from '@sentry/nextjs';
+
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
 const LOG_LEVELS: Record<LogLevel, number> = {
@@ -50,5 +52,15 @@ export const logger = {
         : error
       console.error(formatMessage('error', context, message, errorData))
     }
+    // Forward to Sentry (no-ops when DSN is not configured)
+    Sentry.withScope((scope) => {
+      scope.setTag('context', context);
+      scope.setExtra('message', message);
+      if (error instanceof Error) {
+        Sentry.captureException(error);
+      } else if (error !== undefined) {
+        Sentry.captureMessage(`${context}: ${message}`, 'error');
+      }
+    });
   },
 }

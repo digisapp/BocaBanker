@@ -9,7 +9,7 @@ import { leadSchema } from '@/lib/validation/schemas';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAuth();
+    const user = await requireAuth();
 
     const searchParams = request.nextUrl.searchParams;
     const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
@@ -28,8 +28,8 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * limit;
 
-    // Build where conditions
-    const conditions = [];
+    // Build where conditions — always scope to the authenticated user
+    const conditions = [eq(leads.userId, user.id)];
 
     if (search) {
       conditions.push(

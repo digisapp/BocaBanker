@@ -6,6 +6,7 @@ import {
   Upload,
   FileText,
   Download,
+  Trash2,
   Loader2,
   CloudUpload,
   File,
@@ -23,6 +24,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import EmptyState from '@/components/shared/EmptyState';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
+import { toast } from 'sonner';
 
 interface DocumentEntry {
   id: string;
@@ -32,6 +34,8 @@ interface DocumentEntry {
   storagePath: string;
   createdAt: string;
   clientId: string | null;
+  studyId: string | null;
+  clientName: string | null;
 }
 
 function formatFileSize(bytes: number | null): string {
@@ -41,12 +45,30 @@ function formatFileSize(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function fileTypeLabel(mime: string | null): string {
+  if (!mime) return '--';
+  const map: Record<string, string> = {
+    'application/pdf': 'PDF',
+    'application/msword': 'Word',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word',
+    'application/vnd.ms-excel': 'Excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'Excel',
+    'image/jpeg': 'Image',
+    'image/png': 'Image',
+    'image/webp': 'Image',
+    'text/csv': 'CSV',
+    'text/plain': 'Text',
+  };
+  return map[mime] ?? mime.split('/')[1]?.toUpperCase() ?? '--';
+}
+
 export default function DocumentsPage() {
   const { user } = useAuth();
   const supabase = createClient();
-  const [documents, setDocuments] = useState<DocumentEntry[]>([]);
+  const [docs, setDocs] = useState<DocumentEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
   const fetchDocuments = useCallback(async () => {
@@ -56,7 +78,7 @@ export default function DocumentsPage() {
       const res = await fetch('/api/documents');
       if (res.ok) {
         const data = await res.json();
-        setDocuments(data.documents || []);
+        setDocs(data.documents || []);
       }
     } catch (err) {
       logger.error('documents-page', 'Failed to fetch documents', err);
@@ -73,6 +95,7 @@ export default function DocumentsPage() {
     if (!files || files.length === 0 || !user) return;
 
     setUploading(true);
+    let successCount = 0;
 
     for (const file of Array.from(files)) {
       const filePath = `${user.id}/${Date.now()}-${file.name}`;
@@ -84,11 +107,11 @@ export default function DocumentsPage() {
 
         if (uploadError) {
           logger.error('documents-page', 'Upload error', uploadError);
+          toast.error(`Failed to upload ${file.name}`);
           continue;
         }
 
-        // Save document record via API
-        await fetch('/api/documents', {
+        const res = await fetch('/api/documents', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -98,13 +121,24 @@ export default function DocumentsPage() {
             storagePath: filePath,
           }),
         });
+
+        if (res.ok) {
+          successCount++;
+        } else {
+          logger.error('documents-page', 'Failed to save document record');
+        }
       } catch (err) {
         logger.error('documents-page', 'Upload failed', err);
+        toast.error(`Failed to upload ${file.name}`);
       }
     }
 
     setUploading(false);
-    fetchDocuments();
+
+    if (successCount > 0) {
+      toast.success(`${successCount} file${successCount > 1 ? 's' : ''} uploaded`);
+      fetchDocuments();
+    }
   }
 
   async function handleDownload(doc: DocumentEntry) {
@@ -115,10 +149,10 @@ export default function DocumentsPage() {
 
       if (error) {
         logger.error('documents-page', 'Download error', error);
+        toast.error('Failed to download file');
         return;
       }
 
-      // Create a download link
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
@@ -129,32 +163,34 @@ export default function DocumentsPage() {
       URL.revokeObjectURL(url);
     } catch (err) {
       logger.error('documents-page', 'Download failed', err);
+      toast.error('Failed to download file');
     }
   }
 
-  function handleDragOver(e: React.DragEvent) {
-    e.preventDefault();
-    setDragOver(true);
-  }
+  async function handleDelete(doc: DocumentEntry) {
+    if (!confirm(`Delete "${doc.fileName}"? This cannot be undone.`)) return;
 
-  function handleDragLeave(e: React.DragEvent) {
-    e.preventDefault();
-    setDragOver(false);
-  }
-
-  function handleDrop(e: React.DragEvent) {
-    e.preventDefault();
-    setDragOver(false);
-    handleUpload(e.dataTransfer.files);
+    setDeletingId(doc.id);
+    try {
+      const res = await fetch(`/api/documents/${doc.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Document deleted');
+        setDocs((prev) => prev.filter((d) => d.id !== doc.id));
+      } else {
+        toast.error('Failed to delete document');
+      }
+    } catch (err) {
+      logger.error('documents-page', 'Delete failed', err);
+      toast.error('Failed to delete document');
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-serif font-bold text-amber-600">
-          Documents
-        </h1>
+        <h1 className="text-2xl font-serif font-bold text-amber-600">Documents</h1>
         <p className="text-gray-500 mt-1">
           Upload and manage documents for your clients and studies
         </p>
@@ -162,13 +198,11 @@ export default function DocumentsPage() {
 
       {/* Upload Zone */}
       <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+        onDrop={(e) => { e.preventDefault(); setDragOver(false); handleUpload(e.dataTransfer.files); }}
         className={`bg-white rounded-2xl border-2 border-dashed transition-all duration-200 ${
-          dragOver
-            ? 'border-amber-500 bg-amber-50/50'
-            : 'border-gray-200'
+          dragOver ? 'border-amber-500 bg-amber-50/50' : 'border-gray-200'
         }`}
       >
         <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
@@ -180,11 +214,9 @@ export default function DocumentsPage() {
           ) : (
             <>
               <CloudUpload className="h-10 w-10 text-amber-500 mb-3" />
-              <p className="text-gray-900 font-medium mb-1">
-                Drag and drop files here
-              </p>
+              <p className="text-gray-900 font-medium mb-1">Drag and drop files here</p>
               <p className="text-sm text-gray-400 mb-4">
-                or click to browse
+                PDF, Word, Excel, CSV, or images up to 50 MB
               </p>
               <label>
                 <Button
@@ -199,6 +231,7 @@ export default function DocumentsPage() {
                 <input
                   type="file"
                   multiple
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp"
                   className="hidden"
                   onChange={(e) => handleUpload(e.target.files)}
                 />
@@ -211,7 +244,7 @@ export default function DocumentsPage() {
       {/* Documents Table */}
       {loading ? (
         <LoadingSpinner text="Loading documents..." />
-      ) : documents.length === 0 ? (
+      ) : docs.length === 0 ? (
         <EmptyState
           icon={FileText}
           title="No Documents Yet"
@@ -225,31 +258,30 @@ export default function DocumentsPage() {
                 <TableHead className="text-amber-600">Name</TableHead>
                 <TableHead className="text-amber-600">Type</TableHead>
                 <TableHead className="text-amber-600">Size</TableHead>
+                <TableHead className="text-amber-600">Client</TableHead>
                 <TableHead className="text-amber-600">Date</TableHead>
-                <TableHead className="text-amber-600 text-right">
-                  Actions
-                </TableHead>
+                <TableHead className="text-amber-600 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {documents.map((doc) => (
-                <TableRow
-                  key={doc.id}
-                  className="border-gray-100 hover:bg-amber-50/50"
-                >
+              {docs.map((doc) => (
+                <TableRow key={doc.id} className="border-gray-100 hover:bg-amber-50/50">
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <File className="h-4 w-4 text-amber-600 flex-shrink-0" />
-                      <span className="text-gray-900 text-sm truncate max-w-[200px]">
+                      <span className="text-gray-900 text-sm truncate max-w-[220px]">
                         {doc.fileName}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell className="text-gray-500 text-sm">
-                    {doc.fileType || '--'}
+                    {fileTypeLabel(doc.fileType)}
                   </TableCell>
                   <TableCell className="text-gray-500 text-sm">
                     {formatFileSize(doc.fileSize)}
+                  </TableCell>
+                  <TableCell className="text-gray-500 text-sm">
+                    {doc.clientName ?? <span className="text-gray-300">—</span>}
                   </TableCell>
                   <TableCell className="text-gray-500 text-sm whitespace-nowrap">
                     {new Date(doc.createdAt).toLocaleDateString('en-US', {
@@ -259,14 +291,31 @@ export default function DocumentsPage() {
                     })}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDownload(doc)}
-                      className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDownload(doc)}
+                        className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                        title="Download"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(doc)}
+                        disabled={deletingId === doc.id}
+                        className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                        title="Delete"
+                      >
+                        {deletingId === doc.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

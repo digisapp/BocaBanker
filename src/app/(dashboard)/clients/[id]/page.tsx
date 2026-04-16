@@ -16,11 +16,13 @@ import {
   StickyNote,
   Home,
   Loader2,
+  Paperclip,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { RoleGate } from '@/components/shared/RoleGate'
+import DocumentPanel from '@/components/shared/DocumentPanel'
 
 interface ClientDetail {
   id: string
@@ -297,6 +299,15 @@ export default function ClientDetailPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Documents */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
+          <Paperclip className="h-4 w-4" />
+          Documents
+        </h2>
+        <DocumentPanel clientId={params.id} />
       </div>
 
       {/* Metadata */}

@@ -208,6 +208,25 @@ function brandedTemplate(bodyHtml: string, quotedOriginal?: string): string {
 </html>`.trim();
 }
 
+// ── Platform settings cache (TTL: 60 s) ───────────────────────────
+
+let _autoReplyCache: { enabled: boolean; expiresAt: number } | null = null;
+
+async function isAutoReplyEnabled(): Promise<boolean> {
+  const now = Date.now();
+  if (_autoReplyCache && now < _autoReplyCache.expiresAt) {
+    return _autoReplyCache.enabled;
+  }
+  const [setting] = await db
+    .select({ value: platformSettings.value })
+    .from(platformSettings)
+    .where(eq(platformSettings.key, 'ai_auto_reply_enabled'))
+    .limit(1);
+  const enabled = setting?.value === true;
+  _autoReplyCache = { enabled, expiresAt: now + 60_000 };
+  return enabled;
+}
+
 // ── Auto-reply ─────────────────────────────────────────────────────
 
 export async function sendAutoReply(
@@ -224,14 +243,8 @@ export async function sendAutoReply(
   },
   classification: EmailClassification,
 ): Promise<boolean> {
-  // Check if auto-reply is enabled
-  const [setting] = await db
-    .select({ value: platformSettings.value })
-    .from(platformSettings)
-    .where(eq(platformSettings.key, 'ai_auto_reply_enabled'))
-    .limit(1);
-
-  if (!setting || setting.value !== true) {
+  // Check if auto-reply is enabled (cached for 60 s)
+  if (!(await isAutoReplyEnabled())) {
     logger.info('ai-email', 'Auto-reply disabled, skipping');
     return false;
   }

@@ -3,7 +3,7 @@ import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { leads } from '@/db/schema';
-import { isNotNull } from 'drizzle-orm';
+import { isNotNull, eq, and } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
 
 interface PortfolioMember {
@@ -30,9 +30,9 @@ interface PortfolioMember {
 
 export async function GET() {
   try {
-    await requireAuth();
+    const user = await requireAuth();
 
-    // Fetch all leads that have a member_name
+    // Fetch leads for the authenticated user that have a member_name
     const rows = await db
       .select({
         id: leads.id,
@@ -50,7 +50,7 @@ export async function GET() {
         status: leads.status,
       })
       .from(leads)
-      .where(isNotNull(leads.memberName));
+      .where(and(eq(leads.userId, user.id), isNotNull(leads.memberName)));
 
     // Group by member_name
     const memberMap = new Map<string, PortfolioMember>();

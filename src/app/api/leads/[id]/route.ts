@@ -3,7 +3,7 @@ import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { leads } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
 
 export async function GET(
@@ -11,14 +11,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAuth();
+    const user = await requireAuth();
 
     const { id } = await params;
 
     const [lead] = await db
       .select()
       .from(leads)
-      .where(eq(leads.id, id));
+      .where(and(eq(leads.id, id), eq(leads.userId, user.id)));
 
     if (!lead) {
       return apiError('Lead not found', 404);
@@ -37,16 +37,16 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAuth();
+    const user = await requireAuth();
 
     const { id } = await params;
     const body = await request.json();
 
-    // Verify lead exists
+    // Verify lead exists and belongs to the authenticated user
     const [existing] = await db
       .select({ id: leads.id })
       .from(leads)
-      .where(eq(leads.id, id));
+      .where(and(eq(leads.id, id), eq(leads.userId, user.id)));
 
     if (!existing) {
       return apiError('Lead not found', 404);
@@ -104,13 +104,13 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAuth();
+    const user = await requireAuth();
 
     const { id } = await params;
 
     await db
       .delete(leads)
-      .where(eq(leads.id, id));
+      .where(and(eq(leads.id, id), eq(leads.userId, user.id)));
 
     return NextResponse.json({ success: true });
   } catch (error) {

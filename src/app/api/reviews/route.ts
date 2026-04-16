@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limit: 5 reviews per hour per IP
     const ip = getClientIp(request);
-    const rl = rateLimit(`reviews:${ip}`, { maxRequests: 5, windowMs: 3_600_000 });
+    const rl = await rateLimit(`reviews:${ip}`, { maxRequests: 5, windowMs: 3_600_000 });
     if (!rl.success) {
       return NextResponse.json(
         { error: 'Too many submissions. Please try again later.' },

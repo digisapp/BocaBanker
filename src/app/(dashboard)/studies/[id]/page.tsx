@@ -12,6 +12,7 @@ import {
   Printer,
   Trash2,
   Loader2,
+  Paperclip,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -29,6 +30,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import StudyResults from '@/components/studies/StudyResults'
 import { RoleGate } from '@/components/shared/RoleGate'
+import DocumentPanel from '@/components/shared/DocumentPanel'
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Draft',
@@ -344,6 +346,15 @@ export default function StudyDetailPage() {
       {hasResults && (
         <StudyResults results={study.results as StudyResults['results']} />
       )}
+
+      {/* Documents */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
+          <Paperclip className="h-4 w-4" />
+          Documents
+        </h2>
+        <DocumentPanel studyId={id} />
+      </div>
     </div>
   )
 }

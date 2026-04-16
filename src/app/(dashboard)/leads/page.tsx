@@ -423,6 +423,16 @@ export default function LeadsPage() {
             Export CSV
           </Button>
           <RoleGate permission="canCreate">
+            <Button
+              variant="outline"
+              onClick={() => router.push('/dashboard/leads/scrape')}
+              className="border-gray-200 text-gray-700 hover:bg-gray-50"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Import Data
+            </Button>
+          </RoleGate>
+          <RoleGate permission="canCreate">
             <LeadImportModal
               open={importOpen}
               onOpenChange={setImportOpen}

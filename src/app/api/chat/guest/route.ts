@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   try {
     // Rate limit: 20 requests per minute per IP
     const ip = getClientIp(request)
-    const rateLimitResult = rateLimit(`guest-chat:${ip}`, {
+    const rateLimitResult = await rateLimit(`guest-chat:${ip}`, {
       maxRequests: 20,
       windowMs: 60_000,
     })

@@ -47,27 +47,30 @@ export async function POST(request: NextRequest) {
     const rawBody = await request.text();
     const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
 
-    // Verify Svix signature
-    if (webhookSecret) {
-      const svixId = request.headers.get('svix-id');
-      const svixTimestamp = request.headers.get('svix-timestamp');
-      const svixSignature = request.headers.get('svix-signature');
+    // Verify Svix signature — mandatory; set RESEND_WEBHOOK_SECRET in your environment
+    if (!webhookSecret) {
+      logger.error('email-webhook', 'RESEND_WEBHOOK_SECRET is not configured');
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+    }
 
-      if (!svixId || !svixTimestamp || !svixSignature) {
-        return NextResponse.json({ error: 'Missing Svix headers' }, { status: 401 });
-      }
+    const svixId = request.headers.get('svix-id');
+    const svixTimestamp = request.headers.get('svix-timestamp');
+    const svixSignature = request.headers.get('svix-signature');
 
-      try {
-        const wh = new Webhook(webhookSecret);
-        wh.verify(rawBody, {
-          'svix-id': svixId,
-          'svix-timestamp': svixTimestamp,
-          'svix-signature': svixSignature,
-        });
-      } catch {
-        logger.error('email-webhook', 'Svix signature verification failed');
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-      }
+    if (!svixId || !svixTimestamp || !svixSignature) {
+      return NextResponse.json({ error: 'Missing Svix headers' }, { status: 401 });
+    }
+
+    try {
+      const wh = new Webhook(webhookSecret);
+      wh.verify(rawBody, {
+        'svix-id': svixId,
+        'svix-timestamp': svixTimestamp,
+        'svix-signature': svixSignature,
+      });
+    } catch {
+      logger.error('email-webhook', 'Svix signature verification failed');
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
     const body = JSON.parse(rawBody);
@@ -223,36 +226,47 @@ export async function POST(request: NextRequest) {
 
       logger.info('email-webhook', `Inbound from ${parsedFromEmail}, thread: ${threadId || 'new'}`);
 
-      // ── Async AI classification (non-blocking) ────────────────────
+      // ── Async AI classification (non-blocking, up to 3 retries) ─────
       if (inserted?.id) {
-        classifyAndDraftReply(
-          parsedFromEmail,
-          parsedFromName,
-          subject || '(no subject)',
-          fullText,
-          fullHtml,
-        )
-          .then(async (classification) => {
-            await storeClassification(inserted.id, classification);
-            logger.info('ai-email', `Classified ${inserted.id}: ${classification.category} (${classification.confidence})`);
+        const emailId = inserted.id;
+        (async () => {
+          const MAX_ATTEMPTS = 3;
+          for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+            try {
+              const classification = await classifyAndDraftReply(
+                parsedFromEmail,
+                parsedFromName,
+                subject || '(no subject)',
+                fullText,
+                fullHtml,
+              );
+              await storeClassification(emailId, classification);
+              logger.info('ai-email', `Classified ${emailId}: ${classification.category} (${classification.confidence})`);
 
-            // Auto-reply if conditions met
-            if (classification.autoSendable) {
-              await sendAutoReply(inserted.id, {
-                fromEmail: parsedFromEmail,
-                fromName: parsedFromName,
-                subject: subject || '(no subject)',
-                bodyHtml: fullHtml,
-                bodyText: fullText,
-                userId: matchedClient?.userId || null,
-                clientId: matchedClient?.id || null,
-                threadId,
-              }, classification);
+              if (classification.autoSendable) {
+                await sendAutoReply(emailId, {
+                  fromEmail: parsedFromEmail,
+                  fromName: parsedFromName,
+                  subject: subject || '(no subject)',
+                  bodyHtml: fullHtml,
+                  bodyText: fullText,
+                  userId: matchedClient?.userId || null,
+                  clientId: matchedClient?.id || null,
+                  threadId,
+                }, classification);
+              }
+              break; // success — exit retry loop
+            } catch (err) {
+              if (attempt < MAX_ATTEMPTS) {
+                const delay = attempt * 2000; // 2 s, 4 s
+                logger.warn('ai-email', `AI classification attempt ${attempt} failed, retrying in ${delay}ms`, err);
+                await new Promise((r) => setTimeout(r, delay));
+              } else {
+                logger.error('ai-email', `AI classification failed after ${MAX_ATTEMPTS} attempts for ${emailId}`, err);
+              }
             }
-          })
-          .catch((err) => {
-            logger.error('ai-email', 'AI classification failed', err);
-          });
+          }
+        })();
       }
 
       return NextResponse.json({ success: true });

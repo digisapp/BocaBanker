@@ -7,7 +7,6 @@ export * from './chat-conversations';
 export * from './chat-messages';
 export * from './documents';
 export * from './email-logs';
-export * from './received-emails';
 export * from './emails';
 export * from './leads';
 export * from './loans';

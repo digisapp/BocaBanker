@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { db } from '@/db'
 import { leads } from '@/db/schema'
+import { eq, and, ilike } from 'drizzle-orm'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { logger } from '@/lib/logger'
 import { captureLeadSchema } from './tools'
@@ -14,6 +15,29 @@ type CaptureLeadInput = z.infer<typeof captureLeadSchema>
 export function createAuthLeadCapture(userId: string) {
   return async (input: CaptureLeadInput) => {
     try {
+      // Dedup: check for an existing lead with the same email or address+name
+      const dupeCondition = input.buyerEmail
+        ? and(eq(leads.userId, userId), eq(leads.buyerEmail, input.buyerEmail))
+        : and(
+            eq(leads.userId, userId),
+            ilike(leads.propertyAddress, input.propertyAddress || 'Not provided'),
+            ilike(leads.buyerName, input.buyerName || '')
+          );
+
+      const [existing] = await db
+        .select({ id: leads.id })
+        .from(leads)
+        .where(dupeCondition)
+        .limit(1);
+
+      if (existing) {
+        return {
+          success: true,
+          leadId: existing.id,
+          message: `${input.buyerName} is already in the leads dashboard — I've updated the conversation notes.`,
+        };
+      }
+
       const [created] = await db
         .insert(leads)
         .values({
@@ -59,6 +83,24 @@ export function createAuthLeadCapture(userId: string) {
 export function createGuestLeadCapture() {
   return async (input: CaptureLeadInput) => {
     try {
+      // Dedup: skip insert if a guest lead with this email already exists
+      if (input.buyerEmail) {
+        const { data: existing } = await supabaseAdmin
+          .from('leads')
+          .select('id')
+          .eq('buyer_email', input.buyerEmail)
+          .eq('source', 'guest-chat')
+          .limit(1)
+          .single();
+
+        if (existing) {
+          return {
+            success: true,
+            message: `Thank you, ${input.buyerName}! I already have your information on file.`,
+          };
+        }
+      }
+
       const { error } = await supabaseAdmin
         .from('leads')
         .insert({

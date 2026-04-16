@@ -4,6 +4,7 @@ import { createChatStream, getMessageText } from '@/lib/api/chat-shared'
 import { createAuthLeadCapture } from '@/lib/ai/tool-executors'
 import { BOCA_BANKER_SYSTEM_PROMPT } from '@/lib/ai/boca-banker-prompt'
 import { logger } from '@/lib/logger'
+import { rateLimit } from '@/lib/rate-limit'
 import { db } from '@/db'
 import { chatMessages, chatConversations } from '@/db/schema'
 import { eq } from 'drizzle-orm'
@@ -11,6 +12,12 @@ import { eq } from 'drizzle-orm'
 export async function POST(request: Request) {
   try {
     const user = await requireAuth()
+
+    // 30 messages per minute per authenticated user
+    const rl = await rateLimit(`chat:${user.id}`, { maxRequests: 30, windowMs: 60_000 })
+    if (!rl.success) {
+      return apiError('Rate limit exceeded. Please wait before sending another message.', 429)
+    }
     const { messages, conversationId, isGuestHandoff } = await request.json()
 
     let activeConversationId = conversationId
