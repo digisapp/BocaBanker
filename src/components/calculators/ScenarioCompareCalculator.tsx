@@ -80,7 +80,8 @@ export default function ScenarioCompareCalculator({
     })
 
     // FHA
-    const fhaDownPct = Math.max(3.5, Math.min(downPct, 3.5))
+    // FHA minimum down payment is 3.5% — a floor, not a cap
+    const fhaDownPct = Math.max(downPct, 3.5)
     const fhaDown = price * (fhaDownPct / 100)
     const fhaLoan = price - fhaDown
     const fhaRate = rate + adj - 0.25 // FHA typically has slightly lower rates

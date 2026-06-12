@@ -35,6 +35,7 @@ export function LeadForm({
   onSubmit,
   isSubmitting = false,
 }: LeadFormProps) {
+  const isEditMode = Boolean(defaultValues)
   const form = useForm<LeadInput>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(leadSchema) as any,
@@ -536,7 +537,13 @@ export function LeadForm({
             {isSubmitting && (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             )}
-            {isSubmitting ? 'Creating...' : 'Create Lead'}
+            {isSubmitting
+              ? isEditMode
+                ? 'Saving...'
+                : 'Creating...'
+              : isEditMode
+              ? 'Save Changes'
+              : 'Create Lead'}
           </Button>
         </div>
       </form>

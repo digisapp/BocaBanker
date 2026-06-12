@@ -72,7 +72,8 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
   const [propertyValue, setPropertyValue] = useState(initialValues?.propertyValue || '');
   const [propertyType, setPropertyType] = useState(initialValues?.propertyType || 'commercial');
   const [taxRate, setTaxRate] = useState('37');
-  const [bonusRate, setBonusRate] = useState('60');
+  // 100% bonus depreciation for 2025+ under OBBBA (see getBonusRateForYear)
+  const [bonusRate, setBonusRate] = useState('100');
 
   // Current loan inputs
   const [currentBalance, setCurrentBalance] = useState(initialValues?.loanAmount || '');

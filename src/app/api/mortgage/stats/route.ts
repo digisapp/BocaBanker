@@ -22,11 +22,16 @@ export async function GET(_request: NextRequest) {
         : null;
 
     // Pipeline summary
-    const { data: pipelineRows } = await supabaseAdmin
+    const { data: pipelineRows, error: pipelineError } = await supabaseAdmin
       .from('loans')
       .select('status, loan_amount')
       .eq('user_id', user.id)
       .not('status', 'in', '("closed","withdrawn")');
+
+    if (pipelineError) {
+      logger.error('mortgage-stats', 'Failed to fetch pipeline loans', pipelineError);
+      return apiError('Failed to fetch mortgage stats');
+    }
 
     const pipeline = {
       preQual: 0,
@@ -66,11 +71,16 @@ export async function GET(_request: NextRequest) {
     const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
     const yearStart = `${now.getFullYear()}-01-01`;
 
-    const { data: fundedLoans } = await supabaseAdmin
+    const { data: fundedLoans, error: fundedError } = await supabaseAdmin
       .from('loans')
       .select('commission_amount, actual_closing_date, status')
       .eq('user_id', user.id)
       .in('status', ['funded', 'closed']);
+
+    if (fundedError) {
+      logger.error('mortgage-stats', 'Failed to fetch funded loans', fundedError);
+      return apiError('Failed to fetch mortgage stats');
+    }
 
     let commissionMTD = 0;
     let commissionYTD = 0;

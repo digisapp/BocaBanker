@@ -1,6 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+  useSyncExternalStore,
+} from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import type { UIMessage } from 'ai';
@@ -24,13 +31,40 @@ interface ChatInterfaceProps {
   initialGuestHandoff?: boolean;
 }
 
+const DESKTOP_MEDIA_QUERY = '(min-width: 768px)';
+
+function subscribeToViewport(callback: () => void) {
+  const mql = window.matchMedia(DESKTOP_MEDIA_QUERY);
+  mql.addEventListener('change', callback);
+  return () => mql.removeEventListener('change', callback);
+}
+
+function getIsDesktop() {
+  return window.matchMedia(DESKTOP_MEDIA_QUERY).matches;
+}
+
+// Server snapshot: render with the sidebar open, then sync on the client.
+function getServerIsDesktop() {
+  return true;
+}
+
 export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return window.innerWidth >= 768;
-  });
-  const [guestHandoff, setGuestHandoff] = useState(initialGuestHandoff);
+  // Hydration-safe responsive default: the server renders the sidebar open and
+  // the client syncs to the real viewport without an effect-driven setState.
+  const isDesktop = useSyncExternalStore(
+    subscribeToViewport,
+    getIsDesktop,
+    getServerIsDesktop
+  );
+  const [sidebarOverride, setSidebarOverride] = useState<boolean | null>(null);
+  const sidebarOpen = sidebarOverride ?? isDesktop;
+  const setSidebarOpen = setSidebarOverride;
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Read inside the transport's body()/fetch callbacks so the (single) Chat
+  // instance created by useChat never works with stale values.
+  const conversationIdRef = useRef<string | null>(null);
+  const guestHandoffRef = useRef(initialGuestHandoff);
 
   const {
     conversations,
@@ -49,25 +83,45 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
     startNewConversation,
   } = useMessageHistory();
 
+  // Keep the conversation id ref in sync with state changes that come from
+  // loading/starting conversations elsewhere in the component.
+  useEffect(() => {
+    conversationIdRef.current = activeConversationId;
+  }, [activeConversationId]);
+
+  // Create the transport exactly once: useChat builds its Chat instance on the
+  // first render, so a recreated transport would never be picked up. All
+  // per-request values are read from refs inside the callbacks instead.
   const transport = useMemo(
     () =>
+      // False positive: body()/fetch run at request time, not during render;
+      // refs are required because useChat captures the transport once and
+      // would otherwise see stale state.
+      // eslint-disable-next-line react-hooks/refs
       new DefaultChatTransport({
         api: '/api/chat',
-        body: () => ({
-          conversationId: activeConversationId,
-          ...(guestHandoff ? { isGuestHandoff: true } : {}),
-        }),
+        body: () => {
+          // Only flag the first message after a guest handoff; re-sending
+          // isGuestHandoff would duplicate the guest history server-side.
+          const isGuestHandoff = guestHandoffRef.current;
+          guestHandoffRef.current = false;
+          return {
+            conversationId: conversationIdRef.current,
+            ...(isGuestHandoff ? { isGuestHandoff: true } : {}),
+          };
+        },
         // Capture conversationId from response header without global fetch mutation
         fetch: async (input, init) => {
           const response = await window.fetch(input, init);
           const convId = response.headers.get('X-Conversation-Id');
-          if (convId && !activeConversationId) {
+          if (convId && !conversationIdRef.current) {
+            conversationIdRef.current = convId;
             setActiveConversationId(convId);
           }
           return response;
         },
       }),
-    [activeConversationId, guestHandoff, setActiveConversationId]
+    [setActiveConversationId]
   );
 
   const {
@@ -106,9 +160,8 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
     } catch {
       // Ignore localStorage errors
     }
-
-    // Clear the handoff flag after first send
-    setGuestHandoff(false);
+    // The handoff flag itself is cleared by the transport's body() callback
+    // after the first message is sent, so nothing else to do here.
   }, [initialGuestHandoff, setMessages]);
 
   const scrollToBottom = useCallback(() => {

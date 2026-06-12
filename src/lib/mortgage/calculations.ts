@@ -133,7 +133,11 @@ export function generateAmortizationSchedule(
 
   for (let month = 1; month <= n; month++) {
     const interest = Math.round(balance * r * 100) / 100;
-    const principalPaid = Math.min(monthlyPayment - interest, balance);
+    // Final payment absorbs any residual balance left by payment rounding,
+    // so the loan always amortizes to exactly zero.
+    const principalPaid = month === n
+      ? balance
+      : Math.min(monthlyPayment - interest, balance);
     balance = Math.max(0, balance - principalPaid);
     cumulativeInterest += interest;
     cumulativePrincipal += principalPaid;
@@ -196,8 +200,14 @@ export function calculateMortgage(
   const monthlyInsurance = insurance / 12;
   const monthlyTotal = Math.round((monthlyPI + monthlyTax + monthlyInsurance) * 100) / 100;
 
-  const totalPayments = monthlyPI * termYears * 12;
-  const totalInterest = Math.round((totalPayments - loanAmount) * 100) / 100;
+  const monthlySchedule = generateAmortizationSchedule(loanAmount, interestRate, termYears);
+
+  // Derive totals from the actual schedule (which absorbs rounding into the
+  // final payment) rather than approximating with payment * n - principal.
+  const totalPayments = monthlySchedule.reduce((sum, m) => sum + m.payment, 0);
+  const totalInterest = Math.round(
+    monthlySchedule.reduce((sum, m) => sum + m.interest, 0) * 100
+  ) / 100;
   const totalCost = Math.round((totalPayments + propertyTax * termYears + insurance * termYears) * 100) / 100;
 
   return {
@@ -206,7 +216,7 @@ export function calculateMortgage(
     totalInterest,
     totalCost,
     schedule: generateAnnualSchedule(loanAmount, interestRate, termYears),
-    monthlySchedule: generateAmortizationSchedule(loanAmount, interestRate, termYears),
+    monthlySchedule,
   };
 }
 
@@ -244,13 +254,17 @@ export function calculateRefinanceAnalysis(
     (monthlySavings * comparisonYears * 12 - totalClosingCosts) * 100
   ) / 100;
 
-  // NPV of annual savings at 5% discount rate
-  const annualSavingsArray: number[] = [];
-  annualSavingsArray.push(-totalClosingCosts); // Upfront cost
+  // NPV of annual savings at 5% discount rate.
+  // calculateNPV discounts element t as an end-of-year (t+1) flow, so the
+  // upfront closing costs (a t=0 outflow) must NOT be passed through it —
+  // they are subtracted at face value instead.
+  const savingsOnlyArray: number[] = [];
   for (let y = 0; y < comparisonYears; y++) {
-    annualSavingsArray.push(monthlySavings * 12);
+    savingsOnlyArray.push(monthlySavings * 12);
   }
-  const npvSavings = calculateNPV(annualSavingsArray, 5);
+  const npvSavings = Math.round(
+    (-totalClosingCosts + calculateNPV(savingsOnlyArray, 5)) * 100
+  ) / 100;
 
   // Year-by-year savings schedule
   const savingsSchedule: RefinanceSavingsEntry[] = [];
@@ -330,10 +344,15 @@ export function calculateDSCR(
   const targetAnnualDebtService = noi / 1.25;
   const targetMonthly = targetAnnualDebtService / 12;
   let maxLoanAmount = 0;
-  if (targetMonthly > 0 && interestRate > 0) {
-    const r = interestRate / 100 / 12;
+  if (targetMonthly > 0 && termYears > 0) {
     const n = termYears * 12;
-    maxLoanAmount = Math.round(targetMonthly * (Math.pow(1 + r, n) - 1) / (r * Math.pow(1 + r, n)));
+    if (interestRate > 0) {
+      const r = interestRate / 100 / 12;
+      maxLoanAmount = Math.round(targetMonthly * (Math.pow(1 + r, n) - 1) / (r * Math.pow(1 + r, n)));
+    } else {
+      // Interest-free loan: principal is simply payment * number of payments
+      maxLoanAmount = Math.round(targetMonthly * n);
+    }
   }
 
   return {
@@ -407,6 +426,7 @@ export interface CombinedAnalysisResult {
   // Cost Seg
   costSegFirstYearSavings: number;
   costSegFiveYearSavings: number;
+  /** Peak cumulative tax savings over the schedule (cost seg is a timing benefit, so lifetime savings net to ~zero). */
   costSegTotalSavings: number;
   reclassifiedPercentage: number;
   // Refinance
@@ -492,7 +512,13 @@ export function calculateCombinedAnalysis(
   const costSegFiveYearSavings = taxSavings
     .slice(0, 5)
     .reduce((sum, e) => sum + e.annualSavings, 0);
-  const costSegTotalSavings = taxSavings.reduce((sum, e) => sum + e.annualSavings, 0);
+  // Cost seg is a timing benefit: lifetime annual savings net to ~zero, so a
+  // simple sum is meaningless. Report the PEAK cumulative savings — the
+  // maximum timing benefit reached over the schedule.
+  const costSegTotalSavings = taxSavings.reduce(
+    (max, e) => Math.max(max, e.cumulativeSavings),
+    0
+  );
   const reclassifiedPercentage = propertyValue > 0
     ? Math.round((reclassifiedAmount / propertyValue) * 100)
     : 0;
@@ -574,6 +600,35 @@ export function calculateCombinedAnalysis(
       loanBalanceWithPaydown: Math.round(balanceWith * 100) / 100,
       loanBalanceWithout: Math.round(balanceWithout * 100) / 100,
     });
+  }
+
+  // Continue simulating BOTH loans to full payoff (the schedule above only
+  // covers the comparison window, during which neither balance reaches zero),
+  // so monthsSaved and additionalInterestSaved reflect real payoff dates.
+  // Capped at the new loan term plus a buffer to guard against
+  // non-amortizing inputs (payment <= monthly interest).
+  const maxSimulationMonths = newTermYears * 12 + 24;
+  let simulatedMonths = comparisonYears * 12;
+  while (
+    (balanceWithout > 0 || balanceWith > 0) &&
+    simulatedMonths < maxSimulationMonths
+  ) {
+    simulatedMonths++;
+    if (balanceWithout > 0) {
+      const intWithout = balanceWithout * r;
+      const princWithout = Math.min(newMonthly - intWithout, balanceWithout);
+      if (princWithout <= 0) break; // non-amortizing; avoid infinite loop
+      interestWithout += intWithout;
+      balanceWithout = Math.max(0, balanceWithout - princWithout);
+      monthsPaidWithout++;
+    }
+    if (balanceWith > 0) {
+      const intWith = balanceWith * r;
+      const princWith = Math.min(newMonthly - intWith, balanceWith);
+      interestWith += intWith;
+      balanceWith = Math.max(0, balanceWith - princWith);
+      monthsPaidWith++;
+    }
   }
 
   const monthsSaved = monthsPaidWithout - monthsPaidWith;

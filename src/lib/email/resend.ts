@@ -11,15 +11,32 @@ export function getResend(): Resend {
   return _resend;
 }
 
+export interface SendEmailAttachment {
+  content: string;
+  filename: string;
+  contentType?: string;
+}
+
 interface SendEmailParams {
   to: string;
   subject: string;
   html: string;
-  userId: string;
+  userId: string | null;
   clientId?: string;
   template?: string;
   threadId?: string;
   inReplyToId?: string;
+  /** RFC Message-ID of the email being replied to (with or without angle brackets). */
+  inReplyToMessageId?: string | null;
+  /** RFC Message-IDs for the References header (with or without angle brackets). */
+  referencesMessageIds?: string[] | null;
+  attachments?: SendEmailAttachment[];
+}
+
+/** Wrap a bare RFC message-id in angle brackets if needed. */
+function angleWrap(id: string): string {
+  const trimmed = id.trim();
+  return trimmed.startsWith('<') ? trimmed : `<${trimmed}>`;
 }
 
 interface SendEmailResult {
@@ -33,8 +50,21 @@ interface SendEmailResult {
  * Send a single email via Resend and log it to both emails and email_logs tables.
  */
 export async function sendEmail(params: SendEmailParams): Promise<SendEmailResult> {
-  const { to, subject, html, userId, clientId, template, threadId, inReplyToId } = params;
+  const {
+    to, subject, html, userId, clientId, template, threadId, inReplyToId,
+    inReplyToMessageId, referencesMessageIds, attachments,
+  } = params;
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'Boca Banker <team@bocabanker.com>';
+
+  // RFC threading headers so replies thread correctly in recipients' mail clients
+  const headers: Record<string, string> = {};
+  if (inReplyToMessageId) {
+    headers['In-Reply-To'] = angleWrap(inReplyToMessageId);
+  }
+  const references = (referencesMessageIds || []).filter(Boolean).map(angleWrap);
+  if (references.length > 0) {
+    headers['References'] = references.join(' ');
+  }
 
   try {
     const { data, error } = await getResend().emails.send({
@@ -42,6 +72,16 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
       to,
       subject,
       html,
+      ...(Object.keys(headers).length > 0 ? { headers } : {}),
+      ...(attachments && attachments.length > 0
+        ? {
+            attachments: attachments.map((a) => ({
+              content: a.content,
+              filename: a.filename,
+              ...(a.contentType ? { contentType: a.contentType } : {}),
+            })),
+          }
+        : {}),
     });
 
     const status = error ? 'failed' : 'sent';

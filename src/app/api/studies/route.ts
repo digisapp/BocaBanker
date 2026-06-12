@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, ApiError } from '@/lib/api/auth'
-import { apiError } from '@/lib/api/response'
+import { apiError, apiValidationError } from '@/lib/api/response'
 import { db } from '@/db'
 import { costSegStudies, properties, clients, studyAssets } from '@/db/schema'
 import { logger } from '@/lib/logger'
@@ -12,8 +12,8 @@ export async function GET(request: NextRequest) {
     const user = await requireAuth()
 
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
+    const page = Math.max(1, Number(searchParams.get('page') ?? '1') || 1)
+    const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit') ?? '20') || 20))
     const status = searchParams.get('status') || ''
     const offset = (page - 1) * limit
 
@@ -92,46 +92,79 @@ export async function POST(request: NextRequest) {
 
     const parsed = studySchema.safeParse(studyData)
     if (!parsed.success) {
-      return apiError('Validation failed', 400)
+      return apiValidationError(parsed.error)
     }
 
     const data = parsed.data
 
-    // Create the study
-    const [newStudy] = await db
-      .insert(costSegStudies)
-      .values({
-        userId: user.id,
-        propertyId: data.property_id,
-        clientId: data.client_id,
-        studyName: data.study_name,
-        status: 'draft',
-        taxRate: data.tax_rate.toString(),
-        discountRate: data.discount_rate.toString(),
-        bonusDepreciationRate: data.bonus_depreciation_rate.toString(),
-        studyYear: data.study_year,
-      })
-      .returning()
+    // Validate assets before touching the database
+    const hasAssets = assetsData && Array.isArray(assetsData) && assetsData.length > 0
+    if (hasAssets) {
+      const badAssets = (assetsData as {
+        category?: string
+        description?: string
+        amount?: number
+        recoveryPeriod?: number
+        bonusEligible?: boolean
+      }[])
+        .map((asset, index) => ({ asset, index }))
+        .filter(
+          ({ asset }) =>
+            asset.amount == null ||
+            (asset.amount as unknown) === '' ||
+            isNaN(Number(asset.amount))
+        )
 
-    // Insert study assets if provided
-    if (assetsData && Array.isArray(assetsData) && assetsData.length > 0) {
-      const assetRows = assetsData.map((asset: {
-        category: string
-        description: string
-        amount: number
-        recoveryPeriod: number
-        bonusEligible: boolean
-      }) => ({
-        studyId: newStudy.id,
-        assetName: asset.description || asset.category,
-        assetCategory: asset.category as typeof studyAssets.$inferInsert['assetCategory'],
-        recoveryPeriod: asset.recoveryPeriod,
-        costBasis: asset.amount.toString(),
-        bonusEligible: asset.bonusEligible,
-      }))
-
-      await db.insert(studyAssets).values(assetRows)
+      if (badAssets.length > 0) {
+        return apiError(
+          `Invalid asset amount for asset(s): ${badAssets
+            .map(({ asset, index }) => asset.description || asset.category || `#${index + 1}`)
+            .join(', ')}`,
+          400
+        )
+      }
     }
+
+    // Create the study and its assets atomically
+    const newStudy = await db.transaction(async (tx) => {
+      const [study] = await tx
+        .insert(costSegStudies)
+        .values({
+          userId: user.id,
+          propertyId: data.property_id,
+          clientId: data.client_id,
+          studyName: data.study_name,
+          status: 'draft',
+          taxRate: data.tax_rate.toString(),
+          discountRate: data.discount_rate.toString(),
+          bonusDepreciationRate: data.bonus_depreciation_rate.toString(),
+          studyYear: data.study_year,
+        })
+        .returning()
+
+      // Insert study assets if provided
+      if (hasAssets) {
+        const assetRows = assetsData.map((asset: {
+          category: string
+          description: string
+          amount: number
+          recoveryPeriod: number
+          bonusEligible: boolean
+        }) => ({
+          studyId: study.id,
+          assetName: asset.description || asset.category,
+          assetCategory: asset.category as typeof studyAssets.$inferInsert['assetCategory'],
+          // recoveryPeriod is a real column — pass fractional values (e.g. 27.5) directly
+          recoveryPeriod: asset.recoveryPeriod,
+          costBasis: asset.amount.toString(),
+          bonusEligible: asset.bonusEligible,
+        }))
+
+        await tx.insert(studyAssets).values(assetRows)
+      }
+
+      return study
+    })
 
     return NextResponse.json({ study: newStudy }, { status: 201 })
   } catch (error) {

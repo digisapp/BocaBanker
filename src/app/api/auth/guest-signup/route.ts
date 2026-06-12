@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 const signupSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }).max(100),
@@ -21,6 +22,21 @@ export async function POST(request: Request) {
     }
 
     const { name, email, propertyLocation } = parsed.data;
+
+    // This endpoint triggers outbound magic-link emails to arbitrary addresses,
+    // so throttle both per-IP and per-target-email to prevent email bombing.
+    const ip = getClientIp(request);
+    const [ipLimit, emailLimit] = await Promise.all([
+      rateLimit(`guest-signup:ip:${ip}`, { maxRequests: 10, windowMs: 60 * 60_000 }),
+      rateLimit(`guest-signup:email:${email.toLowerCase()}`, { maxRequests: 3, windowMs: 60 * 60_000 }),
+    ]);
+    if (!ipLimit.success || !emailLimit.success) {
+      return new Response(
+        JSON.stringify({ error: 'Too many signup attempts. Please try again later.' }),
+        { status: 429, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
     const { error } = await supabaseAdmin.auth.signInWithOtp({

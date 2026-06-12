@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, ApiError } from '@/lib/api/auth'
-import { apiError } from '@/lib/api/response'
+import { apiError, apiValidationError } from '@/lib/api/response'
 import { db } from '@/db'
 import { properties, clients } from '@/db/schema'
 import { logger } from '@/lib/logger'
@@ -12,8 +12,8 @@ export async function GET(request: NextRequest) {
     const user = await requireAuth()
 
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '12')
+    const page = Math.max(1, Number(searchParams.get('page') ?? '1') || 1)
+    const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit') ?? '12') || 12))
     const search = searchParams.get('search') || ''
     const clientId = searchParams.get('client_id') || ''
     const propertyType = searchParams.get('property_type') || ''
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     const parsed = propertySchema.safeParse(body)
 
     if (!parsed.success) {
-      return apiError('Validation failed', 400)
+      return apiValidationError(parsed.error)
     }
 
     const data = parsed.data
@@ -127,6 +127,13 @@ export async function POST(request: NextRequest) {
         squareFootage: data.square_footage || null,
         yearBuilt: data.year_built || null,
         description,
+        loanAmount: data.loan_amount?.toString() || null,
+        interestRate: data.interest_rate?.toString() || null,
+        loanTermYears: data.loan_term_years || null,
+        monthlyPayment: data.monthly_payment?.toString() || null,
+        loanType: data.loan_type || null,
+        lenderName: data.lender_name || null,
+        loanOriginationDate: data.loan_origination_date || null,
       })
       .returning()
 

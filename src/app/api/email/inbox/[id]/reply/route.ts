@@ -4,8 +4,8 @@ import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { emails } from '@/db/schema';
-import { sendEmail } from '@/lib/email/resend';
-import { eq, and } from 'drizzle-orm';
+import { sendEmail, type SendEmailAttachment } from '@/lib/email/resend';
+import { eq, and, or, isNull } from 'drizzle-orm';
 
 /**
  * POST /api/email/inbox/[id]/reply
@@ -21,16 +21,43 @@ export async function POST(
     const user = await requireAdmin();
     const { id } = await params;
     const body = await request.json();
-    const { html, subject: customSubject } = body;
+    const { html, subject: customSubject, attachments: rawAttachments } = body;
 
     if (!html) {
       return apiError('Reply body (html) is required', 400);
     }
 
+    // Validate attachments shape: [{ content, filename, contentType? }]
+    let attachments: SendEmailAttachment[] | undefined;
+    if (rawAttachments !== undefined) {
+      if (!Array.isArray(rawAttachments)) {
+        return apiError('attachments must be an array', 400);
+      }
+      const valid = rawAttachments.every(
+        (a: unknown) =>
+          a !== null &&
+          typeof a === 'object' &&
+          typeof (a as Record<string, unknown>).content === 'string' &&
+          typeof (a as Record<string, unknown>).filename === 'string'
+      );
+      if (!valid) {
+        return apiError('Each attachment requires string content and filename', 400);
+      }
+      attachments = (rawAttachments as SendEmailAttachment[]).map((a) => ({
+        content: a.content,
+        filename: a.filename,
+        ...(typeof a.contentType === 'string' ? { contentType: a.contentType } : {}),
+      }));
+    }
+
+    // Admin-only route: admin can reply to their emails and legacy NULL-owner rows
     const [originalEmail] = await db
       .select()
       .from(emails)
-      .where(and(eq(emails.id, id), eq(emails.userId, user.id)))
+      .where(and(
+        eq(emails.id, id),
+        or(eq(emails.userId, user.id), isNull(emails.userId)),
+      ))
       .limit(1);
 
     if (!originalEmail) {
@@ -40,7 +67,7 @@ export async function POST(
     // Build reply subject
     const replySubject =
       customSubject ||
-      (originalEmail.subject.startsWith('Re:')
+      (/^re:/i.test(originalEmail.subject)
         ? originalEmail.subject
         : `Re: ${originalEmail.subject}`);
 
@@ -65,6 +92,12 @@ export async function POST(
 
     const threadId = originalEmail.threadId || originalEmail.id;
 
+    // RFC threading headers from the original inbound email's Message-ID
+    const originalMessageId =
+      (originalEmail.metadata as Record<string, unknown> | null)?.messageId;
+    const inReplyToMessageId =
+      typeof originalMessageId === 'string' ? originalMessageId : null;
+
     // Send via Resend with attachments if provided
     const result = await sendEmail({
       to: originalEmail.fromEmail,
@@ -75,6 +108,9 @@ export async function POST(
       template: 'reply',
       threadId,
       inReplyToId: originalEmail.id,
+      inReplyToMessageId,
+      referencesMessageIds: inReplyToMessageId ? [inReplyToMessageId] : null,
+      attachments,
     });
 
     if (!result.success) {

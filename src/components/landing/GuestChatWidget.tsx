@@ -37,7 +37,10 @@ export default function GuestChatWidget() {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem(LS_LEAD_CAPTURED_KEY) === 'true';
   });
-  const [leadDismissed, setLeadDismissed] = useState(false);
+  const [leadDismissed, setLeadDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(LS_LEAD_DISMISSED_KEY) === 'true';
+  });
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -50,9 +53,22 @@ export default function GuestChatWidget() {
     transport,
   });
 
-  // Set greeting message on mount
+  // On mount, restore any saved guest history (e.g. after closing/reopening
+  // the mobile chat overlay); otherwise show the greeting message.
   useEffect(() => {
-    setMessages([GREETING_MESSAGE]);
+    let restored: UIMessage[] | null = null;
+    try {
+      const stored = localStorage.getItem(LS_HISTORY_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as UIMessage[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          restored = parsed;
+        }
+      }
+    } catch {
+      // Ignore localStorage/parse errors and fall back to the greeting
+    }
+    setMessages(restored ?? [GREETING_MESSAGE]);
   }, [setMessages]);
 
   const isLoading = status === 'submitted' || status === 'streaming';

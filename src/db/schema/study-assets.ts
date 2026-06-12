@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, numeric, integer, boolean, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, numeric, real, boolean, index } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { costSegStudies } from './cost-seg-studies';
 
@@ -9,7 +9,8 @@ export const studyAssets = pgTable('study_assets', {
   assetCategory: text('asset_category', {
     enum: ['personal_property_5yr', 'personal_property_7yr', 'land_improvements_15yr', 'building_27_5yr', 'building_39yr', 'land'],
   }).notNull(),
-  recoveryPeriod: integer('recovery_period').notNull(),
+  // real, not integer: residential building assets have a 27.5-year recovery period
+  recoveryPeriod: real('recovery_period').notNull(),
   costBasis: numeric('cost_basis').notNull(),
   depreciationMethod: text('depreciation_method').default('MACRS'),
   bonusEligible: boolean('bonus_eligible').default(true),

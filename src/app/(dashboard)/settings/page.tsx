@@ -19,7 +19,6 @@ interface ProfileFormData {
 }
 
 interface PasswordFormData {
-  currentPassword: string;
   newPassword: string;
   confirmPassword: string;
 }
@@ -95,11 +94,21 @@ export default function SettingsPage() {
 
   const passwordForm = useForm<PasswordFormData>({
     defaultValues: {
-      currentPassword: '',
       newPassword: '',
       confirmPassword: '',
     },
   });
+
+  // Prefill the profile form once the user loads (defaultValues capture
+  // user=null on a hard reload, so reset when the user becomes available).
+  useEffect(() => {
+    if (user) {
+      profileForm.reset({
+        fullName: user.user_metadata?.full_name || '',
+        email: user.email || '',
+      });
+    }
+  }, [user, profileForm]);
 
   async function handleProfileSave(data: ProfileFormData) {
     setProfileSaving(true);
@@ -237,15 +246,6 @@ export default function SettingsPage() {
           onSubmit={passwordForm.handleSubmit(handlePasswordSave)}
           className="space-y-4"
         >
-          <div className="space-y-2">
-            <Label className="text-gray-500">Current Password</Label>
-            <Input
-              type="password"
-              {...passwordForm.register('currentPassword')}
-              className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
-            />
-          </div>
-
           <div className="space-y-2">
             <Label className="text-gray-500">New Password</Label>
             <Input

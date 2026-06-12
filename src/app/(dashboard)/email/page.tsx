@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import {
   Mail, Inbox, Send, Loader2, MailOpen, Reply, Trash2, X, Search,
-  CheckCircle, AlertCircle, MessageSquare, Sparkles, ToggleLeft,
-  ToggleRight, ChevronLeft, Square, CheckSquare, ArrowLeft,
+  MessageSquare, Sparkles, ToggleLeft,
+  ToggleRight, Square, CheckSquare, ArrowLeft,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -138,10 +138,6 @@ function formatDate(dateStr: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
-function getPreview(text: string | null): string {
-  if (!text) return '';
-  return text.slice(0, 120) + (text.length > 120 ? '...' : '');
-}
 
 function categoryLabel(cat: string): string {
   return cat.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
@@ -461,6 +457,9 @@ function InboxTab({ onUnreadChange }: { onUnreadChange: (n: number) => void }) {
         setEmailList((prev) => prev.map((e) => e.id === selectedEmail.id ? { ...e, status: 'replied' } : e));
         setSelectedEmail({ ...selectedEmail, status: 'replied' });
         toast.success('Reply sent!');
+      } else {
+        const data = await res.json().catch(() => null);
+        toast.error(data?.error || 'Failed to send reply');
       }
     } catch { toast.error('Failed to send reply'); }
     finally { setSendingReply(false); }
@@ -475,7 +474,11 @@ function InboxTab({ onUnreadChange }: { onUnreadChange: (n: number) => void }) {
   function toggleSelect(id: string) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   }

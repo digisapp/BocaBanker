@@ -4,6 +4,26 @@
  * Each template returns a complete HTML email string styled with the light/amber theme.
  */
 
+/** Escape user-supplied values interpolated into email HTML. */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** Escape a multi-line message and preserve line breaks. */
+function escapeMultiline(value: string): string {
+  return escapeHtml(value).replace(/\r?\n/g, '<br />');
+}
+
+/** Only allow https URLs into href attributes; anything else renders inert. */
+function safeHref(url: string): string {
+  return /^https:\/\//i.test(url.trim()) ? escapeHtml(url.trim()) : '#';
+}
+
 function emailWrapper(content: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -62,8 +82,8 @@ function amberButton(text: string, href: string): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin: 28px 0;">
   <tr>
     <td style="background: linear-gradient(135deg, #F59E0B, #EAB308); border-radius: 10px;">
-      <a href="${href}" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: 600; color: #FFFFFF; text-decoration: none; border-radius: 10px;">
-        ${text}
+      <a href="${safeHref(href)}" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: 600; color: #FFFFFF; text-decoration: none; border-radius: 10px;">
+        ${escapeHtml(text)}
       </a>
     </td>
   </tr>
@@ -82,9 +102,9 @@ interface OutreachParams {
 
 export function outreachTemplate({ clientName, senderName, customMessage }: OutreachParams): string {
   const body = `
-    <h2 style="margin: 0 0 16px; font-size: 20px; color: #1F2937;">Hello ${clientName},</h2>
+    <h2 style="margin: 0 0 16px; font-size: 20px; color: #1F2937;">Hello ${escapeHtml(clientName)},</h2>
     <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
-      I hope this message finds you well. My name is ${senderName}, and I specialize in
+      I hope this message finds you well. My name is ${escapeHtml(senderName)}, and I specialize in
       helping property owners like you maximize tax savings through <strong>cost segregation studies</strong>.
     </p>
     <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
@@ -94,7 +114,7 @@ export function outreachTemplate({ clientName, senderName, customMessage }: Outr
     </p>
     ${
       customMessage
-        ? `<p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">${customMessage}</p>`
+        ? `<p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">${escapeMultiline(customMessage)}</p>`
         : ''
     }
     <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
@@ -104,7 +124,7 @@ export function outreachTemplate({ clientName, senderName, customMessage }: Outr
     ${amberButton('Schedule a Consultation', 'https://bocabanker.com')}
     <p style="margin: 0; font-size: 15px; color: #374151;">
       Best regards,<br />
-      <strong style="color: #1F2937;">${senderName}</strong><br />
+      <strong style="color: #1F2937;">${escapeHtml(senderName)}</strong><br />
       <span style="color: #D97706;">Boca Banker</span>
     </p>
   `;
@@ -120,13 +140,13 @@ interface FollowUpParams {
 export function followUpTemplate({ clientName, senderName, propertyAddress }: FollowUpParams): string {
   const propertyLine = propertyAddress
     ? `<p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
-        Specifically regarding your property at <strong>${propertyAddress}</strong>, we believe there
+        Specifically regarding your property at <strong>${escapeHtml(propertyAddress)}</strong>, we believe there
         is a substantial opportunity for accelerated depreciation and tax savings.
       </p>`
     : '';
 
   const body = `
-    <h2 style="margin: 0 0 16px; font-size: 20px; color: #1F2937;">Hi ${clientName},</h2>
+    <h2 style="margin: 0 0 16px; font-size: 20px; color: #1F2937;">Hi ${escapeHtml(clientName)},</h2>
     <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
       I wanted to follow up on my previous message about how a cost segregation study could
       benefit you. Many of our clients are surprised to learn they could reduce their current-year
@@ -140,7 +160,7 @@ export function followUpTemplate({ clientName, senderName, propertyAddress }: Fo
     ${amberButton('Get Your Free Estimate', 'https://bocabanker.com')}
     <p style="margin: 0; font-size: 15px; color: #374151;">
       Looking forward to hearing from you,<br />
-      <strong style="color: #1F2937;">${senderName}</strong><br />
+      <strong style="color: #1F2937;">${escapeHtml(senderName)}</strong><br />
       <span style="color: #D97706;">Boca Banker</span>
     </p>
   `;
@@ -159,7 +179,7 @@ export function reportDeliveryTemplate({
   totalSavings,
 }: ReportDeliveryParams): string {
   const body = `
-    <h2 style="margin: 0 0 16px; font-size: 20px; color: #1F2937;">Great news, ${clientName}!</h2>
+    <h2 style="margin: 0 0 16px; font-size: 20px; color: #1F2937;">Great news, ${escapeHtml(clientName)}!</h2>
     <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
       Your cost segregation study report is ready. Here is a quick summary:
     </p>
@@ -167,9 +187,9 @@ export function reportDeliveryTemplate({
       <tr>
         <td style="padding: 20px;">
           <p style="margin: 0 0 8px; font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Study</p>
-          <p style="margin: 0 0 16px; font-size: 16px; color: #1F2937; font-weight: 600;">${studyName}</p>
+          <p style="margin: 0 0 16px; font-size: 16px; color: #1F2937; font-weight: 600;">${escapeHtml(studyName)}</p>
           <p style="margin: 0 0 8px; font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Estimated Total Tax Savings</p>
-          <p style="margin: 0; font-size: 28px; color: #D97706; font-weight: 700;">${totalSavings}</p>
+          <p style="margin: 0; font-size: 28px; color: #D97706; font-weight: 700;">${escapeHtml(totalSavings)}</p>
         </td>
       </tr>
     </table>
@@ -207,14 +227,14 @@ export function ariveLinkTemplate({
 }: AriveLinkParams): string {
   const propertyLine = propertyAddress
     ? `<p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
-        This application is for the property at <strong>${propertyAddress}</strong>.
+        This application is for the property at <strong>${escapeHtml(propertyAddress)}</strong>.
       </p>`
     : '';
 
   const body = `
-    <h2 style="margin: 0 0 16px; font-size: 20px; color: #1F2937;">Hi ${borrowerName},</h2>
+    <h2 style="margin: 0 0 16px; font-size: 20px; color: #1F2937;">Hi ${escapeHtml(borrowerName)},</h2>
     <p style="margin: 0 0 16px; font-size: 15px; color: #374151; line-height: 1.6;">
-      Thank you for choosing <strong>${companyName}</strong> for your mortgage needs!
+      Thank you for choosing <strong>${escapeHtml(companyName)}</strong> for your mortgage needs!
       To get started, please click the button below to complete your secure loan application.
     </p>
     ${propertyLine}
@@ -235,8 +255,8 @@ export function ariveLinkTemplate({
     </p>
     <p style="margin: 0; font-size: 15px; color: #374151;">
       Best regards,<br />
-      <strong style="color: #1F2937;">${senderName}</strong><br />
-      <span style="color: #D97706;">${companyName}</span>
+      <strong style="color: #1F2937;">${escapeHtml(senderName)}</strong><br />
+      <span style="color: #D97706;">${escapeHtml(companyName)}</span>
     </p>
   `;
   return emailWrapper(body);

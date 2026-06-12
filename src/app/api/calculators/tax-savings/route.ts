@@ -12,7 +12,7 @@ import type { MacrsRecoveryPeriod } from '@/lib/cost-seg/macrs-tables';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { propertyValue, propertyType, taxRate, bonusDepreciationRate } = body;
+    const { propertyValue, propertyType, taxRate, bonusDepreciationRate, discountRate } = body;
 
     if (!propertyValue || propertyValue <= 0) {
       return NextResponse.json(
@@ -44,6 +44,10 @@ export async function POST(request: NextRequest) {
       typeof bonusDepreciationRate === 'number'
         ? Math.max(0, Math.min(100, bonusDepreciationRate))
         : 100;
+    const npvDiscountRate =
+      typeof discountRate === 'number' && Number.isFinite(discountRate) && discountRate >= 0
+        ? discountRate
+        : 5;
 
     // Get default allocation
     const allocation = getDefaultAllocation(propertyType, propertyValue);
@@ -101,7 +105,7 @@ export async function POST(request: NextRequest) {
         : 0;
 
     const annualFlows = taxSavings.map((e) => e.annualSavings);
-    const npv = calculateNPV(annualFlows, 5);
+    const npv = calculateNPV(annualFlows, npvDiscountRate);
 
     return NextResponse.json({
       propertyValue,

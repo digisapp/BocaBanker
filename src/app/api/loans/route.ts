@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
-import { apiError } from '@/lib/api/response';
+import { apiError, apiValidationError } from '@/lib/api/response';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { loans } from '@/db/schema';
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     const parsed = loanSchema.safeParse(body);
 
     if (!parsed.success) {
-      return apiError('Validation failed', 400);
+      return apiValidationError(parsed.error);
     }
 
     const data = parsed.data;

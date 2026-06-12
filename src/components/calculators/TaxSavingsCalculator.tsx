@@ -42,8 +42,10 @@ const PROPERTY_TYPES = [
 interface SavingsResult {
   firstYearSavings: number;
   fiveYearSavings: number;
-  totalSavings: number;
+  /** Maximum cumulative savings reached over the schedule (peak timing benefit). */
+  peakCumulativeSavings: number;
   npv: number;
+  discountRate: number;
   schedule: {
     year: number;
     withCostSeg: number;
@@ -58,12 +60,15 @@ export default function TaxSavingsCalculator() {
   const [propertyType, setPropertyType] = useState('commercial');
   const [taxRate, setTaxRate] = useState('37');
   const [bonusRate, setBonusRate] = useState(100);
+  const [discountRate, setDiscountRate] = useState('5');
   const [result, setResult] = useState<SavingsResult | null>(null);
   const [calculated, setCalculated] = useState(false);
 
   function handleCalculate() {
     const value = parseFloat(propertyValue);
     const rate = parseFloat(taxRate);
+    const parsedDiscount = parseFloat(discountRate);
+    const dr = Number.isFinite(parsedDiscount) && parsedDiscount >= 0 ? parsedDiscount : 5;
     if (isNaN(value) || value <= 0 || isNaN(rate) || rate <= 0) return;
 
     const allocation = getDefaultAllocation(propertyType, value);
@@ -110,19 +115,23 @@ export default function TaxSavingsCalculator() {
     const firstYearSavings = taxSavings.length > 0 ? taxSavings[0].annualSavings : 0;
     const fiveYearSavings =
       taxSavings.length >= 5 ? taxSavings[4].cumulativeSavings : taxSavings.length > 0 ? taxSavings[taxSavings.length - 1].cumulativeSavings : 0;
-    const totalSavings =
-      taxSavings.length > 0
-        ? taxSavings[taxSavings.length - 1].cumulativeSavings
-        : 0;
+    // Cost seg is a timing benefit: lifetime cumulative savings net to ~zero,
+    // so report the PEAK cumulative savings (maximum timing benefit) instead
+    // of the final cumulative value.
+    const peakCumulativeSavings = taxSavings.reduce(
+      (max, e) => Math.max(max, e.cumulativeSavings),
+      0
+    );
 
     const annualFlows = taxSavings.map((e) => e.annualSavings);
-    const npv = calculateNPV(annualFlows, 5);
+    const npv = calculateNPV(annualFlows, dr);
 
     setResult({
       firstYearSavings,
       fiveYearSavings,
-      totalSavings,
+      peakCumulativeSavings,
       npv,
+      discountRate: dr,
       schedule: taxSavings,
     });
     setCalculated(true);
@@ -133,6 +142,7 @@ export default function TaxSavingsCalculator() {
     setPropertyType('commercial');
     setTaxRate('37');
     setBonusRate(100);
+    setDiscountRate('5');
     setResult(null);
     setCalculated(false);
   }
@@ -204,6 +214,17 @@ export default function TaxSavingsCalculator() {
           </div>
 
           <div className="space-y-2">
+            <Label className="text-gray-500">Discount Rate (%)</Label>
+            <Input
+              type="number"
+              placeholder="5"
+              value={discountRate}
+              onChange={(e) => setDiscountRate(e.target.value)}
+              className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label className="text-gray-500">
               Bonus Depreciation: {bonusRate}%
             </Label>
@@ -249,7 +270,7 @@ export default function TaxSavingsCalculator() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="h-4 w-4 text-amber-600" />
-              <span className="text-sm text-gray-500">First-Year Savings</span>
+              <span className="text-sm text-gray-500">First-Year Tax Savings</span>
             </div>
             <p className="text-2xl font-bold text-gray-900">
               {formatCurrency(result.firstYearSavings)}
@@ -269,17 +290,19 @@ export default function TaxSavingsCalculator() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center gap-2 mb-2">
               <PiggyBank className="h-4 w-4 text-amber-600" />
-              <span className="text-sm text-gray-500">Total Savings</span>
+              <span className="text-sm text-gray-500">Peak Cumulative Savings</span>
             </div>
             <p className="text-2xl font-bold text-gray-900">
-              {formatCurrency(result.totalSavings)}
+              {formatCurrency(result.peakCumulativeSavings)}
             </p>
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center gap-2 mb-2">
               <DollarSign className="h-4 w-4 text-amber-600" />
-              <span className="text-sm text-gray-500">NPV (5% Discount)</span>
+              <span className="text-sm text-gray-500">
+                NPV ({result.discountRate}% Discount)
+              </span>
             </div>
             <p className="text-2xl font-bold text-gray-900">
               {formatCurrency(result.npv)}

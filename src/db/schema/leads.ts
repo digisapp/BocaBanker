@@ -10,6 +10,7 @@ import {
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 import { users } from './users'
+import { clients } from './clients'
 import { LEAD_PROPERTY_TYPES } from '@/constants/property-types'
 
 export const leads = pgTable('leads', {
@@ -72,10 +73,13 @@ export const leads = pgTable('leads', {
 
   // Tracking
   contactedAt: timestamp('contacted_at'),
-  convertedClientId: uuid('converted_client_id'),
+  convertedClientId: uuid('converted_client_id').references(() => clients.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').default(sql`now()`),
   updatedAt: timestamp('updated_at').default(sql`now()`),
 }, (table) => [
   index('leads_user_id_idx').on(table.userId),
+  index('leads_user_id_status_idx').on(table.userId, table.status),
+  index('leads_user_id_created_at_idx').on(table.userId, table.createdAt),
+  index('leads_member_name_idx').on(table.memberName),
 ])
 

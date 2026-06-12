@@ -52,39 +52,49 @@ export async function PUT(
       return apiError('Lead not found', 404);
     }
 
-    const tagsArray = body.tags
-      ? (typeof body.tags === 'string'
-          ? body.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
-          : body.tags)
-      : [];
+    // Partial update: only set fields present in the request body
+    // (supports both snake_case and camelCase keys)
+    const pick = (snake: string, camel: string) =>
+      body[snake] !== undefined ? body[snake] : body[camel];
+    const has = (snake: string, camel: string) =>
+      body[snake] !== undefined || body[camel] !== undefined;
+
+    const updateData: Partial<typeof leads.$inferInsert> = {
+      updatedAt: new Date(),
+    };
+
+    if (has('property_address', 'propertyAddress')) updateData.propertyAddress = pick('property_address', 'propertyAddress');
+    if (has('property_city', 'propertyCity')) updateData.propertyCity = pick('property_city', 'propertyCity');
+    if (has('property_county', 'propertyCounty')) updateData.propertyCounty = pick('property_county', 'propertyCounty');
+    if (has('property_state', 'propertyState')) updateData.propertyState = pick('property_state', 'propertyState');
+    if (has('property_zip', 'propertyZip')) updateData.propertyZip = pick('property_zip', 'propertyZip');
+    if (has('property_type', 'propertyType')) updateData.propertyType = pick('property_type', 'propertyType');
+    if (has('sale_price', 'salePrice')) updateData.salePrice = pick('sale_price', 'salePrice');
+    if (has('sale_date', 'saleDate')) updateData.saleDate = pick('sale_date', 'saleDate');
+    if (has('parcel_id', 'parcelId')) updateData.parcelId = pick('parcel_id', 'parcelId');
+    if (has('buyer_name', 'buyerName')) updateData.buyerName = pick('buyer_name', 'buyerName');
+    if (has('buyer_company', 'buyerCompany')) updateData.buyerCompany = pick('buyer_company', 'buyerCompany');
+    if (has('buyer_email', 'buyerEmail')) updateData.buyerEmail = pick('buyer_email', 'buyerEmail');
+    if (has('buyer_phone', 'buyerPhone')) updateData.buyerPhone = pick('buyer_phone', 'buyerPhone');
+    if (has('seller_name', 'sellerName')) updateData.sellerName = pick('seller_name', 'sellerName');
+    if (has('square_footage', 'squareFootage')) updateData.squareFootage = pick('square_footage', 'squareFootage');
+    if (has('year_built', 'yearBuilt')) updateData.yearBuilt = pick('year_built', 'yearBuilt');
+    if (body.status !== undefined) updateData.status = body.status;
+    if (body.priority !== undefined) updateData.priority = body.priority;
+    if (body.source !== undefined) updateData.source = body.source;
+    if (body.notes !== undefined) updateData.notes = body.notes;
+    if (body.tags !== undefined) {
+      updateData.tags = body.tags
+        ? (typeof body.tags === 'string'
+            ? body.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+            : body.tags)
+        : [];
+    }
 
     const [updated] = await db
       .update(leads)
-      .set({
-        propertyAddress: body.property_address ?? body.propertyAddress,
-        propertyCity: body.property_city ?? body.propertyCity ?? null,
-        propertyCounty: body.property_county ?? body.propertyCounty ?? null,
-        propertyState: body.property_state ?? body.propertyState ?? 'FL',
-        propertyZip: body.property_zip ?? body.propertyZip ?? null,
-        propertyType: body.property_type ?? body.propertyType,
-        salePrice: body.sale_price ?? body.salePrice ?? null,
-        saleDate: body.sale_date ?? body.saleDate ?? null,
-        parcelId: body.parcel_id ?? body.parcelId ?? null,
-        buyerName: body.buyer_name ?? body.buyerName ?? null,
-        buyerCompany: body.buyer_company ?? body.buyerCompany ?? null,
-        buyerEmail: body.buyer_email ?? body.buyerEmail ?? null,
-        buyerPhone: body.buyer_phone ?? body.buyerPhone ?? null,
-        sellerName: body.seller_name ?? body.sellerName ?? null,
-        squareFootage: body.square_footage ?? body.squareFootage ?? null,
-        yearBuilt: body.year_built ?? body.yearBuilt ?? null,
-        status: body.status,
-        priority: body.priority,
-        source: body.source ?? null,
-        notes: body.notes ?? null,
-        tags: tagsArray,
-        updatedAt: new Date(),
-      })
-      .where(eq(leads.id, id))
+      .set(updateData)
+      .where(and(eq(leads.id, id), eq(leads.userId, user.id)))
       .returning();
 
     if (!updated) {
@@ -108,9 +118,14 @@ export async function DELETE(
 
     const { id } = await params;
 
-    await db
+    const deleted = await db
       .delete(leads)
-      .where(and(eq(leads.id, id), eq(leads.userId, user.id)));
+      .where(and(eq(leads.id, id), eq(leads.userId, user.id)))
+      .returning({ id: leads.id });
+
+    if (deleted.length === 0) {
+      return apiError('Lead not found', 404);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

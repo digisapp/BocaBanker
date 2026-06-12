@@ -5,6 +5,7 @@ import {
   numeric,
   date,
   timestamp,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
@@ -18,4 +19,7 @@ export const mortgageRates = pgTable('mortgage_rates', {
   rate5arm: numeric('rate_5_arm'),
   source: text('source').default('freddie_mac_pmms'),
   fetchedAt: timestamp('fetched_at').default(sql`now()`),
-})
+}, (table) => [
+  // dedupe guard: concurrent rate-fetch runs must not insert the same week twice
+  uniqueIndex('mortgage_rates_week_of_unique').on(table.weekOf),
+])

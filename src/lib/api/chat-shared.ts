@@ -23,7 +23,7 @@ export interface ChatStreamConfig {
   captureLeadExecutor: (input: any) => Promise<any>
   maxSearchResults?: number
   searchSources?: Array<{ type: string }>
-  onFinish?: (result: { text: string }) => Promise<void>
+  onFinish?: (result: { text: string; steps: Array<{ text: string }> }) => Promise<void>
 }
 
 // ─── Message helpers ────────────────────────────────────────────────
@@ -45,10 +45,13 @@ export function getMessageText(msg: UIMessage): string {
  * Convert an array of UIMessages to CoreMessages for the AI SDK.
  */
 export function toCoreMessages(messages: UIMessage[]) {
-  return messages.map((msg) => ({
-    role: msg.role as 'user' | 'assistant',
-    content: getMessageText(msg),
-  }))
+  return messages
+    .filter((msg) => msg.role === 'user' || msg.role === 'assistant')
+    .map((msg) => ({
+      role: msg.role as 'user' | 'assistant',
+      content: getMessageText(msg),
+    }))
+    .filter((msg) => msg.content.length > 0)
 }
 
 // ─── Stream builder ─────────────────────────────────────────────────

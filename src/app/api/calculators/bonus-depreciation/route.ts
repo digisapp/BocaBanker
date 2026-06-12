@@ -8,11 +8,14 @@ import type { MacrsRecoveryPeriod } from '@/lib/cost-seg/macrs-tables';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { buildingValue, propertyType, bonusRate: inputBonusRate } = body;
+    const { propertyType, bonusRate: inputBonusRate } = body;
+    // This value is the TOTAL property value (land is subtracted via the
+    // default allocation below). `buildingValue` is accepted as a legacy alias.
+    const buildingValue = body.propertyValue ?? body.buildingValue;
 
     if (!buildingValue || buildingValue <= 0) {
       return NextResponse.json(
-        { error: 'buildingValue must be a positive number' },
+        { error: 'propertyValue must be a positive number' },
         { status: 400 }
       );
     }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, ApiError } from '@/lib/api/auth';
+import { requireAdmin, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { reviews } from '@/db/schema';
@@ -12,7 +12,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAuth();
+    await requireAdmin();
 
     const { id } = await params;
     const body = await request.json();
@@ -68,13 +68,18 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAuth();
+    await requireAdmin();
 
     const { id } = await params;
 
-    await db
+    const deleted = await db
       .delete(reviews)
-      .where(eq(reviews.id, id));
+      .where(eq(reviews.id, id))
+      .returning({ id: reviews.id });
+
+    if (deleted.length === 0) {
+      return apiError('Review not found', 404);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { formatCurrency } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
@@ -26,34 +27,18 @@ import {
 import { Badge } from '@/components/ui/badge'
 import PropertyCard from '@/components/properties/PropertyCard'
 import { RoleGate } from '@/components/shared/RoleGate'
+import {
+  PROPERTY_PROPERTY_TYPES,
+  PROPERTY_TYPE_LABELS,
+  propertyTypeOptions,
+} from '@/constants/property-types'
 
 const PROPERTY_TYPES = [
   { value: '', label: 'All Types' },
-  { value: 'commercial', label: 'Commercial' },
-  { value: 'residential', label: 'Residential' },
-  { value: 'mixed_use', label: 'Mixed Use' },
-  { value: 'industrial', label: 'Industrial' },
-  { value: 'retail', label: 'Retail' },
-  { value: 'office', label: 'Office' },
-  { value: 'warehouse', label: 'Warehouse' },
-  { value: 'hotel', label: 'Hotel' },
-  { value: 'multifamily', label: 'Multifamily' },
-  { value: 'other', label: 'Other' },
+  ...propertyTypeOptions(PROPERTY_PROPERTY_TYPES),
 ]
 
-const TYPE_LABELS: Record<string, string> = {
-  commercial: 'Commercial',
-  residential: 'Residential',
-  mixed_use: 'Mixed Use',
-  'mixed-use': 'Mixed Use',
-  industrial: 'Industrial',
-  retail: 'Retail',
-  office: 'Office',
-  warehouse: 'Warehouse',
-  hotel: 'Hotel',
-  multifamily: 'Multifamily',
-  other: 'Other',
-}
+const TYPE_LABELS: Record<string, string> = PROPERTY_TYPE_LABELS
 
 interface Property {
   id: string
@@ -75,6 +60,7 @@ export default function PropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [propertyType, setPropertyType] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
   const [pagination, setPagination] = useState({
@@ -84,17 +70,17 @@ export default function PropertiesPage() {
     totalPages: 0,
   })
 
-  const fetchProperties = useCallback(async () => {
+  const fetchProperties = useCallback(async (signal?: AbortSignal) => {
     setLoading(true)
     try {
       const params = new URLSearchParams({
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
       })
-      if (search) params.set('search', search)
+      if (debouncedSearch) params.set('search', debouncedSearch)
       if (propertyType) params.set('property_type', propertyType)
 
-      const res = await fetch(`/api/properties?${params}`)
+      const res = await fetch(`/api/properties?${params}`, { signal })
       if (!res.ok) throw new Error('Failed to fetch')
 
       const data = await res.json()
@@ -104,21 +90,27 @@ export default function PropertiesPage() {
         total: data.pagination.total,
         totalPages: data.pagination.totalPages,
       }))
+      setLoading(false)
     } catch (error) {
+      // An aborted request means a newer one is in flight; leave its state alone
+      if (signal?.aborted) return
       logger.error('properties-page', 'Error fetching properties', error)
-    } finally {
+      toast.error('Failed to load properties')
       setLoading(false)
     }
-  }, [pagination.page, pagination.limit, search, propertyType])
+  }, [pagination.page, pagination.limit, debouncedSearch, propertyType])
 
   useEffect(() => {
-    fetchProperties()
+    const controller = new AbortController()
+    fetchProperties(controller.signal)
+    return () => controller.abort()
   }, [fetchProperties])
 
-  // Debounced search
+  // Debounce the search value so we don't refetch on every keystroke
   useEffect(() => {
     const timer = setTimeout(() => {
-      setPagination((prev) => ({ ...prev, page: 1 }))
+      setDebouncedSearch(search)
+      setPagination((prev) => (prev.page === 1 ? prev : { ...prev, page: 1 }))
     }, 300)
     return () => clearTimeout(timer)
   }, [search])
@@ -157,7 +149,13 @@ export default function PropertiesPage() {
             />
           </div>
 
-          <Select value={propertyType} onValueChange={(val) => { setPropertyType(val); setPagination((p) => ({ ...p, page: 1 })) }}>
+          <Select
+            value={propertyType || '_all'}
+            onValueChange={(val) => {
+              setPropertyType(val === '_all' ? '' : val)
+              setPagination((p) => ({ ...p, page: 1 }))
+            }}
+          >
             <SelectTrigger className="w-full sm:w-[180px] bg-gray-50 border-gray-200 text-gray-900">
               <SelectValue placeholder="All Types" />
             </SelectTrigger>

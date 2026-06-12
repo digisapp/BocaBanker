@@ -58,14 +58,22 @@ export async function PUT(request: NextRequest) {
     };
 
     if (existing) {
-      await supabaseAdmin
+      const { error } = await supabaseAdmin
         .from('user_settings')
         .update(payload)
         .eq('user_id', user.id);
+      if (error) {
+        logger.error('settings-api', 'Failed to update user settings', error);
+        return apiError('Failed to update settings');
+      }
     } else {
-      await supabaseAdmin
+      const { error } = await supabaseAdmin
         .from('user_settings')
         .insert({ ...payload, user_id: user.id });
+      if (error) {
+        logger.error('settings-api', 'Failed to insert user settings', error);
+        return apiError('Failed to update settings');
+      }
     }
 
     return NextResponse.json({ success: true });

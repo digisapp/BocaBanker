@@ -4,7 +4,16 @@ import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { emails, clients } from '@/db/schema';
-import { eq, desc, and, count, ilike, or, inArray } from 'drizzle-orm';
+import { eq, desc, and, count, ilike, or, inArray, isNull, sql } from 'drizzle-orm';
+
+/**
+ * These routes are admin-only (requireAdmin). The admin can see emails
+ * assigned to them plus legacy rows with NULL user_id (inbound mail stored
+ * before owner assignment existed).
+ */
+function adminOwnerFilter(userId: string) {
+  return or(eq(emails.userId, userId), isNull(emails.userId))!;
+}
 
 /**
  * GET /api/email/inbox
@@ -50,7 +59,7 @@ export async function GET(request: NextRequest) {
         .from(emails)
         .leftJoin(clients, eq(emails.clientId, clients.id))
         .where(and(
-          eq(emails.userId, user.id),
+          adminOwnerFilter(user.id),
           or(eq(emails.id, threadIdParam), eq(emails.threadId, threadIdParam)),
         ))
         .orderBy(emails.createdAt);
@@ -59,7 +68,7 @@ export async function GET(request: NextRequest) {
     }
 
     const conditions = [
-      eq(emails.userId, user.id),
+      adminOwnerFilter(user.id),
       eq(emails.direction, 'inbound'),
     ];
 
@@ -118,7 +127,7 @@ export async function GET(request: NextRequest) {
       .select({ total: count() })
       .from(emails)
       .where(and(
-        eq(emails.userId, user.id),
+        adminOwnerFilter(user.id),
         eq(emails.direction, 'inbound'),
         eq(emails.isRead, false),
       ));
@@ -152,16 +161,22 @@ export async function PATCH(request: NextRequest) {
     const ids: string[] = body.emailIds || (body.emailId ? [body.emailId] : []);
     if (ids.length === 0) return apiError('emailId or emailIds required', 400);
 
-    await db
+    // Always mark read; only flip status to 'read' from 'received' so
+    // replied/forwarded statuses are preserved.
+    const updated = await db
       .update(emails)
-      .set({ isRead: true, status: 'read', readAt: new Date() })
+      .set({
+        isRead: true,
+        readAt: new Date(),
+        status: sql`CASE WHEN ${emails.status} = 'received' THEN 'read' ELSE ${emails.status} END`,
+      })
       .where(and(
         inArray(emails.id, ids),
-        eq(emails.userId, user.id),
-        eq(emails.status, 'received'),
-      ));
+        adminOwnerFilter(user.id),
+      ))
+      .returning({ id: emails.id });
 
-    return NextResponse.json({ success: true, updated: ids.length });
+    return NextResponse.json({ success: true, updated: updated.length });
   } catch (error) {
     if (error instanceof ApiError) return error.response;
     logger.error('email-api', 'Bulk mark-read error', error);
@@ -183,23 +198,37 @@ export async function DELETE(request: NextRequest) {
     const ids: string[] = body.emailIds || (body.emailId ? [body.emailId] : []);
     if (ids.length === 0) return apiError('emailId or emailIds required', 400);
 
-    // Clear thread references pointing to these emails
-    await db
-      .update(emails)
-      .set({ threadId: null })
-      .where(inArray(emails.threadId, ids));
+    // Verify ownership first, then clean up thread references and delete —
+    // all inside a transaction so references are never cleared for emails
+    // that don't end up deleted.
+    const deletedCount = await db.transaction(async (tx) => {
+      const owned = await tx
+        .select({ id: emails.id })
+        .from(emails)
+        .where(and(inArray(emails.id, ids), adminOwnerFilter(user.id)));
 
-    await db
-      .update(emails)
-      .set({ inReplyToId: null })
-      .where(inArray(emails.inReplyToId, ids));
+      const ownedIds = owned.map((e) => e.id);
+      if (ownedIds.length === 0) return 0;
 
-    // Delete
-    await db
-      .delete(emails)
-      .where(and(inArray(emails.id, ids), eq(emails.userId, user.id)));
+      await tx
+        .update(emails)
+        .set({ threadId: null })
+        .where(inArray(emails.threadId, ownedIds));
 
-    return NextResponse.json({ success: true, deleted: ids.length });
+      await tx
+        .update(emails)
+        .set({ inReplyToId: null })
+        .where(inArray(emails.inReplyToId, ownedIds));
+
+      const deleted = await tx
+        .delete(emails)
+        .where(inArray(emails.id, ownedIds))
+        .returning({ id: emails.id });
+
+      return deleted.length;
+    });
+
+    return NextResponse.json({ success: true, deleted: deletedCount });
   } catch (error) {
     if (error instanceof ApiError) return error.response;
     logger.error('email-api', 'Bulk delete error', error);

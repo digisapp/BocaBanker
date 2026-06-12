@@ -8,7 +8,9 @@ import { eq } from 'drizzle-orm'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
+  const rawNext = searchParams.get('next') ?? '/dashboard'
+  // Only allow same-origin relative paths ("/x" but not "//evil.com" or "https://...")
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard'
 
   if (code) {
     const supabase = await createClient()
@@ -33,18 +35,20 @@ export async function GET(request: NextRequest) {
         logger.error('auth-api', 'User sync error', syncError)
       }
 
-      const forwardedHost = request.headers.get('x-forwarded-host')
       const isLocalEnv = process.env.NODE_ENV === 'development'
 
       if (isLocalEnv) {
         // In development, redirect to localhost
         return NextResponse.redirect(`${origin}${next}`)
-      } else if (forwardedHost) {
-        // In production behind a proxy/load balancer
-        return NextResponse.redirect(`https://${forwardedHost}${next}`)
-      } else {
-        return NextResponse.redirect(`${origin}${next}`)
       }
+
+      // In production pin the redirect host to the configured app URL rather
+      // than trusting the client-influenceable x-forwarded-host header.
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL
+      if (appUrl) {
+        return NextResponse.redirect(`${appUrl.replace(/\/$/, '')}${next}`)
+      }
+      return NextResponse.redirect(`${origin}${next}`)
     }
   }
 

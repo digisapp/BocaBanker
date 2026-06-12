@@ -36,10 +36,26 @@ export function calculateTaxSavings(
 ): TaxSavingsEntry[] {
   const rate = taxRate / 100;
 
-  // Determine the maximum number of years across both schedules
+  // Index each schedule by its year field (summing any duplicate years) so
+  // that entries are matched on year rather than array position.
+  const buildYearMap = (
+    schedule: { year: number; depreciation: number }[]
+  ): Map<number, number> => {
+    const map = new Map<number, number>();
+    for (const entry of schedule) {
+      map.set(entry.year, (map.get(entry.year) ?? 0) + entry.depreciation);
+    }
+    return map;
+  };
+
+  const acceleratedByYear = buildYearMap(depreciationSchedule);
+  const straightLineByYear = buildYearMap(straightLineSchedule);
+
+  // Cover every year from 1 through the latest year in either schedule
   const maxYears = Math.max(
-    depreciationSchedule.length,
-    straightLineSchedule.length
+    0,
+    ...acceleratedByYear.keys(),
+    ...straightLineByYear.keys()
   );
 
   const results: TaxSavingsEntry[] = [];
@@ -49,13 +65,8 @@ export function calculateTaxSavings(
     const yearNumber = i + 1;
 
     // Get depreciation for this year from each schedule, defaulting to 0
-    const acceleratedDep = i < depreciationSchedule.length
-      ? depreciationSchedule[i].depreciation
-      : 0;
-
-    const straightLineDep = i < straightLineSchedule.length
-      ? straightLineSchedule[i].depreciation
-      : 0;
+    const acceleratedDep = acceleratedByYear.get(yearNumber) ?? 0;
+    const straightLineDep = straightLineByYear.get(yearNumber) ?? 0;
 
     // Tax savings = depreciation * tax rate
     const withCostSeg = Math.round(acceleratedDep * rate * 100) / 100;

@@ -20,7 +20,10 @@ export async function GET(request: NextRequest) {
     const conditions = [eq(reviews.status, 'approved')];
 
     if (rating) {
-      conditions.push(eq(reviews.rating, Number(rating)));
+      const ratingNum = Number(rating);
+      if (Number.isInteger(ratingNum) && ratingNum >= 1 && ratingNum <= 5) {
+        conditions.push(eq(reviews.rating, ratingNum));
+      }
     }
 
     const whereClause = and(...conditions);

@@ -17,17 +17,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
+import {
+  PROPERTY_PROPERTY_TYPES,
+  propertyTypeOptions,
+} from '@/constants/property-types';
 
-const PROPERTY_TYPES = [
-  { value: 'commercial', label: 'Commercial' },
-  { value: 'residential', label: 'Residential' },
-  { value: 'mixed-use', label: 'Mixed-Use' },
-  { value: 'industrial', label: 'Industrial' },
-  { value: 'retail', label: 'Retail' },
-  { value: 'hospitality', label: 'Hospitality' },
-  { value: 'healthcare', label: 'Healthcare' },
-  { value: 'multifamily', label: 'Multifamily' },
-];
+const PROPERTY_TYPES = propertyTypeOptions(PROPERTY_PROPERTY_TYPES);
 
 interface PropertyFormData {
   address: string;

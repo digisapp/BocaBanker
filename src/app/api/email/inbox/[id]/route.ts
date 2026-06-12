@@ -4,7 +4,15 @@ import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { emails, clients } from '@/db/schema';
-import { eq, and, desc, or } from 'drizzle-orm';
+import { eq, and, desc, or, isNull } from 'drizzle-orm';
+
+/**
+ * These routes are admin-only (requireAdmin). The admin can see emails
+ * assigned to them plus legacy rows with NULL user_id.
+ */
+function adminOwnerFilter(userId: string) {
+  return or(eq(emails.userId, userId), isNull(emails.userId))!;
+}
 
 const emailSelectFields = {
   id: emails.id,
@@ -53,7 +61,7 @@ export async function GET(
       .select(emailSelectFields)
       .from(emails)
       .leftJoin(clients, eq(emails.clientId, clients.id))
-      .where(and(eq(emails.id, id), eq(emails.userId, user.id)))
+      .where(and(eq(emails.id, id), adminOwnerFilter(user.id)))
       .limit(1);
 
     if (!email) {
@@ -79,7 +87,7 @@ export async function GET(
       .from(emails)
       .leftJoin(clients, eq(emails.clientId, clients.id))
       .where(and(
-        eq(emails.userId, user.id),
+        adminOwnerFilter(user.id),
         or(eq(emails.id, threadId), eq(emails.threadId, threadId)),
       ))
       .orderBy(desc(emails.createdAt));
@@ -114,13 +122,27 @@ export async function DELETE(
     const user = await requireAdmin();
     const { id } = await params;
 
-    // Clear thread references
-    await db.update(emails).set({ threadId: null }).where(eq(emails.threadId, id));
-    await db.update(emails).set({ inReplyToId: null }).where(eq(emails.inReplyToId, id));
+    // Verify ownership first, then clean up thread references and delete —
+    // inside a transaction so references aren't cleared for emails that
+    // don't end up deleted.
+    const deleted = await db.transaction(async (tx) => {
+      const [owned] = await tx
+        .select({ id: emails.id })
+        .from(emails)
+        .where(and(eq(emails.id, id), adminOwnerFilter(user.id)))
+        .limit(1);
 
-    await db
-      .delete(emails)
-      .where(and(eq(emails.id, id), eq(emails.userId, user.id)));
+      if (!owned) return false;
+
+      await tx.update(emails).set({ threadId: null }).where(eq(emails.threadId, id));
+      await tx.update(emails).set({ inReplyToId: null }).where(eq(emails.inReplyToId, id));
+      await tx.delete(emails).where(eq(emails.id, id));
+      return true;
+    });
+
+    if (!deleted) {
+      return apiError('Email not found', 404);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

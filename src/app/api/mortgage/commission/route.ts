@@ -13,12 +13,17 @@ export async function GET(_request: NextRequest) {
     const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
 
     // Get all funded/closed loans
-    const { data: loans } = await supabaseAdmin
+    const { data: loans, error: loansError } = await supabaseAdmin
       .from('loans')
       .select('borrower_name, loan_amount, commission_bps, commission_amount, actual_closing_date, lender_name, status')
       .eq('user_id', user.id)
       .in('status', ['funded', 'closed'])
-      .order('actual_closing_date', { ascending: false });
+      .order('actual_closing_date', { ascending: false, nullsFirst: false });
+
+    if (loansError) {
+      logger.error('commission-api', 'Failed to fetch funded loans', loansError);
+      return apiError('Failed to fetch commission data');
+    }
 
     let commissionMTD = 0;
     let commissionYTD = 0;

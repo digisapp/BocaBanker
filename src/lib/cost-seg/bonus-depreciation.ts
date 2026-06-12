@@ -26,6 +26,26 @@ export interface BonusDepreciationResult {
 const BONUS_ELIGIBLE_MAX_PERIOD = 20;
 
 /**
+ * Section 168(k) bonus depreciation rate by placed-in-service year.
+ *
+ * TCJA phase-down: 100% through 2022, 80% in 2023, 60% in 2024.
+ * The One Big Beautiful Bill Act (July 2025) restored permanent 100% bonus
+ * for property acquired after January 19, 2025 — treated here as 100% for
+ * all of 2025+ as a practical simplification.
+ */
+export function getBonusRateForYear(placedInService: Date | number): number {
+  const year =
+    typeof placedInService === 'number'
+      ? placedInService
+      : placedInService.getFullYear();
+
+  if (year <= 2022) return 100;
+  if (year === 2023) return 80;
+  if (year === 2024) return 60;
+  return 100; // 2025+ under OBBBA
+}
+
+/**
  * Calculates bonus depreciation and the total first-year deduction for an asset.
  *
  * Assets with a MACRS recovery period of 20 years or less are eligible for
@@ -52,9 +72,12 @@ export function calculateBonusDepreciation(
 
   const isEligible = recoveryPeriod <= BONUS_ELIGIBLE_MAX_PERIOD;
 
+  // Clamp so bad stored values (e.g. 150) can't produce a negative basis
+  const clampedRate = Math.min(100, Math.max(0, bonusRate));
+
   // Calculate bonus depreciation
   const bonusAmount = isEligible
-    ? Math.round(costBasis * (bonusRate / 100) * 100) / 100
+    ? Math.round(costBasis * (clampedRate / 100) * 100) / 100
     : 0;
 
   const remainingBasis = Math.round((costBasis - bonusAmount) * 100) / 100;

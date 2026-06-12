@@ -4,7 +4,8 @@ import { Redis } from '@upstash/redis';
 // ── Upstash client (only initialised when env vars are present) ────
 
 let _redis: Redis | null = null;
-let _ratelimit: Map<string, Ratelimit> = new Map();
+const _ratelimit: Map<string, Ratelimit> = new Map();
+let warnedInMemoryFallback = false;
 
 function getRedis(): Redis | null {
   if (_redis) return _redis;
@@ -103,7 +104,14 @@ export async function rateLimit(
     };
   }
 
-  // Fallback to in-memory (single-instance only)
+  // Fallback to in-memory (single-instance only). On serverless this is
+  // per-lambda and trivially bypassed — Upstash must be configured in prod.
+  if (process.env.NODE_ENV === 'production' && !warnedInMemoryFallback) {
+    warnedInMemoryFallback = true;
+    console.warn(
+      '[rate-limit] UPSTASH_REDIS_REST_URL/TOKEN not set — falling back to per-instance in-memory rate limiting, which is ineffective on serverless. Configure Upstash in production.',
+    );
+  }
   return inMemoryRateLimit(key, config.maxRequests, config.windowMs);
 }
 

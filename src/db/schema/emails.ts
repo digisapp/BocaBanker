@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, boolean, index, jsonb, real } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, boolean, index, uniqueIndex, jsonb, real } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { users } from './users';
 import { clients } from './clients';
@@ -48,5 +48,6 @@ export const emails = pgTable('emails', {
   index('emails_to_email_idx').on(table.toEmail),
   index('emails_is_read_idx').on(table.isRead),
   index('emails_created_at_idx').on(table.createdAt),
-  index('emails_resend_id_idx').on(table.resendId),
+  // unique so duplicate webhook deliveries (Svix retries) can't insert the same email twice
+  uniqueIndex('emails_resend_id_unique').on(table.resendId).where(sql`resend_id IS NOT NULL`),
 ]);

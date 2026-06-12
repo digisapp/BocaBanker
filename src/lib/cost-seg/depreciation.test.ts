@@ -93,11 +93,18 @@ describe('calculateStraightLineDepreciation', () => {
     expect(schedule).toHaveLength(28);
   });
 
-  it('total depreciation is within 1% of cost basis', () => {
+  it('total 39-year depreciation equals cost basis', () => {
     const schedule = calculateStraightLineDepreciation(1_000_000, 39);
     const total = schedule.reduce((sum, e) => sum + e.depreciation, 0);
-    // MACRS mid-month rounding can cause minor deviations
-    expect(Math.abs(total - 1_000_000)).toBeLessThan(10_000);
+    // The IRS Table A-7a month-1 column sums to exactly 100.000%, so the
+    // schedule should recover the full basis (small tolerance for cent rounding).
+    expect(Math.abs(total - 1_000_000)).toBeLessThan(100);
+  });
+
+  it('total 27.5-year depreciation equals cost basis', () => {
+    const schedule = calculateStraightLineDepreciation(1_000_000, 27.5);
+    const total = schedule.reduce((sum, e) => sum + e.depreciation, 0);
+    expect(Math.abs(total - 1_000_000)).toBeLessThan(100);
   });
 
   it('no bonus depreciation is applied', () => {

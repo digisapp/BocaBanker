@@ -67,7 +67,7 @@ export function ClientsTable({ data, onDelete }: ClientsTableProps) {
   const router = useRouter()
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [pageSize, setPageSize] = useState(10)
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
 
   const columns: ColumnDef<ClientRow>[] = [
     {
@@ -237,21 +237,16 @@ export function ClientsTable({ data, onDelete }: ClientsTableProps) {
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
     state: {
       sorting,
       columnFilters,
-      pagination: {
-        pageIndex: 0,
-        pageSize,
-      },
+      pagination,
     },
   })
 
   const handlePageSizeChange = (value: string) => {
-    const newSize = Number(value)
-    setPageSize(newSize)
-    table.setPageSize(newSize)
-    table.setPageIndex(0)
+    setPagination({ pageIndex: 0, pageSize: Number(value) })
   }
 
   return (
@@ -345,7 +340,7 @@ export function ClientsTable({ data, onDelete }: ClientsTableProps) {
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <span>Rows per page</span>
           <Select
-            value={String(pageSize)}
+            value={String(pagination.pageSize)}
             onValueChange={handlePageSizeChange}
           >
             <SelectTrigger className="h-8 w-[70px] bg-gray-50 border-gray-200 text-gray-900">

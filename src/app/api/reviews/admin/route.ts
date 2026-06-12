@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, ApiError } from '@/lib/api/auth';
+import { requireAdmin, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { reviews } from '@/db/schema';
@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAuth();
+    await requireAdmin();
 
     const searchParams = request.nextUrl.searchParams;
     const page = Math.max(1, Number(searchParams.get('page') ?? '1'));

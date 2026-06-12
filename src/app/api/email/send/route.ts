@@ -8,6 +8,9 @@ import {
   followUpTemplate,
   reportDeliveryTemplate,
 } from '@/lib/email/templates';
+import { emailSchema } from '@/lib/validation/email-schemas';
+
+const VALID_TEMPLATES = ['outreach', 'follow-up', 'report-delivery'] as const;
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,8 +19,25 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { to, subject, html, template, clientId, clientName, senderName, propertyAddress, studyName, totalSavings, customMessage } = body;
 
-    if (!to || !subject) {
-      return apiError('to and subject are required', 400);
+    // Validate recipient + subject with the shared email schema
+    // (its `body` field maps to this route's `html`, which may instead be
+    // template-generated, so validate it only when provided).
+    const parsed = emailSchema
+      .pick({ to_email: true, subject: true, template: true })
+      .safeParse({ to_email: to, subject, template });
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    if (template && !VALID_TEMPLATES.includes(template)) {
+      return apiError(
+        `Unknown template "${template}". Valid templates: ${VALID_TEMPLATES.join(', ')}`,
+        400
+      );
     }
 
     // If a template is specified but no HTML, generate from template
@@ -40,8 +60,6 @@ export async function POST(request: NextRequest) {
             totalSavings: totalSavings || '$0',
           });
           break;
-        default:
-          emailHtml = `<p>${subject}</p>`;
       }
     }
 

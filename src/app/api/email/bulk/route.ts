@@ -12,12 +12,22 @@ import {
   reportDeliveryTemplate,
 } from '@/lib/email/templates';
 
+// Bulk sends are throttled to ~2/s; allow long-running invocations on Vercel.
+export const maxDuration = 300;
+
+const VALID_TEMPLATES = ['outreach', 'follow-up', 'report-delivery'] as const;
+
 /**
  * Simple rate-limited delay.
- * Ensures we do not exceed ~10 emails per second for Resend rate limits.
+ * Resend's default rate limit is 2 requests per second.
  */
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRateLimitError(error?: string): boolean {
+  if (!error) return false;
+  return /429|rate.?limit|too many requests/i.test(error);
 }
 
 export async function POST(request: NextRequest) {
@@ -35,6 +45,13 @@ export async function POST(request: NextRequest) {
 
     if (!template || !subject) {
       return apiError('template and subject are required', 400);
+    }
+
+    if (!VALID_TEMPLATES.includes(template)) {
+      return apiError(
+        `Unknown template "${template}". Valid templates: ${VALID_TEMPLATES.join(', ')}`,
+        400
+      );
     }
 
     // Fetch recipients
@@ -80,45 +97,69 @@ export async function POST(request: NextRequest) {
 
     for (let i = 0; i < validRecipients.length; i++) {
       const client = validRecipients[i];
-      const clientName = `${client.firstName} ${client.lastName}`.trim();
 
-      let html: string;
-      switch (template) {
-        case 'outreach':
-          html = outreachTemplate({ clientName, senderName, customMessage });
-          break;
-        case 'follow-up':
-          html = followUpTemplate({ clientName, senderName });
-          break;
-        case 'report-delivery':
-          html = reportDeliveryTemplate({
-            clientName,
-            studyName: 'Cost Segregation Study',
-            totalSavings: 'See report for details',
+      // Per-recipient isolation: an unexpected failure for one recipient is
+      // recorded as a failure and the loop continues, so we always return
+      // accurate sent/failed accounting.
+      try {
+        const clientName = `${client.firstName} ${client.lastName}`.trim();
+
+        let html: string;
+        switch (template) {
+          case 'outreach':
+            html = outreachTemplate({ clientName, senderName, customMessage });
+            break;
+          case 'follow-up':
+            html = followUpTemplate({ clientName, senderName });
+            break;
+          case 'report-delivery':
+            html = reportDeliveryTemplate({
+              clientName,
+              studyName: 'Cost Segregation Study',
+              totalSavings: 'See report for details',
+            });
+            break;
+          default:
+            // Unreachable: template is validated above
+            throw new Error(`Unknown template: ${template}`);
+        }
+
+        let result = await sendEmail({
+          to: client.email!,
+          subject,
+          html,
+          userId: user.id,
+          clientId: client.id,
+          template,
+        });
+
+        // On rate limiting (429), wait 1s and retry once before recording failure
+        if (!result.success && isRateLimitError(result.error)) {
+          logger.warn('email-api', `Rate limited sending to ${client.email}, retrying in 1s`);
+          await delay(1000);
+          result = await sendEmail({
+            to: client.email!,
+            subject,
+            html,
+            userId: user.id,
+            clientId: client.id,
+            template,
           });
-          break;
-        default:
-          html = `<p>${subject}</p>`;
-      }
+        }
 
-      const result = await sendEmail({
-        to: client.email!,
-        subject,
-        html,
-        userId: user.id,
-        clientId: client.id,
-        template,
-      });
-
-      if (result.success) {
-        sent++;
-      } else {
+        if (result.success) {
+          sent++;
+        } else {
+          failed++;
+        }
+      } catch (err) {
         failed++;
+        logger.error('email-api', `Bulk send failed for ${client.email}`, err);
       }
 
-      // Rate limit: max 10 per second = 100ms between each
+      // Rate limit: Resend default is 2 req/s = 500ms between each
       if (i < validRecipients.length - 1) {
-        await delay(100);
+        await delay(500);
       }
     }
 

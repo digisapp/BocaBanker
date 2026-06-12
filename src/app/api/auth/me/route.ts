@@ -28,7 +28,19 @@ export async function GET() {
         })
         .onConflictDoNothing()
         .returning({ role: users.role, fullName: users.fullName })
-      dbUser = created ?? { role: 'viewer', fullName: null }
+
+      if (created) {
+        dbUser = created
+      } else {
+        // Insert conflicted (concurrent request created the row) — re-select
+        // so we return the actual role instead of a hardcoded default
+        const [reSelected] = await db
+          .select({ role: users.role, fullName: users.fullName })
+          .from(users)
+          .where(eq(users.id, user.id))
+          .limit(1)
+        dbUser = reSelected ?? { role: 'viewer', fullName: null }
+      }
     }
 
     return NextResponse.json({

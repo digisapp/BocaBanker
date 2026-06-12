@@ -3,6 +3,7 @@ import { requireAdmin, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { leads } from '@/db/schema';
+import { eq, and, isNotNull } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
 import type { LeadPropertyType } from '@/constants/property-types';
 
@@ -204,8 +205,20 @@ export async function POST(request: NextRequest) {
         .filter(Boolean);
 
       let totalImported = 0;
+      let totalSkipped = 0;
       const maxPages = 10;
       const pageSize = 100;
+
+      // Dedupe: load existing (parcelId, saleDate) pairs for this user so we
+      // can skip leads that were already imported
+      const existingLeads = await db
+        .select({ parcelId: leads.parcelId, saleDate: leads.saleDate })
+        .from(leads)
+        .where(and(eq(leads.userId, user.id), isNotNull(leads.parcelId)));
+
+      const existingKeys = new Set(
+        existingLeads.map((l) => `${l.parcelId}|${l.saleDate ?? ''}`)
+      );
 
       for (let page = 1; page <= maxPages; page++) {
         try {
@@ -213,6 +226,8 @@ export async function POST(request: NextRequest) {
           const params = new URLSearchParams();
 
           // Florida FIPS code
+          // NOTE: non-FL states need numeric FIPS codes (e.g. GA -> ST13);
+          // passing the 2-letter abbreviation here will not work for them
           const stateFips = state === 'FL' ? 'ST12' : `ST${state}`;
           params.set('geoid', stateFips);
           params.set('page', page.toString());
@@ -319,7 +334,18 @@ export async function POST(request: NextRequest) {
             })
             .filter(
               (lead): lead is NonNullable<typeof lead> => lead !== null
-            );
+            )
+            // Skip leads whose (parcelId, saleDate) already exists for this user
+            .filter((lead) => {
+              if (!lead.parcelId) return true;
+              const key = `${lead.parcelId}|${lead.saleDate ?? ''}`;
+              if (existingKeys.has(key)) {
+                totalSkipped++;
+                return false;
+              }
+              existingKeys.add(key);
+              return true;
+            });
 
           if (leadsToInsert.length > 0) {
             await db.insert(leads).values(leadsToInsert);
@@ -343,10 +369,11 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      logger.info('leads-scrape', `ATTOM import complete`, { totalImported });
+      logger.info('leads-scrape', `ATTOM import complete`, { totalImported, totalSkipped });
 
       return NextResponse.json({
         imported: totalImported,
+        skipped: totalSkipped,
         source: 'attom',
       });
     }

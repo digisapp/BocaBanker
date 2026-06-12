@@ -137,14 +137,38 @@ export function generateStudyReport(input: StudyReportInput): StudyReport {
   // Collect per-asset depreciation schedules (only depreciable assets)
   const assetSchedules: { year: number; depreciation: number }[][] = [];
 
+  // Silently excluding an asset would understate the accelerated schedule
+  // while the straight-line baseline still includes its basis — wildly wrong
+  // savings. Reject invalid recovery periods loudly instead.
+  const invalidAssets = assets.filter(
+    (a) => a.recoveryPeriod !== 0 && !isValidRecoveryPeriod(a.recoveryPeriod)
+  );
+  if (invalidAssets.length > 0) {
+    throw new Error(
+      `Invalid recovery period(s): ${invalidAssets
+        .map((a) => `${a.category}=${a.recoveryPeriod}`)
+        .join(', ')}. Valid MACRS periods are 5, 7, 15, 27.5, 39 (0 for land).`
+    );
+  }
+
+  // Flag basis mismatches: savings should come from timing, not from the
+  // asset bases simply not summing to the building value.
+  const depreciableBasis = assets
+    .filter((a) => a.recoveryPeriod !== 0)
+    .reduce((sum, a) => sum + a.costBasis, 0);
+  if (buildingValue > 0 && Math.abs(depreciableBasis - buildingValue) / buildingValue > 0.01) {
+    console.warn(
+      `[report-generator] Depreciable asset basis ($${depreciableBasis.toFixed(2)}) ` +
+        `differs from building value ($${buildingValue.toFixed(2)}) by more than 1% — ` +
+        `savings will include spurious basis differences.`
+    );
+  }
+
   for (const asset of assets) {
     // Land (recoveryPeriod 0) is not depreciable
     if (asset.recoveryPeriod === 0) continue;
-
-    if (!isValidRecoveryPeriod(asset.recoveryPeriod)) {
-      // Skip assets with non-standard recovery periods
-      continue;
-    }
+    // unreachable after the throw above; narrows the type for TS
+    if (!isValidRecoveryPeriod(asset.recoveryPeriod)) continue;
 
     const schedule = calculateDepreciation(
       asset.costBasis,
@@ -307,10 +331,13 @@ export function generateStudyReport(input: StudyReportInput): StudyReport {
       .reduce((sum, a) => sum + a.costBasis, 0) * 100
   ) / 100;
 
-  const totalTaxSavings =
-    taxSavingsSchedule.length > 0
-      ? taxSavingsSchedule[taxSavingsSchedule.length - 1].cumulativeSavings
-      : 0;
+  // Cost seg is a timing benefit: lifetime cumulative savings nets to ~zero,
+  // so the headline "total savings" is the PEAK cumulative savings over the
+  // schedule (matching the calculators), not the final-year value.
+  const totalTaxSavings = taxSavingsSchedule.reduce(
+    (max, entry) => Math.max(max, entry.cumulativeSavings),
+    0
+  );
 
   // Effective rate: first-year tax savings as a percentage of purchase price
   const effectiveRate =

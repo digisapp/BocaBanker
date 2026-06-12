@@ -127,10 +127,8 @@ export async function DELETE(
     const { id } = await params
     const user = await requireAuth()
 
-    // Delete associated assets first
-    await db.delete(studyAssets).where(eq(studyAssets.studyId, id))
-
-    // Delete the study
+    // Delete the study — associated study_assets rows are removed by the
+    // FK's onDelete cascade
     const [deleted] = await db
       .delete(costSegStudies)
       .where(and(eq(costSegStudies.id, id), eq(costSegStudies.userId, user.id)))

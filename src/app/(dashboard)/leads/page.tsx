@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { Fragment, useState, useEffect, useCallback } from 'react'
+import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { formatCurrency } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
@@ -209,7 +210,7 @@ export default function LeadsPage() {
     setPage(1)
   }, [debouncedSearch, statusFilter, propertyTypeFilter, priorityFilter, memberFilter])
 
-  const fetchLeads = useCallback(async () => {
+  const fetchLeads = useCallback(async (signal?: AbortSignal) => {
     setLoading(true)
     try {
       const params = new URLSearchParams({
@@ -219,12 +220,12 @@ export default function LeadsPage() {
         order: sortOrder,
         ...(debouncedSearch && { search: debouncedSearch }),
         ...(statusFilter !== 'all' && { status: statusFilter }),
-        ...(propertyTypeFilter !== 'all' && { property_type: propertyTypeFilter }),
+        ...(propertyTypeFilter !== 'all' && { propertyType: propertyTypeFilter }),
         ...(priorityFilter !== 'all' && { priority: priorityFilter }),
         ...(memberFilter && { member: memberFilter }),
       })
 
-      const res = await fetch(`/api/leads?${params}`)
+      const res = await fetch(`/api/leads?${params}`, { signal })
       if (!res.ok) throw new Error('Failed to fetch')
 
       const data = await res.json()
@@ -247,34 +248,41 @@ export default function LeadsPage() {
         avgSalePrice: avg,
         totalValue: totalVal,
       })
+      setLoading(false)
     } catch (error) {
+      // An aborted request means a newer one is in flight; leave its state alone
+      if (signal?.aborted) return
       logger.error('leads-page', 'Failed to fetch leads', error)
-    } finally {
+      toast.error('Failed to load leads')
       setLoading(false)
     }
   }, [page, sortKey, sortOrder, debouncedSearch, statusFilter, propertyTypeFilter, priorityFilter, memberFilter])
 
-  const fetchPortfolios = useCallback(async () => {
+  const fetchPortfolios = useCallback(async (signal?: AbortSignal) => {
     setPortfolioLoading(true)
     try {
-      const res = await fetch('/api/leads/portfolio')
+      const res = await fetch('/api/leads/portfolio', { signal })
       if (!res.ok) throw new Error('Failed to fetch portfolios')
       const data = await res.json()
       setPortfolios(data.portfolios)
       setPortfolioStats(data.stats)
+      setPortfolioLoading(false)
     } catch (error) {
+      if (signal?.aborted) return
       logger.error('leads-page', 'Failed to fetch portfolios', error)
-    } finally {
+      toast.error('Failed to load portfolios')
       setPortfolioLoading(false)
     }
   }, [])
 
   useEffect(() => {
+    const controller = new AbortController()
     if (viewMode === 'leads') {
-      fetchLeads()
+      fetchLeads(controller.signal)
     } else {
-      fetchPortfolios()
+      fetchPortfolios(controller.signal)
     }
+    return () => controller.abort()
   }, [viewMode, fetchLeads, fetchPortfolios])
 
   const handleDelete = async (id: string) => {
@@ -305,22 +313,17 @@ export default function LeadsPage() {
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
-      const lead = leads.find((l) => l.id === id)
-      if (!lead) return
+      // Partial update: only send the field we intend to change
       const res = await fetch(`/api/leads/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          propertyAddress: lead.propertyAddress,
-          propertyType: lead.propertyType,
-          status: newStatus,
-          priority: lead.priority,
-        }),
+        body: JSON.stringify({ status: newStatus }),
       })
       if (!res.ok) throw new Error('Failed to update status')
       fetchLeads()
     } catch (error) {
       logger.error('leads-page', 'Failed to update lead status', error)
+      toast.error('Failed to update lead status')
     }
   }
 
@@ -425,7 +428,7 @@ export default function LeadsPage() {
           <RoleGate permission="canCreate">
             <Button
               variant="outline"
-              onClick={() => router.push('/dashboard/leads/scrape')}
+              onClick={() => router.push('/leads/scrape')}
               className="border-gray-200 text-gray-700 hover:bg-gray-50"
             >
               <Sparkles className="h-4 w-4 mr-2" />
@@ -997,9 +1000,8 @@ export default function LeadsPage() {
                       const isExpanded = expandedMember === portfolio.memberName
 
                       return (
-                        <>
+                        <Fragment key={portfolio.memberName}>
                           <TableRow
-                            key={portfolio.memberName}
                             className={`border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${
                               isExpanded ? 'bg-amber-50/50' : ''
                             }`}
@@ -1100,7 +1102,7 @@ export default function LeadsPage() {
 
                           {/* Expanded properties */}
                           {isExpanded && (
-                            <TableRow key={`${portfolio.memberName}-expanded`} className="hover:bg-transparent">
+                            <TableRow className="hover:bg-transparent">
                               <TableCell colSpan={8} className="p-0">
                                 <div className="bg-gray-50 border-y border-gray-100 px-8 py-3">
                                   <div className="space-y-2">
@@ -1157,7 +1159,7 @@ export default function LeadsPage() {
                               </TableCell>
                             </TableRow>
                           )}
-                        </>
+                        </Fragment>
                       )
                     })}
                   </TableBody>

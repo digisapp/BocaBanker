@@ -62,7 +62,10 @@ export async function POST(
       studyYear: study.studyYear,
       taxRate: parseFloat(study.taxRate),
       discountRate: parseFloat(study.discountRate || '5'),
-      bonusDepreciationRate: parseFloat(study.bonusDepreciationRate || '100'),
+      bonusDepreciationRate: Math.min(
+        100,
+        Math.max(0, parseFloat(study.bonusDepreciationRate || '100') || 0)
+      ),
       assets: assets.map((a) => ({
         category: a.assetCategory,
         costBasis: parseFloat(a.costBasis),

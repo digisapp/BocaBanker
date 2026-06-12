@@ -79,12 +79,20 @@ export async function POST(request: NextRequest) {
     let imported = 0;
 
     if (validRows.length > 0) {
-      // Batch insert in chunks of 100
+      // Batch insert in chunks of 100 — a failed batch is reported, not fatal
       const BATCH_SIZE = 100;
       for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
         const batch = validRows.slice(i, i + BATCH_SIZE);
-        await db.insert(clients).values(batch);
-        imported += batch.length;
+        try {
+          await db.insert(clients).values(batch);
+          imported += batch.length;
+        } catch (batchError) {
+          logger.error('clients-api', `Failed to insert client batch starting at row ${i + 1}`, batchError);
+          errors.push({
+            row: i + 1,
+            message: `Failed to insert batch of ${batch.length} rows (rows ${i + 1}-${i + batch.length})`,
+          });
+        }
       }
     }
 

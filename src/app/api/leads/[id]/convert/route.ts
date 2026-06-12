@@ -3,7 +3,7 @@ import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { leads, clients, properties } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, ne } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
 
 // Map lead property type to client/property type
@@ -22,6 +22,9 @@ const mapPropertyType = (leadType: string) => {
   }
 };
 
+// Sentinel error used to roll back the transaction on a concurrent convert
+class AlreadyConvertedError extends Error {}
+
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -31,11 +34,11 @@ export async function POST(
 
     const { id } = await params;
 
-    // Fetch the lead
+    // Fetch the lead — scoped to the authenticated user
     const [lead] = await db
       .select()
       .from(leads)
-      .where(eq(leads.id, id));
+      .where(and(eq(leads.id, id), eq(leads.userId, user.id)));
 
     if (!lead) {
       return apiError('Lead not found', 404);
@@ -61,36 +64,31 @@ export async function POST(
     if (lead.deedBookPage) notesParts.push(`Deed Book/Page: ${lead.deedBookPage}`);
     const combinedNotes = notesParts.length > 0 ? notesParts.join('\n') : null;
 
-    // Create client from buyer info
-    const [client] = await db
-      .insert(clients)
-      .values({
-        userId: user.id,
-        firstName,
-        lastName,
-        email: lead.buyerEmail || null,
-        phone: lead.buyerPhone || null,
-        company: lead.buyerCompany || null,
-        address: lead.memberAddress || lead.propertyAddress,
-        city: lead.memberCity || lead.propertyCity || null,
-        state: lead.memberState || lead.propertyState || null,
-        zip: lead.memberZip || lead.propertyZip || null,
-        status: 'active',
-        source: lead.source || 'lead-conversion',
-        tags: lead.tags ?? [],
-        notes: combinedNotes,
-      })
-      .returning();
+    // Create client + property and flip lead status atomically
+    const { clientId, propertyId } = await db.transaction(async (tx) => {
+      // Create client from buyer info
+      const [client] = await tx
+        .insert(clients)
+        .values({
+          userId: user.id,
+          firstName,
+          lastName,
+          email: lead.buyerEmail || null,
+          phone: lead.buyerPhone || null,
+          company: lead.buyerCompany || null,
+          address: lead.memberAddress || lead.propertyAddress,
+          city: lead.memberCity || lead.propertyCity || null,
+          state: lead.memberState || lead.propertyState || null,
+          zip: lead.memberZip || lead.propertyZip || null,
+          status: 'active',
+          source: lead.source || 'lead-conversion',
+          tags: lead.tags ?? [],
+          notes: combinedNotes,
+        })
+        .returning();
 
-    if (!client) {
-      logger.error('leads-api', 'Failed to create client');
-      return apiError('Failed to create client');
-    }
-
-    // Create property from property info
-    let propertyId: string | undefined;
-    try {
-      const [property] = await db
+      // Create property from property info
+      const [property] = await tx
         .insert(properties)
         .values({
           userId: user.id,
@@ -109,24 +107,39 @@ export async function POST(
         })
         .returning();
 
-      propertyId = property?.id;
-    } catch (propError) {
-      logger.error('leads-api', 'Failed to create property', propError);
-    }
+      // Update lead status to converted and link to client — conditional on
+      // the lead not already being converted, so concurrent converts can't
+      // double-create. Scoped to the authenticated user.
+      const flipped = await tx
+        .update(leads)
+        .set({
+          status: 'converted',
+          convertedClientId: client.id,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(leads.id, id),
+            eq(leads.userId, user.id),
+            ne(leads.status, 'converted')
+          )
+        )
+        .returning({ id: leads.id });
 
-    // Update lead status to converted and link to client
-    await db
-      .update(leads)
-      .set({
-        status: 'converted',
-        convertedClientId: client.id,
-        updatedAt: new Date(),
-      })
-      .where(eq(leads.id, id));
+      if (flipped.length === 0) {
+        // Roll back the client/property inserts
+        throw new AlreadyConvertedError('Lead has already been converted');
+      }
 
-    return NextResponse.json({ clientId: client.id, propertyId });
+      return { clientId: client.id, propertyId: property?.id };
+    });
+
+    return NextResponse.json({ clientId, propertyId });
   } catch (error) {
     if (error instanceof ApiError) return error.response;
+    if (error instanceof AlreadyConvertedError) {
+      return apiError('Lead has already been converted', 409);
+    }
     logger.error('leads-api', 'POST /api/leads/[id]/convert error', error);
     return apiError('Failed to convert lead');
   }

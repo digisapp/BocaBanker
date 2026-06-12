@@ -7,7 +7,10 @@ import { logger } from '@/lib/logger'
 import { rateLimit } from '@/lib/rate-limit'
 import { db } from '@/db'
 import { chatMessages, chatConversations } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const MAX_MESSAGES = 100
 
 export async function POST(request: Request) {
   try {
@@ -20,7 +23,34 @@ export async function POST(request: Request) {
     }
     const { messages, conversationId, isGuestHandoff } = await request.json()
 
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return apiError('messages must be a non-empty array', 400)
+    }
+    if (messages.length > MAX_MESSAGES) {
+      return apiError(`Too many messages (max ${MAX_MESSAGES})`, 400)
+    }
+
     let activeConversationId = conversationId
+
+    // Verify the caller owns the conversation they're appending to
+    if (activeConversationId) {
+      if (typeof activeConversationId !== 'string' || !UUID_RE.test(activeConversationId)) {
+        return apiError('Invalid conversationId', 400)
+      }
+      const [conversation] = await db
+        .select({ id: chatConversations.id })
+        .from(chatConversations)
+        .where(
+          and(
+            eq(chatConversations.id, activeConversationId),
+            eq(chatConversations.userId, user.id)
+          )
+        )
+        .limit(1)
+      if (!conversation) {
+        return apiError('Conversation not found', 404)
+      }
+    }
 
     // Create a new conversation if none provided
     if (!activeConversationId) {
@@ -106,16 +136,24 @@ export async function POST(request: Request) {
       captureLeadExecutor: createAuthLeadCapture(user.id),
       maxSearchResults: 5,
       searchSources: [{ type: 'web' }, { type: 'news' }],
-      onFinish: async ({ text }) => {
-        if (text) {
+      onFinish: async ({ text, steps }) => {
+        // `text` is only the LAST step's text; with tool use the answer may
+        // span multiple steps, so join all step texts.
+        const content =
+          steps?.map((s) => s.text).filter(Boolean).join('\n\n') || text
+        if (content) {
           await db.insert(chatMessages).values({
             conversationId: activeConversationId,
             role: 'assistant',
-            content: text,
+            content,
           })
         }
       },
     })
+
+    // Drain the stream server-side so onFinish (message persistence) still
+    // runs if the client disconnects mid-generation.
+    void result.consumeStream()
 
     return result.toUIMessageStreamResponse({
       headers: {

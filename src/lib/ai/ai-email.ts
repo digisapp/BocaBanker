@@ -138,15 +138,19 @@ ${content.slice(0, 3000)}`,
     result = {};
   }
 
+  // Unified confidence fallback: a missing/invalid confidence defaults to 0.5,
+  // which is below the auto-send threshold, so it never triggers an auto-reply.
+  const confidence = typeof result.confidence === 'number' ? result.confidence : 0.5;
+
   return {
     category: result.category || 'other',
-    confidence: typeof result.confidence === 'number' ? result.confidence : 0.5,
+    confidence,
     summary: result.summary || 'Email received',
     draftHtml: result.draftHtml || '',
     draftText: result.draftText || '',
     autoSendable:
       AUTO_SEND_CATEGORIES.includes(result.category || '') &&
-      (result.confidence || 0) >= AUTO_SEND_CONFIDENCE_THRESHOLD,
+      confidence >= AUTO_SEND_CONFIDENCE_THRESHOLD,
   };
 }
 
@@ -240,6 +244,8 @@ export async function sendAutoReply(
     userId: string | null;
     clientId: string | null;
     threadId: string | null;
+    /** RFC Message-ID of the inbound email (bare, no angle brackets) for threading headers. */
+    messageId?: string | null;
   },
   classification: EmailClassification,
 ): Promise<boolean> {
@@ -254,7 +260,7 @@ export async function sendAutoReply(
     return false;
   }
 
-  const replySubject = originalEmail.subject.startsWith('Re:')
+  const replySubject = /^re:/i.test(originalEmail.subject)
     ? originalEmail.subject
     : `Re: ${originalEmail.subject}`;
 
@@ -267,11 +273,13 @@ export async function sendAutoReply(
     to: originalEmail.fromEmail,
     subject: replySubject,
     html,
-    userId: originalEmail.userId || '',
+    userId: originalEmail.userId ?? null,
     clientId: originalEmail.clientId || undefined,
     template: 'ai-auto-reply',
     threadId,
     inReplyToId: emailId,
+    inReplyToMessageId: originalEmail.messageId || null,
+    referencesMessageIds: originalEmail.messageId ? [originalEmail.messageId] : null,
   });
 
   if (result.success) {

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { getDefaultAllocation, ASSET_CLASSES, type AllocationBreakdown } from '@/lib/cost-seg/asset-classes'
 
@@ -94,13 +95,15 @@ export function useStudyForm({
 
   const selectedProperty = properties.find((p) => p.id === propertyId)
 
+  // Remember which property we last populated from so renaming the study (or
+  // any other re-render) never re-runs population and clobbers manual edits.
+  const lastPopulatedPropertyIdRef = useRef<string | null>(null)
+
   const populateFromProperty = useCallback((prop: PropertyOption) => {
     if (prop.clientId) {
       setClientId(prop.clientId)
     }
-    if (!studyName) {
-      setStudyName(`Cost Seg Study - ${prop.address}`)
-    }
+    setStudyName((prev) => prev || `Cost Seg Study - ${prop.address}`)
     const purchasePrice = typeof prop.purchasePrice === 'string'
       ? parseFloat(prop.purchasePrice)
       : prop.purchasePrice
@@ -136,13 +139,17 @@ export function useStudyForm({
         }))
       )
     }
-  }, [studyName])
+  }, [])
 
   useEffect(() => {
-    if (selectedProperty) {
+    if (
+      selectedProperty &&
+      selectedProperty.id !== lastPopulatedPropertyIdRef.current
+    ) {
+      lastPopulatedPropertyIdRef.current = selectedProperty.id
       populateFromProperty(selectedProperty)
     }
-  }, [propertyId, selectedProperty, populateFromProperty])
+  }, [selectedProperty, populateFromProperty])
 
   function validateStep(step: number): boolean {
     const newErrors: Record<string, string> = {}
@@ -235,6 +242,11 @@ export function useStudyForm({
       })
     } catch (error) {
       logger.error('StudyForm', 'Error submitting study', error)
+      toast.error(
+        error instanceof Error && error.message
+          ? error.message
+          : 'Failed to save study. Please try again.'
+      )
     } finally {
       setSubmitting(false)
     }

@@ -65,8 +65,12 @@ export const MACRS_15_YEAR: readonly number[] = [
 
 /**
  * 27.5-Year Residential Rental Property (Straight-Line, Mid-Month Convention)
- * Placed in service in Month 1.
- * Years 1-27 get ~3.636%, Year 28 gets the remainder (~1.97%).
+ * Placed in service in Month 1. (IRS Pub 946, Table A-6, month 1 column.)
+ * Year 1: 3.485% (mid-month: 11.5/12 * 3.636%)
+ * Years 2-9: 3.636%
+ * Years 10-26: alternating 3.637% / 3.636% (3.637% starting in year 10)
+ * Year 27: 3.636%, Year 28: 1.970% (remaining basis)
+ * Column sums to exactly 100.000%.
  */
 export const MACRS_27_5_YEAR: readonly number[] = [
   3.485,  // Year 1  (mid-month: 11.5/12 * 3.636 ~ 3.485)
@@ -78,75 +82,76 @@ export const MACRS_27_5_YEAR: readonly number[] = [
   3.636,  // Year 7
   3.636,  // Year 8
   3.636,  // Year 9
-  3.636,  // Year 10
+  3.637,  // Year 10
   3.636,  // Year 11
-  3.636,  // Year 12
+  3.637,  // Year 12
   3.636,  // Year 13
-  3.636,  // Year 14
+  3.637,  // Year 14
   3.636,  // Year 15
-  3.636,  // Year 16
+  3.637,  // Year 16
   3.636,  // Year 17
-  3.636,  // Year 18
+  3.637,  // Year 18
   3.636,  // Year 19
-  3.636,  // Year 20
+  3.637,  // Year 20
   3.636,  // Year 21
-  3.636,  // Year 22
+  3.637,  // Year 22
   3.636,  // Year 23
-  3.636,  // Year 24
+  3.637,  // Year 24
   3.636,  // Year 25
-  3.636,  // Year 26
+  3.637,  // Year 26
   3.636,  // Year 27
   1.970,  // Year 28 (remaining basis)
 ] as const;
 
 /**
  * 39-Year Nonresidential Real Property (Straight-Line, Mid-Month Convention)
- * Placed in service in Month 1.
- * Year 1: 2.4610% (mid-month for first year)
- * Years 2-39: 2.5641%
- * Year 40: 1.0684% (remaining basis)
+ * Placed in service in Month 1. (IRS Pub 946, Table A-7a, month 1 column.)
+ * Year 1: 2.461% (mid-month for first year)
+ * Years 2-39: 2.564%
+ * Year 40: 0.107% (remaining basis)
+ * Column sums to exactly 100.000%.
  */
 export const MACRS_39_YEAR: readonly number[] = [
-  2.4610,  // Year 1  (mid-month adjustment)
-  2.5641,  // Year 2
-  2.5641,  // Year 3
-  2.5641,  // Year 4
-  2.5641,  // Year 5
-  2.5641,  // Year 6
-  2.5641,  // Year 7
-  2.5641,  // Year 8
-  2.5641,  // Year 9
-  2.5641,  // Year 10
-  2.5641,  // Year 11
-  2.5641,  // Year 12
-  2.5641,  // Year 13
-  2.5641,  // Year 14
-  2.5641,  // Year 15
-  2.5641,  // Year 16
-  2.5641,  // Year 17
-  2.5641,  // Year 18
-  2.5641,  // Year 19
-  2.5641,  // Year 20
-  2.5641,  // Year 21
-  2.5641,  // Year 22
-  2.5641,  // Year 23
-  2.5641,  // Year 24
-  2.5641,  // Year 25
-  2.5641,  // Year 26
-  2.5641,  // Year 27
-  2.5641,  // Year 28
-  2.5641,  // Year 29
-  2.5641,  // Year 30
-  2.5641,  // Year 31
-  2.5641,  // Year 32
-  2.5641,  // Year 33
-  2.5641,  // Year 34
-  2.5641,  // Year 35
-  2.5641,  // Year 36
-  2.5641,  // Year 37
-  2.5641,  // Year 38
-  2.5641,  // Year 39
-  1.0684,  // Year 40 (remaining basis)
+  2.461,  // Year 1  (mid-month adjustment)
+  2.564,  // Year 2
+  2.564,  // Year 3
+  2.564,  // Year 4
+  2.564,  // Year 5
+  2.564,  // Year 6
+  2.564,  // Year 7
+  2.564,  // Year 8
+  2.564,  // Year 9
+  2.564,  // Year 10
+  2.564,  // Year 11
+  2.564,  // Year 12
+  2.564,  // Year 13
+  2.564,  // Year 14
+  2.564,  // Year 15
+  2.564,  // Year 16
+  2.564,  // Year 17
+  2.564,  // Year 18
+  2.564,  // Year 19
+  2.564,  // Year 20
+  2.564,  // Year 21
+  2.564,  // Year 22
+  2.564,  // Year 23
+  2.564,  // Year 24
+  2.564,  // Year 25
+  2.564,  // Year 26
+  2.564,  // Year 27
+  2.564,  // Year 28
+  2.564,  // Year 29
+  2.564,  // Year 30
+  2.564,  // Year 31
+  2.564,  // Year 32
+  2.564,  // Year 33
+  2.564,  // Year 34
+  2.564,  // Year 35
+  2.564,  // Year 36
+  2.564,  // Year 37
+  2.564,  // Year 38
+  2.564,  // Year 39
+  0.107,  // Year 40 (remaining basis)
 ] as const;
 
 /**

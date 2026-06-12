@@ -188,7 +188,7 @@ export function LeadImportModal({
   const handleFileDrop = useCallback(
     async (droppedFile: File) => {
       setError(null)
-      if (!droppedFile.name.endsWith('.csv')) {
+      if (!droppedFile.name.toLowerCase().endsWith('.csv')) {
         setError('Please upload a .csv file.')
         return
       }
@@ -248,6 +248,8 @@ export function LeadImportModal({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const selectedFile = e.target.files?.[0]
       if (selectedFile) handleFileDrop(selectedFile)
+      // Clear the value so selecting the same file again re-fires onChange
+      e.target.value = ''
     },
     [handleFileDrop]
   )

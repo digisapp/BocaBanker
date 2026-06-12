@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { useRouter } from 'next/navigation'
 import { Plus, Upload, Users, Loader2 } from 'lucide-react'
@@ -33,7 +34,7 @@ export default function ClientsPage() {
     return () => clearTimeout(timer)
   }, [search])
 
-  const fetchClients = useCallback(async () => {
+  const fetchClients = useCallback(async (signal?: AbortSignal) => {
     setLoading(true)
     try {
       const params = new URLSearchParams({
@@ -42,21 +43,26 @@ export default function ClientsPage() {
         ...(statusFilter !== 'all' && { status: statusFilter }),
       })
 
-      const res = await fetch(`/api/clients?${params}`)
+      const res = await fetch(`/api/clients?${params}`, { signal })
       if (!res.ok) throw new Error('Failed to fetch')
 
       const data = await res.json()
       setClients(data.clients)
       setTotal(data.total)
+      setLoading(false)
     } catch (error) {
+      // An aborted request means a newer one is in flight; leave its state alone
+      if (signal?.aborted) return
       logger.error('clients-page', 'Failed to fetch clients', error)
-    } finally {
+      toast.error('Failed to load clients')
       setLoading(false)
     }
   }, [debouncedSearch, statusFilter])
 
   useEffect(() => {
-    fetchClients()
+    const controller = new AbortController()
+    fetchClients(controller.signal)
+    return () => controller.abort()
   }, [fetchClients])
 
   const handleDelete = async (id: string) => {
@@ -68,6 +74,7 @@ export default function ClientsPage() {
       fetchClients()
     } catch (error) {
       logger.error('clients-page', 'Failed to delete client', error)
+      toast.error('Failed to delete client')
     }
   }
 
