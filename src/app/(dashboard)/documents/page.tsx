@@ -62,6 +62,8 @@ function fileTypeLabel(mime: string | null): string {
   return map[mime] ?? mime.split('/')[1]?.toUpperCase() ?? '--';
 }
 
+const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
+
 export default function DocumentsPage() {
   const { user } = useAuth();
   const supabase = createClient();
@@ -71,21 +73,26 @@ export default function DocumentsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
+  // Key on the id: token refreshes emit a new User object and would refetch
+  const userId = user?.id;
   const fetchDocuments = useCallback(async () => {
-    if (!user) return;
+    if (!userId) return;
     setLoading(true);
     try {
       const res = await fetch('/api/documents');
       if (res.ok) {
         const data = await res.json();
         setDocs(data.documents || []);
+      } else {
+        toast.error('Failed to load documents');
       }
     } catch (err) {
       logger.error('documents-page', 'Failed to fetch documents', err);
+      toast.error('Failed to load documents');
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
     fetchDocuments();
@@ -98,6 +105,12 @@ export default function DocumentsPage() {
     let successCount = 0;
 
     for (const file of Array.from(files)) {
+      // Reject oversize files before uploading — the API refuses >50 MB and
+      // would otherwise leave the uploaded object orphaned in storage
+      if (file.size > MAX_UPLOAD_BYTES) {
+        toast.error(`${file.name} exceeds the 50 MB limit`);
+        continue;
+      }
       const filePath = `${user.id}/${Date.now()}-${file.name}`;
 
       try {
@@ -125,7 +138,11 @@ export default function DocumentsPage() {
         if (res.ok) {
           successCount++;
         } else {
-          logger.error('documents-page', 'Failed to save document record');
+          const data = await res.json().catch(() => ({}));
+          logger.error('documents-page', 'Failed to save document record', data);
+          toast.error(data.error || `Failed to save ${file.name}`);
+          // Don't leave an untracked file behind in storage
+          await supabase.storage.from('documents').remove([filePath]);
         }
       } catch (err) {
         logger.error('documents-page', 'Upload failed', err);
@@ -298,6 +315,7 @@ export default function DocumentsPage() {
                         onClick={() => handleDownload(doc)}
                         className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                         title="Download"
+                  aria-label={`Download ${doc.fileName}`}
                       >
                         <Download className="h-4 w-4" />
                       </Button>
@@ -308,6 +326,7 @@ export default function DocumentsPage() {
                         disabled={deletingId === doc.id}
                         className="text-red-400 hover:text-red-600 hover:bg-red-50"
                         title="Delete"
+                  aria-label={`Delete ${doc.fileName}`}
                       >
                         {deletingId === doc.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />

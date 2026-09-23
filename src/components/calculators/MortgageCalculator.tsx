@@ -35,6 +35,7 @@ import {
   type MortgageResult,
 } from '@/lib/mortgage/calculations';
 import { formatCurrency } from '@/lib/utils';
+import { formatCurrencyCents } from '@/lib/mortgage/format';
 
 const LOAN_TERMS = [
   { value: '10', label: '10 Years' },
@@ -203,14 +204,14 @@ export default function MortgageCalculator({ initialValues }: MortgageCalculator
                 <DollarSign className="h-4 w-4 text-amber-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Monthly P&I</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(result.monthlyPI)}</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrencyCents(result.monthlyPI)}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
                 <Banknote className="h-4 w-4 text-blue-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Monthly Total</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(result.monthlyTotal)}</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrencyCents(result.monthlyTotal)}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">

@@ -168,3 +168,97 @@ export function getDefaultAllocation(
 
   return breakdown;
 }
+
+/**
+ * Allocation when the property's actual building (depreciable) value is known.
+ *
+ * getDefaultAllocation() assumes land is a fixed 20% of the purchase price.
+ * When the property record carries its own building/land split, the
+ * reclassification percentages must be applied to the building value
+ * instead — otherwise the asset bases won't sum to the building value that
+ * the straight-line baseline uses, and the "savings" include a spurious
+ * basis difference rather than just the timing benefit.
+ *
+ * The depreciable classes keep their typical relative proportions, scaled to
+ * sum exactly (to the cent) to buildingValue; the building class absorbs the
+ * rounding remainder. Land is landValue when provided, otherwise
+ * purchasePrice - buildingValue (floored at 0).
+ *
+ * @throws Error if the property type is not recognized
+ */
+export function getAllocationFromBuildingValue(
+  propertyType: string,
+  buildingValue: number,
+  landValue?: number | null,
+  purchasePrice?: number | null
+): AllocationBreakdown[] {
+  const normalizedType = propertyType.toLowerCase() as CostSegPropertyType;
+  const percentages = TYPICAL_RECLASSIFICATION[normalizedType];
+  if (!percentages) {
+    throw new Error(
+      `Unknown property type: "${propertyType}". Valid types are: ${Object.keys(TYPICAL_RECLASSIFICATION).join(', ')}`
+    );
+  }
+
+  const depreciableClasses = ASSET_CLASSES.filter(
+    (ac) => ac.recoveryPeriod > 0 && (percentages[ac.category] ?? 0) > 0
+  );
+  const depreciablePctTotal = depreciableClasses.reduce(
+    (sum, ac) => sum + percentages[ac.category],
+    0
+  );
+
+  const land =
+    landValue != null && Number.isFinite(landValue) && landValue > 0
+      ? landValue
+      : purchasePrice != null && Number.isFinite(purchasePrice)
+        ? Math.max(0, purchasePrice - buildingValue)
+        : 0;
+  const total = buildingValue + land;
+
+  const breakdown: AllocationBreakdown[] = [];
+  const buildingCents = Math.round(buildingValue * 100);
+  let allocatedCents = 0;
+  // Building class (27.5/39) absorbs the rounding remainder
+  const remainderClass = depreciableClasses.find((ac) => ac.recoveryPeriod >= 27.5);
+
+  for (const ac of depreciableClasses) {
+    if (ac === remainderClass) continue;
+    const cents = Math.round((buildingCents * percentages[ac.category]) / depreciablePctTotal);
+    allocatedCents += cents;
+    breakdown.push({
+      category: ac.category,
+      description: ac.description,
+      amount: cents / 100,
+      percentage: 0,
+      recoveryPeriod: ac.recoveryPeriod,
+    });
+  }
+  if (remainderClass) {
+    breakdown.push({
+      category: remainderClass.category,
+      description: remainderClass.description,
+      amount: (buildingCents - allocatedCents) / 100,
+      percentage: 0,
+      recoveryPeriod: remainderClass.recoveryPeriod,
+    });
+  }
+  if (land > 0) {
+    const landClass = ASSET_CLASSES.find((ac) => ac.category === 'land')!;
+    breakdown.push({
+      category: landClass.category,
+      description: landClass.description,
+      amount: Math.round(land * 100) / 100,
+      percentage: 0,
+      recoveryPeriod: 0,
+    });
+  }
+
+  // Keep ASSET_CLASSES ordering and fill in % of total property value
+  const order = ASSET_CLASSES.map((ac) => ac.category);
+  breakdown.sort((a, b) => order.indexOf(a.category) - order.indexOf(b.category));
+  for (const item of breakdown) {
+    item.percentage = total > 0 ? Math.round((item.amount / total) * 10000) / 100 : 0;
+  }
+  return breakdown;
+}

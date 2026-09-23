@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Star, ChevronDown, Loader2, Send, CheckCircle2, MapPin, Clock, BadgeCheck } from 'lucide-react'
 import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
@@ -29,11 +29,14 @@ function Stars({ rating, size = 16 }: { rating: number; size?: number }) {
 function StarInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [hover, setHover] = useState(0)
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1" role="radiogroup" aria-label="Your rating">
       {[1, 2, 3, 4, 5].map((i) => (
         <button
           key={i}
           type="button"
+          role="radio"
+          aria-checked={value === i}
+          aria-label={`${i} star${i > 1 ? 's' : ''}`}
           onMouseEnter={() => setHover(i)}
           onMouseLeave={() => setHover(0)}
           onClick={() => onChange(i)}
@@ -165,7 +168,15 @@ export default function ReviewsPage() {
   const [submitted, setSubmitted] = useState(false)
   const [formError, setFormError] = useState('')
 
+  // Abort any in-flight request when a new one starts, so a slow "load more"
+  // for the previous rating filter can't append to the new filter's list.
+  const inFlight = useRef<AbortController | null>(null)
+
   const fetchReviews = useCallback(async (p: number, rating: number | null) => {
+    inFlight.current?.abort()
+    const controller = new AbortController()
+    inFlight.current = controller
+
     if (p === 1) {
       setPage(1)
       setReviews([])
@@ -173,21 +184,27 @@ export default function ReviewsPage() {
     setLoading(true)
     const params = new URLSearchParams({ page: String(p), limit: '12' })
     if (rating) params.set('rating', String(rating))
-    const res = await fetch(`/api/reviews?${params}`)
-    if (res.ok) {
-      const data = await res.json()
-      setReviews((prev) => (p === 1 ? data.reviews : [...prev, ...data.reviews]))
-      setTotal(data.total)
-      setAverageRating(data.averageRating)
-      setTotalReviews(data.totalReviews)
-      setRatingBreakdown(data.ratingBreakdown)
+    try {
+      const res = await fetch(`/api/reviews?${params}`, { signal: controller.signal })
+      if (res.ok) {
+        const data = await res.json()
+        if (controller.signal.aborted) return
+        setReviews((prev) => (p === 1 ? data.reviews : [...prev, ...data.reviews]))
+        setTotal(data.total)
+        setAverageRating(data.averageRating)
+        setTotalReviews(data.totalReviews)
+        setRatingBreakdown(data.ratingBreakdown)
+      }
+    } catch {
+      // Aborted or network failure — leave existing reviews in place
     }
-    setLoading(false)
+    if (!controller.signal.aborted) setLoading(false)
   }, [])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching resets page on filter change
     fetchReviews(1, ratingFilter)
+    return () => inFlight.current?.abort()
   }, [ratingFilter, fetchReviews])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -221,7 +238,7 @@ export default function ReviewsPage() {
       if (res.ok) {
         setSubmitted(true)
       } else {
-        const data = await res.json()
+        const data = await res.json().catch(() => ({}))
         setFormError(data.error || 'Failed to submit review')
       }
     } catch {
@@ -367,10 +384,11 @@ export default function ReviewsPage() {
                   {/* Name + Email */}
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label htmlFor="review-your-name" className="text-sm font-medium text-gray-700 mb-1 block">
                         Your Name *
                       </label>
                       <Input
+                        id="review-your-name"
                         value={formData.reviewer_name}
                         onChange={(e) =>
                           setFormData((prev) => ({
@@ -382,10 +400,11 @@ export default function ReviewsPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label htmlFor="review-email" className="text-sm font-medium text-gray-700 mb-1 block">
                         Email (optional)
                       </label>
                       <Input
+                        id="review-email"
                         type="email"
                         value={formData.reviewer_email}
                         onChange={(e) =>
@@ -402,10 +421,11 @@ export default function ReviewsPage() {
                   {/* City + State */}
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label htmlFor="review-city" className="text-sm font-medium text-gray-700 mb-1 block">
                         City (optional)
                       </label>
                       <Input
+                        id="review-city"
                         value={formData.reviewer_city}
                         onChange={(e) =>
                           setFormData((prev) => ({
@@ -417,10 +437,11 @@ export default function ReviewsPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label htmlFor="review-state" className="text-sm font-medium text-gray-700 mb-1 block">
                         State (optional)
                       </label>
                       <Input
+                        id="review-state"
                         value={formData.reviewer_state}
                         onChange={(e) =>
                           setFormData((prev) => ({
@@ -436,10 +457,11 @@ export default function ReviewsPage() {
 
                   {/* Title */}
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    <label htmlFor="review-review-title" className="text-sm font-medium text-gray-700 mb-1 block">
                       Review Title *
                     </label>
                     <Input
+                      id="review-review-title"
                       value={formData.title}
                       onChange={(e) =>
                         setFormData((prev) => ({
@@ -453,10 +475,11 @@ export default function ReviewsPage() {
 
                   {/* Body */}
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    <label htmlFor="review-your-review" className="text-sm font-medium text-gray-700 mb-1 block">
                       Your Review *
                     </label>
                     <Textarea
+                      id="review-your-review"
                       value={formData.body}
                       onChange={(e) =>
                         setFormData((prev) => ({
@@ -476,10 +499,11 @@ export default function ReviewsPage() {
                     </p>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="text-xs text-gray-500 mb-1 block">
+                        <label htmlFor="review-loan-type" className="text-xs text-gray-500 mb-1 block">
                           Loan Type
                         </label>
                         <select
+                          id="review-loan-type"
                           value={formData.loan_type}
                           onChange={(e) =>
                             setFormData((prev) => ({
@@ -499,10 +523,11 @@ export default function ReviewsPage() {
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs text-gray-500 mb-1 block">
+                        <label htmlFor="review-loan-term" className="text-xs text-gray-500 mb-1 block">
                           Loan Term
                         </label>
                         <select
+                          id="review-loan-term"
                           value={formData.loan_term}
                           onChange={(e) =>
                             setFormData((prev) => ({

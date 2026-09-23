@@ -5,6 +5,12 @@ import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { chatConversations, chatMessages } from '@/db/schema';
 import { eq, desc, and } from 'drizzle-orm';
+import { isUuid } from '@/lib/email/ids';
+
+/** Most recent conversations shown in the sidebar. */
+const MAX_CONVERSATIONS = 100;
+/** Most recent messages loaded when opening a conversation. */
+const MAX_HISTORY_MESSAGES = 200;
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,6 +21,9 @@ export async function GET(request: NextRequest) {
 
     // If a specific conversationId is provided, return its messages
     if (conversationId) {
+      if (!isUuid(conversationId)) {
+        return apiError('Conversation not found', 404);
+      }
       // Verify the conversation belongs to the user
       const [conversation] = await db
         .select()
@@ -30,21 +39,34 @@ export async function GET(request: NextRequest) {
         return apiError('Conversation not found', 404);
       }
 
-      const messages = await db
-        .select()
+      // Bounded: newest N messages, returned in chronological order.
+      const recent = await db
+        .select({
+          id: chatMessages.id,
+          role: chatMessages.role,
+          content: chatMessages.content,
+          createdAt: chatMessages.createdAt,
+        })
         .from(chatMessages)
         .where(eq(chatMessages.conversationId, conversationId))
-        .orderBy(chatMessages.createdAt);
+        .orderBy(desc(chatMessages.createdAt), desc(chatMessages.id))
+        .limit(MAX_HISTORY_MESSAGES);
+      const messages = recent.reverse();
 
       return NextResponse.json({ conversation, messages });
     }
 
     // Otherwise return all conversations for the user
     const conversations = await db
-      .select()
+      .select({
+        id: chatConversations.id,
+        title: chatConversations.title,
+        updatedAt: chatConversations.updatedAt,
+      })
       .from(chatConversations)
       .where(eq(chatConversations.userId, user.id))
-      .orderBy(desc(chatConversations.updatedAt));
+      .orderBy(desc(chatConversations.updatedAt))
+      .limit(MAX_CONVERSATIONS);
 
     return NextResponse.json({ conversations });
   } catch (error) {
@@ -59,7 +81,7 @@ export async function DELETE(request: Request) {
     const user = await requireAuth();
     const { conversationId } = await request.json();
 
-    if (!conversationId) {
+    if (!isUuid(conversationId)) {
       return apiError('conversationId is required', 400);
     }
 

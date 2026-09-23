@@ -43,6 +43,7 @@ import {
   type CombinedAnalysisResult,
 } from '@/lib/mortgage/calculations';
 import { formatCurrency } from '@/lib/utils';
+import { formatCurrencyCents } from '@/lib/mortgage/format';
 
 const PROPERTY_TYPES = [
   { value: 'commercial', label: 'Commercial' },
@@ -99,10 +100,14 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
     const nt = parseInt(newTermYears);
     const cc = parseFloat(closingCosts) || 0;
 
-    if (isNaN(pv) || pv <= 0 || isNaN(cb) || cb <= 0 || isNaN(cr) || isNaN(nr) || isNaN(ry)) return;
+    if (isNaN(pv) || pv <= 0 || isNaN(cb) || cb <= 0 || isNaN(cr) || isNaN(nr) || isNaN(ry) || ry <= 0) return;
 
+    // Use Number.isFinite, not `||`: a deliberate 0% bonus (or tax) rate must
+    // not silently fall back to a default.
     const res = calculateCombinedAnalysis(
-      pv, propertyType, tr || 37, br || 60,
+      pv, propertyType,
+      Number.isFinite(tr) ? tr : 37,
+      Number.isFinite(br) ? Math.min(100, Math.max(0, br)) : 100,
       cb, cr, ry, nr, nt, cc
     );
     setResult(res);
@@ -113,7 +118,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
     setPropertyValue('');
     setPropertyType('commercial');
     setTaxRate('37');
-    setBonusRate('60');
+    setBonusRate('100');
     setCurrentBalance('');
     setCurrentRate('');
     setRemainingYears('');
@@ -346,11 +351,11 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
               <div className="space-y-3">
                 <div>
                   <span className="text-xs text-gray-500">Monthly Savings</span>
-                  <p className="text-xl font-bold text-blue-600">{formatCurrency(result.monthlySavings)}</p>
+                  <p className="text-xl font-bold text-blue-600">{formatCurrencyCents(result.monthlySavings)}</p>
                 </div>
                 <div>
                   <span className="text-xs text-gray-500">Break-Even</span>
-                  <p className="text-lg font-semibold text-gray-900">{result.refiBreakEvenMonths} months</p>
+                  <p className="text-lg font-semibold text-gray-900">{result.monthlySavings > 0 ? `${result.refiBreakEvenMonths} months` : 'N/A'}</p>
                 </div>
                 <div>
                   <span className="text-xs text-gray-500">Total Refi Savings</span>
@@ -391,28 +396,28 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
                 <Banknote className="h-4 w-4 text-red-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Current Payment</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(result.currentMonthlyPayment)}</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrencyCents(result.currentMonthlyPayment)}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
                 <DollarSign className="h-4 w-4 text-emerald-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">New Payment</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(result.newMonthlyPayment)}</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrencyCents(result.newMonthlyPayment)}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
                 <TrendingUp className="h-4 w-4 text-amber-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Monthly Savings</span>
               </div>
-              <p className="text-2xl font-bold text-emerald-600">{formatCurrency(result.monthlySavings)}</p>
+              <p className="text-2xl font-bold text-emerald-600">{formatCurrencyCents(result.monthlySavings)}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
                 <Clock className="h-4 w-4 text-blue-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Break-Even</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{result.refiBreakEvenMonths} mo</p>
+              <p className="text-2xl font-bold text-gray-900">{result.monthlySavings > 0 ? `${result.refiBreakEvenMonths} mo` : 'N/A'}</p>
             </div>
           </div>
 

@@ -10,4 +10,5 @@ export const chatMessages = pgTable('chat_messages', {
   createdAt: timestamp('created_at').default(sql`now()`),
 }, (table) => [
   index('chat_messages_conversation_id_idx').on(table.conversationId),
+  index('chat_messages_conversation_id_created_at_idx').on(table.conversationId, table.createdAt),
 ]);

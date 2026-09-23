@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useRef } from 'react'
 import { logger } from '@/lib/logger'
-import Papa from 'papaparse'
 import {
   Upload,
   FileSpreadsheet,
@@ -195,13 +194,23 @@ export function LeadImportModal({
 
       setFile(droppedFile)
 
-      Papa.parse(droppedFile, {
+      // Load papaparse only when a file is actually picked, keeping it out of
+      // the leads page's initial bundle.
+      let Papa: typeof import('papaparse')
+      try {
+        Papa = (await import('papaparse')).default
+      } catch {
+        setError('Failed to load the CSV parser. Please try again.')
+        return
+      }
+
+      Papa.parse<Record<string, string>>(droppedFile, {
         header: true,
         skipEmptyLines: true,
         transformHeader: (header: string) => header.trim(),
         complete: (results) => {
           const headers = results.meta.fields ?? []
-          const rows = results.data as Record<string, string>[]
+          const rows = results.data
 
           if (headers.length === 0 || rows.length === 0) {
             setError('CSV file is empty or has no data rows.')

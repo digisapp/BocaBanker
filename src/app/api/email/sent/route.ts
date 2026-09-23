@@ -5,6 +5,10 @@ import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { emails, clients } from '@/db/schema';
 import { eq, desc, and, count, ilike, or } from 'drizzle-orm';
+import { escapeLike } from '@/lib/email/ids';
+
+const SENT_STATUSES = ['sent', 'delivered', 'bounced', 'failed', 'replied'] as const;
+type SentStatus = (typeof SENT_STATUSES)[number];
 
 /**
  * GET /api/email/sent
@@ -20,7 +24,7 @@ export async function GET(request: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '30') || 30));
     const statusFilter = searchParams.get('status');
-    const search = searchParams.get('search')?.trim();
+    const search = searchParams.get('search')?.trim().slice(0, 200);
 
     const offset = (page - 1) * limit;
 
@@ -30,23 +34,28 @@ export async function GET(request: NextRequest) {
     ];
 
     if (statusFilter) {
-      conditions.push(eq(emails.status, statusFilter as 'sent' | 'delivered' | 'bounced' | 'failed' | 'replied'));
+      // An unknown value would fail the enum cast in Postgres (500)
+      if (!(SENT_STATUSES as readonly string[]).includes(statusFilter)) {
+        return apiError('Invalid status filter', 400);
+      }
+      conditions.push(eq(emails.status, statusFilter as SentStatus));
     }
 
     if (search) {
+      const pattern = `%${escapeLike(search)}%`;
       conditions.push(
         or(
-          ilike(emails.toEmail, `%${search}%`),
-          ilike(emails.subject, `%${search}%`),
-          ilike(clients.firstName, `%${search}%`),
-          ilike(clients.lastName, `%${search}%`),
+          ilike(emails.toEmail, pattern),
+          ilike(emails.subject, pattern),
+          ilike(clients.firstName, pattern),
+          ilike(clients.lastName, pattern),
         )!
       );
     }
 
     const whereClause = and(...conditions);
 
-    const results = await db
+    const [results, [totalResult]] = await Promise.all([db
       .select({
         id: emails.id,
         toEmail: emails.toEmail,
@@ -65,13 +74,13 @@ export async function GET(request: NextRequest) {
       .where(whereClause)
       .orderBy(desc(emails.createdAt))
       .limit(limit)
-      .offset(offset);
-
-    const [totalResult] = await db
+      .offset(offset),
+    db
       .select({ total: count() })
       .from(emails)
       .leftJoin(clients, eq(emails.clientId, clients.id))
-      .where(whereClause);
+      .where(whereClause),
+    ]);
 
     return NextResponse.json({
       emails: results,

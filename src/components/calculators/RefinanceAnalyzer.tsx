@@ -36,6 +36,7 @@ import {
   type RefinanceResult,
 } from '@/lib/mortgage/calculations';
 import { formatCurrency } from '@/lib/utils';
+import { formatCurrencyCents } from '@/lib/mortgage/format';
 
 const TERM_OPTIONS = [
   { value: '10', label: '10 Years' },
@@ -66,7 +67,13 @@ export default function RefinanceAnalyzer({ initialValues }: RefinanceAnalyzerPr
     const remYears = parseInt(remainingYears);
     const nRate = parseFloat(newRate);
     const nTerm = parseInt(newTermYears);
-    if (isNaN(balance) || balance <= 0 || isNaN(curRate) || isNaN(nRate)) return;
+    if (
+      isNaN(balance) || balance <= 0 ||
+      isNaN(curRate) || curRate < 0 ||
+      isNaN(nRate) || nRate < 0 ||
+      isNaN(remYears) || remYears <= 0 ||
+      isNaN(nTerm) || nTerm <= 0
+    ) return;
 
     const res = calculateRefinanceAnalysis(
       balance,
@@ -255,10 +262,10 @@ export default function RefinanceAnalyzer({ initialValues }: RefinanceAnalyzerPr
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Monthly Savings</span>
               </div>
               <p className={`text-2xl font-bold ${result.monthlySavings > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                {result.monthlySavings > 0 ? '+' : ''}{formatCurrency(result.monthlySavings)}
+                {result.monthlySavings > 0 ? '+' : ''}{formatCurrencyCents(result.monthlySavings)}
               </p>
               <p className="text-xs text-gray-400 mt-0.5">
-                {formatCurrency(result.currentMonthlyPayment)} → {formatCurrency(result.newMonthlyPayment)}
+                {formatCurrencyCents(result.currentMonthlyPayment)} → {formatCurrencyCents(result.newMonthlyPayment)}
               </p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -282,7 +289,7 @@ export default function RefinanceAnalyzer({ initialValues }: RefinanceAnalyzerPr
                 {formatCurrency(result.totalSavingsOverTerm)}
               </p>
               <p className="text-xs text-gray-400 mt-0.5">
-                After {formatCurrency(result.closingCosts)} closing costs
+                Life of loans, after {formatCurrency(result.closingCosts)} closing costs
               </p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -309,8 +316,12 @@ export default function RefinanceAnalyzer({ initialValues }: RefinanceAnalyzerPr
               result.totalSavingsOverTerm > 0 ? 'text-emerald-700' : 'text-red-700'
             }`}>
               {result.totalSavingsOverTerm > 0
-                ? `Refinancing saves you ${formatCurrency(result.monthlySavings)}/month. You break even in ${result.breakEvenMonths} months and save ${formatCurrency(result.totalSavingsOverTerm)} total over the loan term.`
-                : `Refinancing at this rate would not save money. The closing costs exceed the payment savings over the remaining term.`
+                ? result.monthlySavings > 0
+                  ? `Refinancing saves you ${formatCurrencyCents(result.monthlySavings)}/month. You break even in ${result.breakEvenMonths} months and save ${formatCurrency(result.totalSavingsOverTerm)} in total payments over the life of the loans, after closing costs.`
+                  : `Your payment rises by ${formatCurrencyCents(-result.monthlySavings)}/month, but the shorter term saves ${formatCurrency(result.totalSavingsOverTerm)} in total payments over the life of the loans, after closing costs.`
+                : result.monthlySavings > 0
+                  ? `Lower payment (${formatCurrencyCents(result.monthlySavings)}/month), but total payments on the new loan plus closing costs exceed what remains on the current loan by ${formatCurrency(-result.totalSavingsOverTerm)} (the longer term adds payments).`
+                  : `Refinancing at this rate would not save money. Total payments plus closing costs exceed what remains on the current loan.`
               }
             </p>
           </div>
@@ -410,8 +421,10 @@ export default function RefinanceAnalyzer({ initialValues }: RefinanceAnalyzerPr
                       <TableCell className="text-gray-900 text-right">
                         {formatCurrency(item.newPayment)}
                       </TableCell>
-                      <TableCell className="text-emerald-600 text-right font-medium">
-                        +{formatCurrency(item.annualSavings)}
+                      <TableCell className={`text-right font-medium ${
+                        item.annualSavings >= 0 ? 'text-emerald-600' : 'text-red-500'
+                      }`}>
+                        {item.annualSavings > 0 ? '+' : ''}{formatCurrency(item.annualSavings)}
                       </TableCell>
                       <TableCell className={`text-right font-medium ${
                         item.cumulativeSavings >= 0 ? 'text-emerald-600' : 'text-red-500'

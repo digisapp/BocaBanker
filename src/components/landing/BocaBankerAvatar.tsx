@@ -3,9 +3,15 @@ import Image from 'next/image'
 interface AvatarProps {
   className?: string
   size?: number
+  /**
+   * Preload eagerly. Only set for an above-the-fold instance — marking every
+   * avatar (chat bubbles, footer, sidebar) as priority emitted a preload per
+   * instance/size and competed with the real LCP resources.
+   */
+  priority?: boolean
 }
 
-export default function BocaBankerAvatar({ className, size = 200 }: AvatarProps) {
+export default function BocaBankerAvatar({ className, size = 200, priority = false }: AvatarProps) {
   const ring = Math.max(2, Math.round(size * 0.04))
 
   return (
@@ -34,7 +40,7 @@ export default function BocaBankerAvatar({ className, size = 200 }: AvatarProps)
           width={size}
           height={size}
           className="rounded-full object-cover w-full h-full"
-          priority
+          priority={priority}
         />
       </div>
     </div>

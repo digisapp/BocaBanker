@@ -1,5 +1,6 @@
 import { requireAuth, ApiError } from '@/lib/api/auth'
 import { apiError } from '@/lib/api/response'
+import { requireUuid } from '@/lib/api/params'
 import { db } from '@/db'
 import { costSegStudies, properties, clients } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
@@ -15,13 +16,24 @@ const CATEGORY_LABELS: Record<string, string> = {
   land: 'Land (Non-depreciable)',
 }
 
+// The report is served as a downloadable .html file, so every user-supplied
+// string must be escaped or it becomes stored HTML/script injection.
+function esc(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
     const user = await requireAuth()
+    const id = requireUuid((await params).id, 'Study not found')
 
     // Fetch study with joins
     const [study] = await db
@@ -50,8 +62,8 @@ export async function GET(
         createdAt: costSegStudies.createdAt,
       })
       .from(costSegStudies)
-      .leftJoin(properties, eq(costSegStudies.propertyId, properties.id))
-      .leftJoin(clients, eq(costSegStudies.clientId, clients.id))
+      .leftJoin(properties, and(eq(costSegStudies.propertyId, properties.id), eq(properties.userId, user.id)))
+      .leftJoin(clients, and(eq(costSegStudies.clientId, clients.id), eq(clients.userId, user.id)))
       .where(and(eq(costSegStudies.id, id), eq(costSegStudies.userId, user.id)))
       .limit(1)
 
@@ -82,7 +94,7 @@ export async function GET(
 
     const assetRowsHtml = results.assetBreakdown.map(asset => `
       <tr>
-        <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6">${CATEGORY_LABELS[asset.category] || asset.category}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6">${esc(CATEGORY_LABELS[asset.category] || asset.category)}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;text-align:right">${asset.recoveryPeriod === 0 ? 'N/A' : `${asset.recoveryPeriod} years`}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;text-align:right;font-weight:600">${formatCurrency(asset.amount)}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;text-align:right">${asset.percentage.toFixed(1)}%</td>
@@ -112,7 +124,7 @@ export async function GET(
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Cost Segregation Study - ${study.studyName}</title>
+  <title>Cost Segregation Study - ${esc(study.studyName)}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1e293b; line-height: 1.5; padding: 40px; max-width: 900px; margin: 0 auto; }
@@ -148,16 +160,16 @@ export async function GET(
 </head>
 <body>
   <h1>Cost Segregation Study Report</h1>
-  <p class="subtitle">${study.studyName}</p>
+  <p class="subtitle">${esc(study.studyName)}</p>
   <p class="meta">Prepared: ${now} | Study Year: ${study.studyYear}</p>
 
   <div class="card">
     <h2 style="margin-top:0">Property Information</h2>
     <div class="grid2">
-      <div><span class="stat-label">Address</span><p class="stat-value">${study.propertyAddress || '-'}</p></div>
-      <div><span class="stat-label">Property Type</span><p class="stat-value" style="text-transform:capitalize">${study.propertyType?.replace(/-/g, ' ') || '-'}</p></div>
+      <div><span class="stat-label">Address</span><p class="stat-value">${esc(study.propertyAddress || '-')}</p></div>
+      <div><span class="stat-label">Property Type</span><p class="stat-value" style="text-transform:capitalize">${esc(study.propertyType?.replace(/-/g, ' ') || '-')}</p></div>
       <div><span class="stat-label">Purchase Price</span><p class="stat-value">${formatCurrency(study.purchasePrice)}</p></div>
-      <div><span class="stat-label">Client</span><p class="stat-value">${clientName || '-'}${study.clientCompany ? ` (${study.clientCompany})` : ''}</p></div>
+      <div><span class="stat-label">Client</span><p class="stat-value">${esc(clientName || '-')}${study.clientCompany ? ` (${esc(study.clientCompany)})` : ''}</p></div>
       <div><span class="stat-label">Building Value</span><p class="stat-value">${formatCurrency(study.buildingValue)}</p></div>
       <div><span class="stat-label">Land Value</span><p class="stat-value">${formatCurrency(study.landValue)}</p></div>
     </div>
@@ -166,9 +178,9 @@ export async function GET(
   <div class="card">
     <h2 style="margin-top:0">Tax Parameters</h2>
     <div class="grid3">
-      <div><span class="stat-label">Marginal Tax Rate</span><p class="stat-value-lg">${study.taxRate}%</p></div>
-      <div><span class="stat-label">Discount Rate</span><p class="stat-value-lg">${study.discountRate || '5'}%</p></div>
-      <div><span class="stat-label">Bonus Depreciation</span><p class="stat-value-lg">${study.bonusDepreciationRate || '100'}%</p></div>
+      <div><span class="stat-label">Marginal Tax Rate</span><p class="stat-value-lg">${esc(study.taxRate)}%</p></div>
+      <div><span class="stat-label">Discount Rate</span><p class="stat-value-lg">${esc(study.discountRate || '5')}%</p></div>
+      <div><span class="stat-label">Bonus Depreciation</span><p class="stat-value-lg">${esc(study.bonusDepreciationRate || '100')}%</p></div>
     </div>
   </div>
 

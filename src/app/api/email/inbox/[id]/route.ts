@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { emails, clients } from '@/db/schema';
 import { eq, and, desc, or, isNull } from 'drizzle-orm';
+import { isUuid } from '@/lib/email/ids';
 
 /**
  * These routes are admin-only (requireAdmin). The admin can see emails
@@ -56,6 +57,7 @@ export async function GET(
   try {
     const user = await requireAdmin();
     const { id } = await params;
+    if (!isUuid(id)) return apiError('Email not found', 404);
 
     const [email] = await db
       .select(emailSelectFields)
@@ -68,29 +70,31 @@ export async function GET(
       return apiError('Email not found', 404);
     }
 
-    // Mark as read
-    if (!email.isRead) {
-      await db
-        .update(emails)
-        .set({
-          isRead: true,
-          status: email.status === 'received' ? 'read' : email.status,
-          readAt: new Date(),
-        })
-        .where(eq(emails.id, id));
-    }
-
-    // Fetch thread
+    // Mark as read and fetch the thread concurrently (independent queries)
     const threadId = email.threadId || id;
-    const threadEmails = await db
-      .select(emailSelectFields)
-      .from(emails)
-      .leftJoin(clients, eq(emails.clientId, clients.id))
-      .where(and(
-        adminOwnerFilter(user.id),
-        or(eq(emails.id, threadId), eq(emails.threadId, threadId)),
-      ))
-      .orderBy(desc(emails.createdAt));
+    const [, threadEmails] = await Promise.all([
+      email.isRead
+        ? Promise.resolve()
+        : db
+            .update(emails)
+            .set({
+              isRead: true,
+              status: email.status === 'received' ? 'read' : email.status,
+              readAt: new Date(),
+            })
+            .where(eq(emails.id, id)),
+      db
+        .select(emailSelectFields)
+        .from(emails)
+        .leftJoin(clients, eq(emails.clientId, clients.id))
+        .where(and(
+          adminOwnerFilter(user.id),
+          or(eq(emails.id, threadId), eq(emails.threadId, threadId)),
+        ))
+        .orderBy(desc(emails.createdAt))
+        // Bound pathological threads (e.g. a sender-matched catch-all thread)
+        .limit(100),
+    ]);
 
     const thread = threadEmails.length > 0
       ? threadEmails
@@ -121,6 +125,7 @@ export async function DELETE(
   try {
     const user = await requireAdmin();
     const { id } = await params;
+    if (!isUuid(id)) return apiError('Email not found', 404);
 
     // Verify ownership first, then clean up thread references and delete —
     // inside a transaction so references aren't cleared for emails that

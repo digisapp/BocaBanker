@@ -25,7 +25,9 @@ export default function SandboxedHtml({ html, className = '' }: SandboxedHtmlPro
       <html>
         <head>
           <meta charset="utf-8">
+          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; object-src 'none'; frame-src 'none'; form-action 'none'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:">
           <meta name="viewport" content="width=device-width, initial-scale=1">
+          <base target="_blank">
           <style>
             * { box-sizing: border-box; }
             body {
@@ -87,7 +89,11 @@ export default function SandboxedHtml({ html, className = '' }: SandboxedHtmlPro
       ref={iframeRef}
       className={`w-full border-0 ${className}`}
       style={{ height: `${height}px`, minHeight: '100px' }}
-      sandbox="allow-same-origin"
+      // No allow-scripts: email HTML can never execute JS. allow-same-origin
+      // is only used to measure the content height. Links open in a new tab
+      // (<base target="_blank">) instead of navigating inside the iframe.
+      sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+      referrerPolicy="no-referrer"
       title="Email content"
     />
   );

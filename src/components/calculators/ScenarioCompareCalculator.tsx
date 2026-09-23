@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { calculateMonthlyPayment } from '@/lib/mortgage/calculations'
+import { calculateMonthlyPayment, getFhaAnnualMipRate } from '@/lib/mortgage/calculations'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Calculator, Star } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { formatCurrencyCents } from '@/lib/mortgage/format'
 
 interface ScenarioResult {
   type: string
@@ -54,7 +55,7 @@ export default function ScenarioCompareCalculator({
     const rate = parseFloat(baseRate) || 0
     const adj = creditAdjustments[creditScore] || 0
 
-    if (price <= 0 || rate <= 0) return
+    if (price <= 0 || rate <= 0 || downPct < 0 || downPct >= 100) return
 
     const scenarios: ScenarioResult[] = []
 
@@ -86,7 +87,10 @@ export default function ScenarioCompareCalculator({
     const fhaLoan = price - fhaDown
     const fhaRate = rate + adj - 0.25 // FHA typically has slightly lower rates
     const fhaPI = calculateMonthlyPayment(fhaLoan, fhaRate, 30)
-    const fhaMI = Math.round(fhaLoan * 0.0085 / 12) // 0.85% annual MIP
+    // Annual MIP per HUD ML 2023-05 (0.50%/0.55% for 30-yr loans <= $726,200;
+    // the old 0.85% rate was retired in March 2023)
+    const fhaMipRate = getFhaAnnualMipRate(fhaLoan, (fhaLoan / price) * 100, 30)
+    const fhaMI = Math.round((fhaLoan * fhaMipRate) / 100 / 12)
     scenarios.push({
       type: 'fha',
       label: 'FHA',
@@ -216,14 +220,14 @@ export default function ScenarioCompareCalculator({
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500">Monthly P&I</span>
                   <span className="text-sm font-medium text-gray-900">
-                    {formatCurrency(s.monthlyPI)}
+                    {formatCurrencyCents(s.monthlyPI)}
                   </span>
                 </div>
                 {s.monthlyMI > 0 && (
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-500">Monthly MI</span>
                     <span className="text-sm font-medium text-red-500">
-                      +{formatCurrency(s.monthlyMI)}
+                      +{formatCurrencyCents(s.monthlyMI)}
                     </span>
                   </div>
                 )}
@@ -232,7 +236,7 @@ export default function ScenarioCompareCalculator({
                     Total Monthly
                   </span>
                   <span className="text-lg font-bold text-amber-600">
-                    {formatCurrency(s.totalMonthly)}
+                    {formatCurrencyCents(s.totalMonthly)}
                   </span>
                 </div>
                 <div className="flex justify-between">

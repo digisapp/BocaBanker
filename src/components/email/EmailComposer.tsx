@@ -56,7 +56,13 @@ export default function EmailComposer() {
         body: JSON.stringify({
           to,
           subject,
-          html: `<p>${body.replace(/\n/g, '</p><p>')}</p>`,
+          // Escape user text before wrapping it in HTML
+          html: `<p>${body
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/\n/g, '</p><p>')}</p>`,
           template: template || undefined,
         }),
       });

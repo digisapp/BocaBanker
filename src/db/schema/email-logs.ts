@@ -15,5 +15,8 @@ export const emailLogs = pgTable('email_logs', {
   sentAt: timestamp('sent_at').default(sql`now()`),
 }, (table) => [
   index('email_logs_user_id_idx').on(table.userId),
+  index('email_logs_user_id_sent_at_idx').on(table.userId, table.sentAt),
   index('email_logs_client_id_idx').on(table.clientId),
+  // delivery/bounce webhooks update status by resend_id
+  index('email_logs_resend_id_idx').on(table.resendId),
 ]);

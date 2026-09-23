@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
-import { apiError } from '@/lib/api/response';
+import { apiError, apiValidationError } from '@/lib/api/response';
+import { requireUuid } from '@/lib/api/params';
+import { leadUpdateSchema } from '@/lib/validation/update-schemas';
 import { db } from '@/db';
 import { leads } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -13,7 +15,7 @@ export async function GET(
   try {
     const user = await requireAuth();
 
-    const { id } = await params;
+    const id = requireUuid((await params).id, 'Lead not found');
 
     const [lead] = await db
       .select()
@@ -39,7 +41,7 @@ export async function PUT(
   try {
     const user = await requireAuth();
 
-    const { id } = await params;
+    const id = requireUuid((await params).id, 'Lead not found');
     const body = await request.json();
 
     // Verify lead exists and belongs to the authenticated user
@@ -53,43 +55,71 @@ export async function PUT(
     }
 
     // Partial update: only set fields present in the request body
-    // (supports both snake_case and camelCase keys)
-    const pick = (snake: string, camel: string) =>
-      body[snake] !== undefined ? body[snake] : body[camel];
-    const has = (snake: string, camel: string) =>
-      body[snake] !== undefined || body[camel] !== undefined;
+    // (supports both snake_case and camelCase keys). Normalize to snake_case,
+    // then validate so bad enums/numerics are a 400 rather than a DB 500.
+    const FIELDS: [string, string][] = [
+      ['property_address', 'propertyAddress'],
+      ['property_city', 'propertyCity'],
+      ['property_county', 'propertyCounty'],
+      ['property_state', 'propertyState'],
+      ['property_zip', 'propertyZip'],
+      ['property_type', 'propertyType'],
+      ['sale_price', 'salePrice'],
+      ['sale_date', 'saleDate'],
+      ['parcel_id', 'parcelId'],
+      ['buyer_name', 'buyerName'],
+      ['buyer_company', 'buyerCompany'],
+      ['buyer_email', 'buyerEmail'],
+      ['buyer_phone', 'buyerPhone'],
+      ['seller_name', 'sellerName'],
+      ['square_footage', 'squareFootage'],
+      ['year_built', 'yearBuilt'],
+      ['status', 'status'],
+      ['priority', 'priority'],
+      ['source', 'source'],
+      ['notes', 'notes'],
+      ['tags', 'tags'],
+    ];
+    const normalized: Record<string, unknown> = {};
+    if (body && typeof body === 'object') {
+      for (const [snake, camel] of FIELDS) {
+        if (body[snake] !== undefined) normalized[snake] = body[snake];
+        else if (body[camel] !== undefined) normalized[snake] = body[camel];
+      }
+    }
+
+    const parsed = leadUpdateSchema.safeParse(normalized);
+    if (!parsed.success) {
+      return apiValidationError(parsed.error);
+    }
+    const d = parsed.data;
+    const has = (k: keyof typeof d) => k in normalized;
 
     const updateData: Partial<typeof leads.$inferInsert> = {
       updatedAt: new Date(),
     };
 
-    if (has('property_address', 'propertyAddress')) updateData.propertyAddress = pick('property_address', 'propertyAddress');
-    if (has('property_city', 'propertyCity')) updateData.propertyCity = pick('property_city', 'propertyCity');
-    if (has('property_county', 'propertyCounty')) updateData.propertyCounty = pick('property_county', 'propertyCounty');
-    if (has('property_state', 'propertyState')) updateData.propertyState = pick('property_state', 'propertyState');
-    if (has('property_zip', 'propertyZip')) updateData.propertyZip = pick('property_zip', 'propertyZip');
-    if (has('property_type', 'propertyType')) updateData.propertyType = pick('property_type', 'propertyType');
-    if (has('sale_price', 'salePrice')) updateData.salePrice = pick('sale_price', 'salePrice');
-    if (has('sale_date', 'saleDate')) updateData.saleDate = pick('sale_date', 'saleDate');
-    if (has('parcel_id', 'parcelId')) updateData.parcelId = pick('parcel_id', 'parcelId');
-    if (has('buyer_name', 'buyerName')) updateData.buyerName = pick('buyer_name', 'buyerName');
-    if (has('buyer_company', 'buyerCompany')) updateData.buyerCompany = pick('buyer_company', 'buyerCompany');
-    if (has('buyer_email', 'buyerEmail')) updateData.buyerEmail = pick('buyer_email', 'buyerEmail');
-    if (has('buyer_phone', 'buyerPhone')) updateData.buyerPhone = pick('buyer_phone', 'buyerPhone');
-    if (has('seller_name', 'sellerName')) updateData.sellerName = pick('seller_name', 'sellerName');
-    if (has('square_footage', 'squareFootage')) updateData.squareFootage = pick('square_footage', 'squareFootage');
-    if (has('year_built', 'yearBuilt')) updateData.yearBuilt = pick('year_built', 'yearBuilt');
-    if (body.status !== undefined) updateData.status = body.status;
-    if (body.priority !== undefined) updateData.priority = body.priority;
-    if (body.source !== undefined) updateData.source = body.source;
-    if (body.notes !== undefined) updateData.notes = body.notes;
-    if (body.tags !== undefined) {
-      updateData.tags = body.tags
-        ? (typeof body.tags === 'string'
-            ? body.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
-            : body.tags)
-        : [];
-    }
+    if (has('property_address')) updateData.propertyAddress = d.property_address;
+    if (has('property_city')) updateData.propertyCity = d.property_city;
+    if (has('property_county')) updateData.propertyCounty = d.property_county;
+    if (has('property_state')) updateData.propertyState = d.property_state;
+    if (has('property_zip')) updateData.propertyZip = d.property_zip;
+    if (has('property_type')) updateData.propertyType = d.property_type;
+    if (has('sale_price')) updateData.salePrice = d.sale_price;
+    if (has('sale_date')) updateData.saleDate = d.sale_date;
+    if (has('parcel_id')) updateData.parcelId = d.parcel_id;
+    if (has('buyer_name')) updateData.buyerName = d.buyer_name;
+    if (has('buyer_company')) updateData.buyerCompany = d.buyer_company;
+    if (has('buyer_email')) updateData.buyerEmail = d.buyer_email;
+    if (has('buyer_phone')) updateData.buyerPhone = d.buyer_phone;
+    if (has('seller_name')) updateData.sellerName = d.seller_name;
+    if (has('square_footage')) updateData.squareFootage = d.square_footage;
+    if (has('year_built')) updateData.yearBuilt = d.year_built;
+    if (has('status')) updateData.status = d.status;
+    if (has('priority')) updateData.priority = d.priority;
+    if (has('source')) updateData.source = d.source;
+    if (has('notes')) updateData.notes = d.notes;
+    if (has('tags')) updateData.tags = d.tags;
 
     const [updated] = await db
       .update(leads)
@@ -98,7 +128,7 @@ export async function PUT(
       .returning();
 
     if (!updated) {
-      return apiError('Failed to update lead');
+      return apiError('Lead not found', 404);
     }
 
     return NextResponse.json(updated);
@@ -116,7 +146,7 @@ export async function DELETE(
   try {
     const user = await requireAuth();
 
-    const { id } = await params;
+    const id = requireUuid((await params).id, 'Lead not found');
 
     const deleted = await db
       .delete(leads)

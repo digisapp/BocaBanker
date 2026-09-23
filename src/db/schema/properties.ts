@@ -35,4 +35,5 @@ export const properties = pgTable('properties', {
 }, (table) => [
   index('properties_client_id_idx').on(table.clientId),
   index('properties_user_id_idx').on(table.userId),
+  index('properties_user_id_created_at_idx').on(table.userId, table.createdAt),
 ]);

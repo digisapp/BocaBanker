@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
+import { requireUuid } from '@/lib/api/params';
 import { db } from '@/db';
 import { documents } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -13,7 +14,7 @@ export async function DELETE(
 ) {
   try {
     const user = await requireAuth();
-    const { id } = await params;
+    const id = requireUuid((await params).id, 'Document not found');
 
     // Fetch the record first to get storagePath and verify ownership
     const [doc] = await db
@@ -37,7 +38,7 @@ export async function DELETE(
 
     await db
       .delete(documents)
-      .where(eq(documents.id, id));
+      .where(and(eq(documents.id, id), eq(documents.userId, user.id)));
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -53,7 +54,7 @@ export async function GET(
 ) {
   try {
     const user = await requireAuth();
-    const { id } = await params;
+    const id = requireUuid((await params).id, 'Document not found');
 
     const [doc] = await db
       .select()

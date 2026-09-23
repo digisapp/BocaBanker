@@ -3,6 +3,7 @@ import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
+import { parsePagination, escapeLike } from '@/lib/api/params';
 import { leads } from '@/db/schema';
 import { eq, and, ilike, or, gte, lte, desc, asc, count } from 'drizzle-orm';
 import { leadSchema } from '@/lib/validation/schemas';
@@ -12,8 +13,7 @@ export async function GET(request: NextRequest) {
     const user = await requireAuth();
 
     const searchParams = request.nextUrl.searchParams;
-    const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
-    const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit') ?? '10')));
+    const { page, limit, offset } = parsePagination(searchParams, { defaultLimit: 10 });
     const search = searchParams.get('search') ?? '';
     const status = searchParams.get('status') ?? '';
     const propertyType = searchParams.get('propertyType') ?? '';
@@ -26,19 +26,19 @@ export async function GET(request: NextRequest) {
     const sort = searchParams.get('sort') ?? 'createdAt';
     const order = searchParams.get('order') ?? 'desc';
 
-    const offset = (page - 1) * limit;
 
     // Build where conditions — always scope to the authenticated user
     const conditions = [eq(leads.userId, user.id)];
 
     if (search) {
+      const term = `%${escapeLike(search)}%`;
       conditions.push(
         or(
-          ilike(leads.propertyAddress, `%${search}%`),
-          ilike(leads.buyerName, `%${search}%`),
-          ilike(leads.buyerCompany, `%${search}%`),
-          ilike(leads.propertyCity, `%${search}%`),
-          ilike(leads.propertyCounty, `%${search}%`)
+          ilike(leads.propertyAddress, term),
+          ilike(leads.buyerName, term),
+          ilike(leads.buyerCompany, term),
+          ilike(leads.propertyCity, term),
+          ilike(leads.propertyCounty, term)
         )!
       );
     }
@@ -55,12 +55,23 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(leads.priority, priority as typeof leads.priority.enumValues[number]));
     }
 
+    // Numeric/date filters are compared against numeric/date columns, so a
+    // malformed value would raise a Postgres cast error (500) — reject as 400.
+    const isNum = (v: string) => v.trim() !== '' && Number.isFinite(Number(v));
+    const isDate = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v) && !isNaN(Date.parse(v));
+    if ((minPrice && !isNum(minPrice)) || (maxPrice && !isNum(maxPrice))) {
+      return apiError('minPrice/maxPrice must be numbers', 400);
+    }
+    if ((dateFrom && !isDate(dateFrom)) || (dateTo && !isDate(dateTo))) {
+      return apiError('dateFrom/dateTo must be YYYY-MM-DD', 400);
+    }
+
     if (minPrice) {
-      conditions.push(gte(leads.salePrice, minPrice));
+      conditions.push(gte(leads.salePrice, String(Number(minPrice))));
     }
 
     if (maxPrice) {
-      conditions.push(lte(leads.salePrice, maxPrice));
+      conditions.push(lte(leads.salePrice, String(Number(maxPrice))));
     }
 
     if (dateFrom) {

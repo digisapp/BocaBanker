@@ -1,9 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { MessageCircle, X } from 'lucide-react'
-import GuestChatWidget from './GuestChatWidget'
 import BocaBankerAvatar from './BocaBankerAvatar'
+
+// Only fetched when the overlay is first opened — keeps the AI chat bundle
+// out of the landing page's initial JS on mobile.
+const GuestChatWidget = dynamic(() => import('./GuestChatWidget'), {
+  ssr: false,
+  loading: () => <div className="h-full w-full animate-pulse bg-gray-50" aria-hidden="true" />,
+})
 
 export default function MobileChatButton() {
   const [open, setOpen] = useState(false)

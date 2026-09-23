@@ -9,12 +9,24 @@ import {
   reportDeliveryTemplate,
 } from '@/lib/email/templates';
 import { emailSchema } from '@/lib/validation/email-schemas';
+import { rateLimit } from '@/lib/rate-limit';
+import { db } from '@/db';
+import { clients } from '@/db/schema';
+import { and, eq } from 'drizzle-orm';
+import { isUuid } from '@/lib/email/ids';
 
 const VALID_TEMPLATES = ['outreach', 'follow-up', 'report-delivery'] as const;
 
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
+
+    // Bound outbound volume per user (sender reputation + abuse of a
+    // compromised account). Bulk sends go through /api/email/bulk.
+    const rl = await rateLimit(`email-send:${user.id}`, { maxRequests: 20, windowMs: 60_000 });
+    if (!rl.success) {
+      return apiError('Too many emails sent. Please wait a minute and try again.', 429);
+    }
 
     const body = await request.json();
     const { to, subject, html, template, clientId, clientName, senderName, propertyAddress, studyName, totalSavings, customMessage } = body;
@@ -31,6 +43,18 @@ export async function POST(request: NextRequest) {
         { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
+    }
+
+    // clientId links the email into a client's history — only allow the
+    // caller's own clients.
+    if (clientId !== undefined && clientId !== null && clientId !== '') {
+      if (!isUuid(clientId)) return apiError('Invalid clientId', 400);
+      const [owned] = await db
+        .select({ id: clients.id })
+        .from(clients)
+        .where(and(eq(clients.id, clientId), eq(clients.userId, user.id)))
+        .limit(1);
+      if (!owned) return apiError('Client not found', 404);
     }
 
     if (template && !VALID_TEMPLATES.includes(template)) {
@@ -72,7 +96,7 @@ export async function POST(request: NextRequest) {
       subject,
       html: emailHtml,
       userId: user.id,
-      clientId,
+      clientId: clientId || undefined,
       template,
     });
 

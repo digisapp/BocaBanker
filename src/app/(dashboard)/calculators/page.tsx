@@ -4,15 +4,50 @@ import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Calculator, DollarSign, Zap, Home, ArrowRightLeft, Landmark, Activity, Sparkles, GitCompare } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import CombinedAnalyzer from '@/components/calculators/CombinedAnalyzer';
-import DepreciationCalculator from '@/components/calculators/DepreciationCalculator';
-import TaxSavingsCalculator from '@/components/calculators/TaxSavingsCalculator';
-import BonusDepreciationCalculator from '@/components/calculators/BonusDepreciationCalculator';
-import MortgageCalculator from '@/components/calculators/MortgageCalculator';
-import RefinanceAnalyzer from '@/components/calculators/RefinanceAnalyzer';
-import DSCRCalculator from '@/components/calculators/DSCRCalculator';
-import RateSensitivityTool from '@/components/calculators/RateSensitivityTool';
-import ScenarioCompareCalculator from '@/components/calculators/ScenarioCompareCalculator';
+import dynamic from 'next/dynamic';
+
+// Each calculator pulls in recharts (~360KB). Radix Tabs only mounts the
+// active TabsContent, so loading them lazily means only the active tab's
+// calculator chunk is fetched.
+function CalculatorSkeleton() {
+  return <div className="h-[600px] w-full animate-pulse rounded-lg bg-gray-100" />;
+}
+const CombinedAnalyzer = dynamic(() => import('@/components/calculators/CombinedAnalyzer'), {
+  ssr: false,
+  loading: CalculatorSkeleton,
+});
+const DepreciationCalculator = dynamic(() => import('@/components/calculators/DepreciationCalculator'), {
+  ssr: false,
+  loading: CalculatorSkeleton,
+});
+const TaxSavingsCalculator = dynamic(() => import('@/components/calculators/TaxSavingsCalculator'), {
+  ssr: false,
+  loading: CalculatorSkeleton,
+});
+const BonusDepreciationCalculator = dynamic(() => import('@/components/calculators/BonusDepreciationCalculator'), {
+  ssr: false,
+  loading: CalculatorSkeleton,
+});
+const MortgageCalculator = dynamic(() => import('@/components/calculators/MortgageCalculator'), {
+  ssr: false,
+  loading: CalculatorSkeleton,
+});
+const RefinanceAnalyzer = dynamic(() => import('@/components/calculators/RefinanceAnalyzer'), {
+  ssr: false,
+  loading: CalculatorSkeleton,
+});
+const DSCRCalculator = dynamic(() => import('@/components/calculators/DSCRCalculator'), {
+  ssr: false,
+  loading: CalculatorSkeleton,
+});
+const RateSensitivityTool = dynamic(() => import('@/components/calculators/RateSensitivityTool'), {
+  ssr: false,
+  loading: CalculatorSkeleton,
+});
+const ScenarioCompareCalculator = dynamic(() => import('@/components/calculators/ScenarioCompareCalculator'), {
+  ssr: false,
+  loading: CalculatorSkeleton,
+});
 
 function CalculatorsContent() {
   const searchParams = useSearchParams();

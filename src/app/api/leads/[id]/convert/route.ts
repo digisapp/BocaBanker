@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
+import { requireUuid } from '@/lib/api/params';
 import { db } from '@/db';
 import { leads, clients, properties } from '@/db/schema';
 import { eq, and, ne } from 'drizzle-orm';
@@ -32,7 +33,7 @@ export async function POST(
   try {
     const user = await requireAuth();
 
-    const { id } = await params;
+    const id = requireUuid((await params).id, 'Lead not found');
 
     // Fetch the lead — scoped to the authenticated user
     const [lead] = await db

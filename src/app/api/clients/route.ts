@@ -6,31 +6,30 @@ import { logger } from '@/lib/logger';
 import { clients } from '@/db/schema';
 import { eq, and, ilike, desc, asc, count, or } from 'drizzle-orm';
 import { clientSchema } from '@/lib/validation/schemas';
+import { parsePagination, escapeLike } from '@/lib/api/params';
 
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth();
 
     const searchParams = request.nextUrl.searchParams;
-    const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
-    const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit') ?? '10')));
+    const { page, limit, offset } = parsePagination(searchParams, { defaultLimit: 10 });
     const search = searchParams.get('search') ?? '';
     const status = searchParams.get('status') ?? '';
     const sort = searchParams.get('sort') ?? 'createdAt';
     const order = searchParams.get('order') ?? 'desc';
 
-    const offset = (page - 1) * limit;
-
     // Build where conditions
     const conditions = [eq(clients.userId, user.id)];
 
     if (search) {
+      const term = `%${escapeLike(search)}%`;
       conditions.push(
         or(
-          ilike(clients.firstName, `%${search}%`),
-          ilike(clients.lastName, `%${search}%`),
-          ilike(clients.email, `%${search}%`),
-          ilike(clients.company, `%${search}%`)
+          ilike(clients.firstName, term),
+          ilike(clients.lastName, term),
+          ilike(clients.email, term),
+          ilike(clients.company, term)
         )!
       );
     }

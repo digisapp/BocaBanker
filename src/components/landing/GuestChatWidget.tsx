@@ -49,9 +49,22 @@ export default function GuestChatWidget() {
     []
   );
 
-  const { messages, sendMessage, status, setMessages } = useChat({
+  const { messages, sendMessage, status, setMessages, error, clearError } = useChat({
     transport,
+    experimental_throttle: 50,
   });
+
+  // DefaultChatTransport puts the non-2xx response body in error.message.
+  const errorText = useMemo(() => {
+    if (!error) return null;
+    try {
+      const parsed = JSON.parse(error.message);
+      if (parsed && typeof parsed.error === 'string') return parsed.error as string;
+    } catch {
+      // not JSON
+    }
+    return 'Something went wrong. Please try again.';
+  }, [error]);
 
   // On mount, restore any saved guest history (e.g. after closing/reopening
   // the mobile chat overlay); otherwise show the greeting message.
@@ -82,20 +95,26 @@ export default function GuestChatWidget() {
     messages.length > 1 &&
     messages[messages.length - 1]?.role === 'assistant';
 
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = useCallback((smooth: boolean) => {
+    messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
   }, []);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, showLeadCard, scrollToBottom]);
+    scrollToBottom(status !== 'streaming');
+  }, [messages, showLeadCard, status, scrollToBottom]);
 
-  // Persist messages to localStorage for handoff
+  // Persist messages to localStorage for handoff. Skip while streaming so we
+  // don't serialize the whole history on every token.
   useEffect(() => {
+    if (status === 'streaming') return;
     if (messages.length > 1) {
-      localStorage.setItem(LS_HISTORY_KEY, JSON.stringify(messages));
+      try {
+        localStorage.setItem(LS_HISTORY_KEY, JSON.stringify(messages));
+      } catch {
+        // Storage full/blocked — handoff history is best-effort
+      }
     }
-  }, [messages]);
+  }, [messages, status]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,6 +126,7 @@ export default function GuestChatWidget() {
     localStorage.setItem(LS_COUNT_KEY, String(newCount));
     setInputValue('');
 
+    if (error) clearError();
     sendMessage({ text });
   };
 
@@ -190,6 +210,12 @@ export default function GuestChatWidget() {
           />
         )}
 
+        {errorText && !isLoading && (
+          <p role="alert" className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+            {errorText}
+          </p>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -201,6 +227,7 @@ export default function GuestChatWidget() {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Ask anything..."
+            maxLength={2000}
             className="flex-1 bg-gray-50 rounded-xl px-3 sm:px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
           />
           <button

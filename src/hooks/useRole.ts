@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth, type UserRole } from '@/context/AuthContext'
 
-export type UserRole = 'admin' | 'analyst' | 'viewer'
+export type { UserRole }
 
 interface UseRoleReturn {
   role: UserRole
@@ -46,41 +45,13 @@ const ROLE_PERMISSIONS: Record<UserRole, {
 }
 
 export function useRole(): UseRoleReturn {
-  const { user, loading: authLoading } = useAuth()
-  const [role, setRole] = useState<UserRole>('viewer')
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (authLoading) return
-
-    if (!user) {
-      setRole('viewer')
-      setLoading(false)
-      return
-    }
-
-    async function fetchRole() {
-      try {
-        const res = await fetch('/api/auth/me')
-        if (res.ok) {
-          const data = await res.json()
-          setRole(data.role || 'viewer')
-        }
-      } catch {
-        // Default to viewer on error
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchRole()
-  }, [user, authLoading])
-
-  const permissions = ROLE_PERMISSIONS[role]
+  // Role is fetched once in AuthProvider and shared, rather than every
+  // RoleGate instance issuing its own /api/auth/me request.
+  const { role, roleLoading } = useAuth()
 
   return {
     role,
-    loading,
-    ...permissions,
+    loading: roleLoading,
+    ...ROLE_PERMISSIONS[role],
   }
 }

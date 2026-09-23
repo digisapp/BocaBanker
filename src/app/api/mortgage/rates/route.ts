@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
 import { logger } from '@/lib/logger';
+import { rateLimit } from '@/lib/rate-limit';
 import { getCachedRates } from '@/lib/mortgage/rates';
 
 export async function GET(_request: NextRequest) {
@@ -19,7 +20,14 @@ export async function GET(_request: NextRequest) {
 
 export async function POST(_request: NextRequest) {
   try {
-    await requireAuth();
+    const user = await requireAuth();
+
+    // Force-refresh hits the upstream rates API and rewrites the cache —
+    // throttle so it can't be hammered
+    const rl = await rateLimit(`mortgage-rates-refresh:${user.id}`, { maxRequests: 5, windowMs: 10 * 60_000 });
+    if (!rl.success) {
+      return apiError('Too many refresh requests. Please try again later.', 429);
+    }
 
     const rates = await getCachedRates(true); // force refresh
     return NextResponse.json({ rates, refreshed: true });

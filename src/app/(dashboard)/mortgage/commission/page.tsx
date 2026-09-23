@@ -10,15 +10,13 @@ import {
   Percent,
   Loader2,
 } from 'lucide-react'
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
+import dynamic from 'next/dynamic'
+
+// recharts is heavy; load the chart lazily on the client
+const CommissionChart = dynamic(
+  () => import('@/components/mortgage/CommissionChart').then((m) => m.CommissionChart),
+  { ssr: false, loading: () => <div className="h-[300px] w-full animate-pulse rounded-lg bg-gray-50" /> }
+)
 import {
   Table,
   TableBody,
@@ -134,32 +132,7 @@ export default function CommissionPage() {
           Revenue by Month
         </h2>
         {chartData.some((d) => d.amount > 0) ? (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis
-                dataKey="label"
-                tick={{ fontSize: 11, fill: '#9ca3af' }}
-                axisLine={{ stroke: '#e5e7eb' }}
-              />
-              <YAxis
-                tick={{ fontSize: 11, fill: '#9ca3af' }}
-                axisLine={{ stroke: '#e5e7eb' }}
-                tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                }}
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                formatter={(value: any) => [formatCurrency(value), 'Commission']}
-              />
-              <Bar dataKey="amount" fill="#d97706" radius={[6, 6, 0, 0]} maxBarSize={48} />
-            </BarChart>
-          </ResponsiveContainer>
+          <CommissionChart data={chartData} />
         ) : (
           <div className="flex items-center justify-center h-[300px] text-gray-400 text-sm">
             No commission data this year yet

@@ -16,6 +16,7 @@ export const documents = pgTable('documents', {
   createdAt: timestamp('created_at').default(sql`now()`),
 }, (table) => [
   index('documents_user_id_idx').on(table.userId),
+  index('documents_user_id_created_at_idx').on(table.userId, table.createdAt),
   index('documents_client_id_idx').on(table.clientId),
   index('documents_study_id_idx').on(table.studyId),
 ]);

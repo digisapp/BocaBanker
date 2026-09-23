@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
+import { requireUuid } from '@/lib/api/params';
+import { rateLimit } from '@/lib/rate-limit';
 import { db } from '@/db';
 import { loans, userSettings, users } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -15,7 +17,14 @@ export async function POST(
   try {
     const user = await requireAuth();
 
-    const { id } = await params;
+    const id = requireUuid((await params).id, 'Loan not found');
+
+    // Each call sends a real email to the borrower — throttle to prevent
+    // accidental/abusive repeat sends
+    const rl = await rateLimit(`send-arive-link:${user.id}`, { maxRequests: 10, windowMs: 60 * 60_000 });
+    if (!rl.success) {
+      return apiError('Too many emails sent. Please try again later.', 429);
+    }
 
     // Fetch the loan
     const [loan] = await db
@@ -31,26 +40,26 @@ export async function POST(
       return apiError('Borrower has no email address', 400);
     }
 
-    // Get user settings for Arive link
-    const [settings] = await db
-      .select({
-        ariveLink: userSettings.ariveLink,
-        ariveCompanyName: userSettings.ariveCompanyName,
-      })
-      .from(userSettings)
-      .where(eq(userSettings.userId, user.id));
+    // Get user settings for Arive link and the sender's name in parallel
+    const [[settings], [userData]] = await Promise.all([
+      db
+        .select({
+          ariveLink: userSettings.ariveLink,
+          ariveCompanyName: userSettings.ariveCompanyName,
+        })
+        .from(userSettings)
+        .where(eq(userSettings.userId, user.id)),
+      db
+        .select({ fullName: users.fullName })
+        .from(users)
+        .where(eq(users.id, user.id)),
+    ]);
 
     const ariveLink = loan.ariveLink || settings?.ariveLink;
 
     if (!ariveLink) {
       return apiError('No Arive link configured. Set it in Settings or on the loan.', 400);
     }
-
-    // Get user's name for the email
-    const [userData] = await db
-      .select({ fullName: users.fullName })
-      .from(users)
-      .where(eq(users.id, user.id));
 
     const senderName = userData?.fullName || 'Your Mortgage Broker';
     const companyName = settings?.ariveCompanyName || 'Boca Banker';
@@ -72,7 +81,8 @@ export async function POST(
     });
 
     if (!result.success) {
-      return apiError(result.error || 'Failed to send email', 500);
+      logger.error('loans-api', 'Arive link email send failed', result.error);
+      return apiError('Failed to send email', 502);
     }
 
     // Update loan with Arive link sent timestamp
@@ -83,7 +93,7 @@ export async function POST(
         ariveLinkSentAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(loans.id, id));
+      .where(and(eq(loans.id, id), eq(loans.userId, user.id)));
 
     return NextResponse.json({ success: true, resendId: result.resendId });
   } catch (error) {

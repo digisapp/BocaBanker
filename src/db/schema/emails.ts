@@ -48,6 +48,10 @@ export const emails = pgTable('emails', {
   index('emails_to_email_idx').on(table.toEmail),
   index('emails_is_read_idx').on(table.isRead),
   index('emails_created_at_idx').on(table.createdAt),
+  // inbox/sent list: filter by owner + direction, sort by newest
+  index('emails_user_id_direction_created_at_idx').on(table.userId, table.direction, table.createdAt),
+  // webhook threading looks up replies by RFC Message-ID stored in metadata
+  index('emails_metadata_message_id_idx').on(sql`(${table.metadata}->>'messageId')`),
   // unique so duplicate webhook deliveries (Svix retries) can't insert the same email twice
   uniqueIndex('emails_resend_id_unique').on(table.resendId).where(sql`resend_id IS NOT NULL`),
 ]);

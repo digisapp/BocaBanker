@@ -143,6 +143,7 @@ export default function PropertiesPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
             <Input
               placeholder="Search by address or city..."
+              aria-label="Search properties"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
@@ -156,7 +157,7 @@ export default function PropertiesPage() {
               setPagination((p) => ({ ...p, page: 1 }))
             }}
           >
-            <SelectTrigger className="w-full sm:w-[180px] bg-gray-50 border-gray-200 text-gray-900">
+            <SelectTrigger aria-label="Filter by property type" className="w-full sm:w-[180px] bg-gray-50 border-gray-200 text-gray-900">
               <SelectValue placeholder="All Types" />
             </SelectTrigger>
             <SelectContent className="bg-white border-gray-200">
@@ -173,6 +174,8 @@ export default function PropertiesPage() {
               variant={viewMode === 'grid' ? 'default' : 'ghost'}
               size="icon-sm"
               onClick={() => setViewMode('grid')}
+              aria-label="Grid view"
+              aria-pressed={viewMode === 'grid'}
               className={viewMode === 'grid' ? 'bg-amber-50 text-amber-600' : 'text-gray-500'}
             >
               <LayoutGrid className="h-4 w-4" />
@@ -181,6 +184,8 @@ export default function PropertiesPage() {
               variant={viewMode === 'table' ? 'default' : 'ghost'}
               size="icon-sm"
               onClick={() => setViewMode('table')}
+              aria-label="Table view"
+              aria-pressed={viewMode === 'table'}
               className={viewMode === 'table' ? 'bg-amber-50 text-amber-600' : 'text-gray-500'}
             >
               <List className="h-4 w-4" />

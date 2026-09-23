@@ -26,6 +26,12 @@ export interface StudyReportInput {
   taxRate: number;
   discountRate: number;
   bonusDepreciationRate: number;
+  /**
+   * Month (1-12) the property was placed in service. Selects the mid-month
+   * convention column for 27.5/39-year property (IRS Pub 946 Tables A-6 /
+   * A-7a). Defaults to 1 (January) when omitted.
+   */
+  placedInServiceMonth?: number;
   assets: { category: string; costBasis: number; recoveryPeriod: number }[];
 }
 
@@ -111,6 +117,7 @@ export function generateStudyReport(input: StudyReportInput): StudyReport {
     bonusDepreciationRate,
     assets,
   } = input;
+  const month = input.placedInServiceMonth ?? 1;
 
   const straightLinePeriod = getStraightLineRecoveryPeriod(propertyType);
 
@@ -173,7 +180,8 @@ export function generateStudyReport(input: StudyReportInput): StudyReport {
     const schedule = calculateDepreciation(
       asset.costBasis,
       asset.recoveryPeriod,
-      bonusDepreciationRate
+      bonusDepreciationRate,
+      month
     );
 
     assetSchedules.push(
@@ -212,7 +220,8 @@ export function generateStudyReport(input: StudyReportInput): StudyReport {
   // straight-line period (39yr or 27.5yr) with no bonus.
   const straightLineSchedule = calculateStraightLineDepreciation(
     buildingValue,
-    straightLinePeriod
+    straightLinePeriod,
+    month
   );
 
   const straightLineEntries = straightLineSchedule.map((entry) => ({
@@ -290,13 +299,14 @@ export function generateStudyReport(input: StudyReportInput): StudyReport {
     const bonusResult = calculateBonusDepreciation(
       asset.costBasis,
       asset.recoveryPeriod,
-      bonusDepreciationRate
+      bonusDepreciationRate,
+      month
     );
 
     totalBonusDepreciation += bonusResult.bonusAmount;
 
     // Regular first year MACRS on remaining basis
-    const rates = getMacrsRates(asset.recoveryPeriod);
+    const rates = getMacrsRates(asset.recoveryPeriod, month);
     const firstYearMacrs = bonusResult.remainingBasis * (rates[0] / 100);
     totalRegularFirstYear += firstYearMacrs;
   }

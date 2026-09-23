@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { logger } from '@/lib/logger'
+import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/utils'
 import {
   ArrowLeft,
@@ -129,11 +130,15 @@ export default function PropertyDetailPage() {
     setDeleting(true)
     try {
       const res = await fetch(`/api/properties/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        router.push('/properties')
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to delete property')
       }
+      toast.success('Property deleted')
+      router.push('/properties')
     } catch (error) {
       logger.error('properties-page', 'Error deleting property', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to delete property')
     } finally {
       setDeleting(false)
     }
@@ -165,6 +170,7 @@ export default function PropertyDetailPage() {
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Go back"
             onClick={() => router.push('/properties')}
             className="text-gray-500 hover:text-amber-600 hover:bg-amber-50"
           >

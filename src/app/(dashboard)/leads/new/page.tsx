@@ -43,6 +43,7 @@ export default function NewLeadPage() {
         <Button
           variant="ghost"
           size="icon"
+          aria-label="Go back"
           onClick={() => router.back()}
           className="text-gray-500 hover:text-amber-600"
         >

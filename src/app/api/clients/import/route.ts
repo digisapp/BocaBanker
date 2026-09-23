@@ -5,6 +5,8 @@ import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { clients } from '@/db/schema';
 
+const MAX_IMPORT_ROWS = 5000;
+
 interface ImportBody {
   clients: Record<string, string>[];
   mapping: Record<string, string>;
@@ -20,10 +22,26 @@ export async function POST(request: NextRequest) {
       return apiError('No client data provided', 400);
     }
 
+    if (body.clients.length > MAX_IMPORT_ROWS) {
+      return apiError(`Too many rows (max ${MAX_IMPORT_ROWS} per import)`, 400);
+    }
+
+    // CSV rows should be string maps, but JSON bodies can carry numbers/null/
+    // objects — coerce so `.trim()` below can't throw and 500 the import.
+    const inputRows: Record<string, string>[] = body.clients.map((raw) => {
+      const out: Record<string, string> = {};
+      if (raw && typeof raw === 'object') {
+        for (const [k, v] of Object.entries(raw)) {
+          if (v != null && typeof v !== 'object') out[k] = String(v);
+        }
+      }
+      return out;
+    });
+
     const errors: { row: number; message: string }[] = [];
     const validRows: (typeof clients.$inferInsert)[] = [];
 
-    body.clients.forEach((row, index) => {
+    inputRows.forEach((row, index) => {
       const firstName = (row.first_name ?? '').trim();
       const lastName = (row.last_name ?? '').trim();
 

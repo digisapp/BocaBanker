@@ -5,6 +5,10 @@ import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { emailLogs, clients } from '@/db/schema';
 import { eq, desc, and, count } from 'drizzle-orm';
+import { isUuid } from '@/lib/email/ids';
+
+const LOG_STATUSES = ['sent', 'delivered', 'bounced', 'failed'] as const;
+type LogStatus = (typeof LOG_STATUSES)[number];
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,15 +26,15 @@ export async function GET(request: NextRequest) {
     const conditions = [eq(emailLogs.userId, user.id)];
 
     if (statusFilter) {
-      conditions.push(
-        eq(
-          emailLogs.status,
-          statusFilter as 'sent' | 'delivered' | 'bounced' | 'failed'
-        )
-      );
+      // An unknown value would fail the enum cast in Postgres (500)
+      if (!(LOG_STATUSES as readonly string[]).includes(statusFilter)) {
+        return apiError('Invalid status filter', 400);
+      }
+      conditions.push(eq(emailLogs.status, statusFilter as LogStatus));
     }
 
     if (clientId) {
+      if (!isUuid(clientId)) return apiError('Invalid clientId', 400);
       conditions.push(eq(emailLogs.clientId, clientId));
     }
 

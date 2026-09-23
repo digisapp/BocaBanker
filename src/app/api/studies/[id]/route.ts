@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, ApiError } from '@/lib/api/auth'
-import { apiError } from '@/lib/api/response'
+import { apiError, apiValidationError } from '@/lib/api/response'
+import { requireUuid } from '@/lib/api/params'
+import { studyUpdateSchema } from '@/lib/validation/update-schemas'
 import { db } from '@/db'
 import { costSegStudies, studyAssets, properties, clients } from '@/db/schema'
 import { logger } from '@/lib/logger'
@@ -11,8 +13,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
     const user = await requireAuth()
+    const id = requireUuid((await params).id, 'Study not found')
 
     // Fetch the study with property and client info
     const studyRows = await db
@@ -45,8 +47,8 @@ export async function GET(
         clientCompany: clients.company,
       })
       .from(costSegStudies)
-      .leftJoin(properties, eq(costSegStudies.propertyId, properties.id))
-      .leftJoin(clients, eq(costSegStudies.clientId, clients.id))
+      .leftJoin(properties, and(eq(costSegStudies.propertyId, properties.id), eq(properties.userId, user.id)))
+      .leftJoin(clients, and(eq(costSegStudies.clientId, clients.id), eq(clients.userId, user.id)))
       .where(and(eq(costSegStudies.id, id), eq(costSegStudies.userId, user.id)))
       .limit(1)
 
@@ -86,20 +88,26 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
     const user = await requireAuth()
+    const id = requireUuid((await params).id, 'Study not found')
 
     const body = await request.json()
 
-    const updateData: Record<string, unknown> = { updatedAt: new Date() }
+    const parsed = studyUpdateSchema.safeParse(body ?? {})
+    if (!parsed.success) {
+      return apiValidationError(parsed.error)
+    }
+    const d = parsed.data
 
-    if (body.study_name !== undefined) updateData.studyName = body.study_name
-    if (body.tax_rate !== undefined) updateData.taxRate = body.tax_rate.toString()
-    if (body.discount_rate !== undefined) updateData.discountRate = body.discount_rate.toString()
-    if (body.bonus_depreciation_rate !== undefined) updateData.bonusDepreciationRate = body.bonus_depreciation_rate.toString()
-    if (body.study_year !== undefined) updateData.studyYear = body.study_year
-    if (body.status !== undefined) updateData.status = body.status
-    if (body.notes !== undefined) updateData.notes = body.notes
+    const updateData: Partial<typeof costSegStudies.$inferInsert> = { updatedAt: new Date() }
+
+    if (d.study_name !== undefined) updateData.studyName = d.study_name
+    if (d.tax_rate !== undefined) updateData.taxRate = d.tax_rate
+    if (d.discount_rate !== undefined) updateData.discountRate = d.discount_rate
+    if (d.bonus_depreciation_rate !== undefined) updateData.bonusDepreciationRate = d.bonus_depreciation_rate
+    if (d.study_year !== undefined) updateData.studyYear = d.study_year
+    if (d.status !== undefined) updateData.status = d.status
+    if (d.notes !== undefined) updateData.notes = d.notes
 
     const [updated] = await db
       .update(costSegStudies)
@@ -124,8 +132,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
     const user = await requireAuth()
+    const id = requireUuid((await params).id, 'Study not found')
 
     // Delete the study — associated study_assets rows are removed by the
     // FK's onDelete cascade

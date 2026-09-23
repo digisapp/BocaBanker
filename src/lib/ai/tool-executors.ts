@@ -6,6 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { logger } from '@/lib/logger'
 import { captureLeadSchema } from './tools'
 import { getDefaultOwnerId } from '@/lib/email/default-owner'
+import { rateLimit } from '@/lib/rate-limit'
 
 type CaptureLeadInput = z.infer<typeof captureLeadSchema>
 
@@ -85,10 +86,27 @@ export function createAuthLeadCapture(userId: string) {
 /**
  * Create a lead capture executor for guest users.
  * Uses supabaseAdmin (service role) since there is no authenticated user.
+ *
+ * Anonymous visitors can steer the model into calling this tool (prompt
+ * injection), so inserts are capped per IP to keep junk out of the admin's
+ * lead pipeline.
  */
-export function createGuestLeadCapture() {
+export function createGuestLeadCapture(ip?: string) {
   return async (input: CaptureLeadInput) => {
     try {
+      if (ip) {
+        const rl = await rateLimit(`guest-lead-capture:${ip}`, {
+          maxRequests: 3,
+          windowMs: 24 * 60 * 60_000,
+        })
+        if (!rl.success) {
+          return {
+            success: true,
+            message: `Thanks, ${input.buyerName}! I already have your details noted.`,
+          }
+        }
+      }
+
       // Dedup: skip insert if a guest lead with this email already exists
       if (input.buyerEmail) {
         const { data: existing } = await supabaseAdmin
@@ -97,7 +115,7 @@ export function createGuestLeadCapture() {
           .eq('buyer_email', input.buyerEmail)
           .eq('source', 'guest-chat')
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (existing) {
           return {

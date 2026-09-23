@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, ApiError } from '@/lib/api/auth';
-import { apiError } from '@/lib/api/response';
+import { apiError, apiValidationError } from '@/lib/api/response';
+import { requireUuid } from '@/lib/api/params';
 import { db } from '@/db';
 import { reviews } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -14,12 +15,12 @@ export async function PUT(
   try {
     await requireAdmin();
 
-    const { id } = await params;
+    const id = requireUuid((await params).id, 'Review not found');
     const body = await request.json();
     const parsed = reviewAdminUpdateSchema.safeParse(body);
 
     if (!parsed.success) {
-      return apiError('Validation failed', 400);
+      return apiValidationError(parsed.error);
     }
 
     const data = parsed.data;
@@ -70,7 +71,7 @@ export async function DELETE(
   try {
     await requireAdmin();
 
-    const { id } = await params;
+    const id = requireUuid((await params).id, 'Review not found');
 
     const deleted = await db
       .delete(reviews)

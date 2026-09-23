@@ -54,6 +54,8 @@ function fileTypeLabel(mime: string | null): string {
   return map[mime] ?? mime.split('/')[1]?.toUpperCase() ?? 'File'
 }
 
+const MAX_UPLOAD_BYTES = 50 * 1024 * 1024
+
 export default function DocumentPanel({ clientId, studyId }: DocumentPanelProps) {
   const { user } = useAuth()
   const supabase = createClient()
@@ -93,6 +95,12 @@ export default function DocumentPanel({ clientId, studyId }: DocumentPanelProps)
     let successCount = 0
 
     for (const file of Array.from(files)) {
+      // Reject oversize files before uploading — the API refuses >50 MB and
+      // would otherwise leave the uploaded object orphaned in storage
+      if (file.size > MAX_UPLOAD_BYTES) {
+        toast.error(`${file.name} exceeds the 50 MB limit`)
+        continue
+      }
       const filePath = `${user.id}/${Date.now()}-${file.name}`
       try {
         const { error: uploadError } = await supabase.storage
@@ -120,6 +128,12 @@ export default function DocumentPanel({ clientId, studyId }: DocumentPanelProps)
 
         if (res.ok) {
           successCount++
+        } else {
+          const data = await res.json().catch(() => ({}))
+          logger.error('document-panel', 'Failed to save document record', data)
+          toast.error(data.error || `Failed to save ${file.name}`)
+          // Don't leave an untracked file behind in storage
+          await supabase.storage.from('documents').remove([filePath])
         }
       } catch (err) {
         logger.error('document-panel', 'Upload failed', err)
@@ -250,13 +264,14 @@ export default function DocumentPanel({ clientId, studyId }: DocumentPanelProps)
                   })}
                 </p>
               </div>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleDownload(doc)}
                   className="h-7 w-7 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                   title="Download"
+                  aria-label={`Download ${doc.fileName}`}
                 >
                   <Download className="h-3.5 w-3.5" />
                 </Button>
@@ -267,6 +282,7 @@ export default function DocumentPanel({ clientId, studyId }: DocumentPanelProps)
                   disabled={deletingId === doc.id}
                   className="h-7 w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
                   title="Delete"
+                  aria-label={`Delete ${doc.fileName}`}
                 >
                   {deletingId === doc.id
                     ? <Loader2 className="h-3.5 w-3.5 animate-spin" />

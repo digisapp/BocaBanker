@@ -290,17 +290,19 @@ export default function LeadsPage() {
     try {
       const res = await fetch(`/api/leads/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Failed to delete')
+      toast.success('Lead deleted')
       fetchLeads()
     } catch (error) {
       logger.error('leads-page', 'Failed to delete lead', error)
+      toast.error('Failed to delete lead')
     }
   }
 
   const handleConvert = async (id: string) => {
     try {
       const res = await fetch(`/api/leads/${id}/convert`, { method: 'POST' })
-      if (!res.ok) throw new Error('Failed to convert')
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || 'Failed to convert lead')
       if (data.propertyId) {
         router.push(`/properties/${data.propertyId}`)
       } else {
@@ -308,6 +310,7 @@ export default function LeadsPage() {
       }
     } catch (error) {
       logger.error('leads-page', 'Failed to convert lead', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to convert lead')
     }
   }
 
@@ -474,6 +477,7 @@ export default function LeadsPage() {
             {memberFilter}
             <button
               onClick={clearMemberFilter}
+              aria-label="Clear member filter"
               className="ml-1 p-0.5 rounded-full hover:bg-amber-200 transition-colors"
             >
               <X className="h-3 w-3" />
@@ -488,6 +492,7 @@ export default function LeadsPage() {
           <div className="flex flex-col sm:flex-row gap-3">
             <Input
               placeholder="Search leads..."
+              aria-label="Search leads"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="max-w-sm bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
@@ -545,21 +550,21 @@ export default function LeadsPage() {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
                 <Sparkles className="h-4 w-4 text-blue-500" />
-                <span className="text-xs text-gray-500 uppercase tracking-wider">New Leads</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wider">New (this page)</span>
               </div>
               <p className="text-2xl font-bold text-gray-900">{stats.newLeads}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
                 <TrendingUp className="h-4 w-4 text-emerald-500" />
-                <span className="text-xs text-gray-500 uppercase tracking-wider">Avg Sale Price</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Avg Sale Price (this page)</span>
               </div>
               <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.avgSalePrice, '--')}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
                 <DollarSign className="h-4 w-4 text-amber-500" />
-                <span className="text-xs text-gray-500 uppercase tracking-wider">Total Value</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Value (this page)</span>
               </div>
               <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalValue, '--')}</p>
             </div>
@@ -780,6 +785,7 @@ export default function LeadsPage() {
                                   size="icon"
                                   className="text-gray-500 hover:text-amber-600 h-8 w-8"
                                   onClick={(e) => e.stopPropagation()}
+                                  aria-label="Lead actions"
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
@@ -877,6 +883,7 @@ export default function LeadsPage() {
                         className="h-8 w-8"
                         disabled={page === 1}
                         onClick={() => setPage(1)}
+                        aria-label="First page"
                       >
                         <ChevronsLeft className="h-4 w-4" />
                       </Button>
@@ -886,6 +893,7 @@ export default function LeadsPage() {
                         className="h-8 w-8"
                         disabled={page === 1}
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        aria-label="Previous page"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
@@ -898,6 +906,7 @@ export default function LeadsPage() {
                         className="h-8 w-8"
                         disabled={page === totalPages}
                         onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        aria-label="Next page"
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>
@@ -907,6 +916,7 @@ export default function LeadsPage() {
                         className="h-8 w-8"
                         disabled={page === totalPages}
                         onClick={() => setPage(totalPages)}
+                        aria-label="Last page"
                       >
                         <ChevronsRight className="h-4 w-4" />
                       </Button>

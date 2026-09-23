@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { MapPin, DollarSign, Building2, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { PROPERTY_PROPERTY_TYPES, propertyTypeOptions } from '@/constants/property-types'
 
 const propertyFormSchema = propertySchema.extend({
@@ -45,9 +46,16 @@ interface PropertyFormProps {
   defaultValues?: Partial<PropertyFormValues>
   clients: ClientOption[]
   onSubmit: (data: PropertyFormValues) => Promise<void>
+  /** Editing an existing property (controls the submit label). Defaults to !!defaultValues */
+  isEdit?: boolean
 }
 
-export default function PropertyForm({ defaultValues, clients, onSubmit }: PropertyFormProps) {
+export default function PropertyForm({
+  defaultValues,
+  clients,
+  onSubmit,
+  isEdit = !!defaultValues,
+}: PropertyFormProps) {
   const form = useForm<PropertyFormValues>({
     resolver: zodResolver(propertyFormSchema),
     defaultValues: {
@@ -71,7 +79,14 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
   const { formState: { isSubmitting } } = form
 
   async function handleSubmit(data: PropertyFormValues) {
-    await onSubmit(data)
+    try {
+      await onSubmit(data)
+    } catch (err) {
+      // Surface API failures instead of an unhandled rejection with no feedback
+      const message = err instanceof Error ? err.message : 'Failed to save property'
+      form.setError('root', { message })
+      toast.error(message)
+    }
   }
 
   return (
@@ -391,6 +406,12 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
           />
         </div>
 
+        {form.formState.errors.root?.message && (
+          <p role="alert" className="text-sm text-red-600 text-right">
+            {form.formState.errors.root.message}
+          </p>
+        )}
+
         {/* Submit */}
         <div className="flex justify-end gap-4">
           <Button
@@ -403,7 +424,7 @@ export default function PropertyForm({ defaultValues, clients, onSubmit }: Prope
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 Saving...
               </>
-            ) : defaultValues ? (
+            ) : isEdit ? (
               'Update Property'
             ) : (
               'Create Property'

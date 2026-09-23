@@ -20,11 +20,15 @@ export default function NewPropertyPage() {
   const router = useRouter()
   const [clients, setClients] = useState<ClientOption[]>([])
   const [loading, setLoading] = useState(true)
+  // Pre-select the client when arriving from a client page (?clientId=...)
+  const [presetClientId, setPresetClientId] = useState<string | null>(null)
 
   useEffect(() => {
+    const clientId = new URLSearchParams(window.location.search).get('clientId')
     async function fetchClients() {
       try {
-        const res = await fetch('/api/clients?limit=200')
+        // API caps limit at 100
+        const res = await fetch('/api/clients?limit=100&sort=firstName&order=asc')
         if (res.ok) {
           const data = await res.json()
           setClients(
@@ -39,6 +43,7 @@ export default function NewPropertyPage() {
       } catch (error) {
         logger.error('properties-page', 'Error fetching clients', error)
       } finally {
+        if (clientId) setPresetClientId(clientId)
         setLoading(false)
       }
     }
@@ -53,7 +58,7 @@ export default function NewPropertyPage() {
     })
 
     if (!res.ok) {
-      const err = await res.json()
+      const err = await res.json().catch(() => ({}))
       throw new Error(err.error || 'Failed to create property')
     }
 
@@ -79,6 +84,7 @@ export default function NewPropertyPage() {
         <Button
           variant="ghost"
           size="icon"
+          aria-label="Go back"
           onClick={() => router.back()}
           className="text-gray-500 hover:text-amber-600 hover:bg-amber-50"
         >
@@ -90,7 +96,12 @@ export default function NewPropertyPage() {
         </div>
       </div>
 
-      <PropertyForm clients={clients} onSubmit={handleSubmit} />
+      <PropertyForm
+        clients={clients}
+        onSubmit={handleSubmit}
+        isEdit={false}
+        defaultValues={presetClientId ? { client_id: presetClientId } : undefined}
+      />
     </div>
   )
 }

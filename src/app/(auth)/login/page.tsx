@@ -60,7 +60,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md bg-white border-gray-200 shadow-xl shadow-black/5">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
-            <BocaBankerAvatar size={56} />
+            <BocaBankerAvatar size={56} priority />
           </div>
           <div>
             <CardTitle className="text-2xl font-serif text-gray-900">

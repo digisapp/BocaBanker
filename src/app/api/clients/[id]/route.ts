@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
-import { apiError } from '@/lib/api/response';
+import { apiError, apiValidationError } from '@/lib/api/response';
+import { requireUuid } from '@/lib/api/params';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { clients } from '@/db/schema';
@@ -14,7 +15,7 @@ export async function GET(
   try {
     const user = await requireAuth();
 
-    const { id } = await params;
+    const id = requireUuid((await params).id, 'Client not found');
 
     const [client] = await db
       .select()
@@ -40,22 +41,12 @@ export async function PUT(
   try {
     const user = await requireAuth();
 
-    const { id } = await params;
+    const id = requireUuid((await params).id, 'Client not found');
     const body = await request.json();
     const parsed = clientSchema.safeParse(body);
 
     if (!parsed.success) {
-      return apiError('Validation failed', 400);
-    }
-
-    // Verify ownership
-    const [existing] = await db
-      .select()
-      .from(clients)
-      .where(and(eq(clients.id, id), eq(clients.userId, user.id)));
-
-    if (!existing) {
-      return apiError('Client not found', 404);
+      return apiValidationError(parsed.error);
     }
 
     const data = parsed.data;
@@ -88,6 +79,10 @@ export async function PUT(
       .where(and(eq(clients.id, id), eq(clients.userId, user.id)))
       .returning();
 
+    if (!updated) {
+      return apiError('Client not found', 404);
+    }
+
     return NextResponse.json(updated);
   } catch (error) {
     if (error instanceof ApiError) return error.response;
@@ -103,22 +98,17 @@ export async function DELETE(
   try {
     const user = await requireAuth();
 
-    const { id } = await params;
+    const id = requireUuid((await params).id, 'Client not found');
 
-    // Verify ownership
-    const [existing] = await db
-      .select()
-      .from(clients)
-      .where(and(eq(clients.id, id), eq(clients.userId, user.id)));
+    // Hard delete, scoped to the owner (properties/studies cascade)
+    const deleted = await db
+      .delete(clients)
+      .where(and(eq(clients.id, id), eq(clients.userId, user.id)))
+      .returning({ id: clients.id });
 
-    if (!existing) {
+    if (deleted.length === 0) {
       return apiError('Client not found', 404);
     }
-
-    // Hard delete
-    await db
-      .delete(clients)
-      .where(and(eq(clients.id, id), eq(clients.userId, user.id)));
 
     return NextResponse.json({ success: true });
   } catch (error) {

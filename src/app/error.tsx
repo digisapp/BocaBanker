@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { logger } from '@/lib/logger'
 
 export default function GlobalError({
   error,
@@ -10,7 +11,8 @@ export default function GlobalError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('Global error:', error)
+    // Report to Sentry (via logger) — console.error alone never left the browser
+    logger.error('app-error-boundary', error.digest ? `Unhandled error (digest ${error.digest})` : 'Unhandled error', error)
   }, [error])
 
   return (

@@ -101,14 +101,16 @@ export default function SettingsPage() {
 
   // Prefill the profile form once the user loads (defaultValues capture
   // user=null on a hard reload, so reset when the user becomes available).
+  // Keyed on the user id (token refreshes emit a new User object) and skipped
+  // once the user has started editing, so typing isn't clobbered.
+  const userId = user?.id;
+  const userFullName = user?.user_metadata?.full_name || '';
+  const userEmail = user?.email || '';
   useEffect(() => {
-    if (user) {
-      profileForm.reset({
-        fullName: user.user_metadata?.full_name || '',
-        email: user.email || '',
-      });
+    if (userId && !profileForm.formState.isDirty) {
+      profileForm.reset({ fullName: userFullName, email: userEmail });
     }
-  }, [user, profileForm]);
+  }, [userId, userFullName, userEmail, profileForm]);
 
   async function handleProfileSave(data: ProfileFormData) {
     setProfileSaving(true);
@@ -119,12 +121,12 @@ export default function SettingsPage() {
         data: { full_name: data.fullName },
       });
 
-      if (!error) {
-        setProfileSaved(true);
-        setTimeout(() => setProfileSaved(false), 3000);
-      }
+      if (error) throw error;
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 3000);
     } catch (err) {
       logger.error('settings-page', 'Failed to update profile', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to update profile');
     } finally {
       setProfileSaving(false);
     }
@@ -195,16 +197,18 @@ export default function SettingsPage() {
           className="space-y-4"
         >
           <div className="space-y-2">
-            <Label className="text-gray-500">Full Name</Label>
+            <Label htmlFor="settings-full-name" className="text-gray-500">Full Name</Label>
             <Input
+              id="settings-full-name"
               {...profileForm.register('fullName')}
               className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-gray-500">Email</Label>
+            <Label htmlFor="settings-email" className="text-gray-500">Email</Label>
             <Input
+              id="settings-email"
               {...profileForm.register('email')}
               disabled
               className="bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed"
@@ -247,8 +251,9 @@ export default function SettingsPage() {
           className="space-y-4"
         >
           <div className="space-y-2">
-            <Label className="text-gray-500">New Password</Label>
+            <Label htmlFor="settings-new-password" className="text-gray-500">New Password</Label>
             <Input
+              id="settings-new-password"
               type="password"
               {...passwordForm.register('newPassword')}
               className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
@@ -256,8 +261,9 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-gray-500">Confirm New Password</Label>
+            <Label htmlFor="settings-confirm-new-password" className="text-gray-500">Confirm New Password</Label>
             <Input
+              id="settings-confirm-new-password"
               type="password"
               {...passwordForm.register('confirmPassword')}
               className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
@@ -298,8 +304,9 @@ export default function SettingsPage() {
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-gray-500">Arive Application Link</Label>
+            <Label htmlFor="settings-arive-application-link" className="text-gray-500">Arive Application Link</Label>
             <Input
+              id="settings-arive-application-link"
               type="url"
               value={ariveLink}
               onChange={(e) => setAriveLink(e.target.value)}
@@ -312,8 +319,9 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-gray-500">Company Name</Label>
+            <Label htmlFor="settings-company-name" className="text-gray-500">Company Name</Label>
             <Input
+              id="settings-company-name"
               value={ariveCompanyName}
               onChange={(e) => setAriveCompanyName(e.target.value)}
               placeholder="Your Brokerage Name"
@@ -334,6 +342,7 @@ export default function SettingsPage() {
               </p>
             </div>
             <Switch
+              aria-label="Rate drop alerts"
               checked={rateAlertEnabled}
               onCheckedChange={setRateAlertEnabled}
             />
@@ -341,8 +350,9 @@ export default function SettingsPage() {
 
           {rateAlertEnabled && (
             <div className="space-y-2 pl-0">
-              <Label className="text-gray-500">Alert Threshold (basis points)</Label>
+              <Label htmlFor="settings-alert-threshold-basis-points" className="text-gray-500">Alert Threshold (basis points)</Label>
               <Input
+                id="settings-alert-threshold-basis-points"
                 type="number"
                 value={rateAlertThresholdBps}
                 onChange={(e) => setRateAlertThresholdBps(e.target.value)}
@@ -395,6 +405,7 @@ export default function SettingsPage() {
               </p>
             </div>
             <Switch
+              aria-label="Email notifications"
               checked={emailNotifications}
               onCheckedChange={setEmailNotifications}
             />
@@ -410,6 +421,7 @@ export default function SettingsPage() {
               </p>
             </div>
             <Switch
+              aria-label="Study completion alerts"
               checked={studyAlerts}
               onCheckedChange={setStudyAlerts}
             />

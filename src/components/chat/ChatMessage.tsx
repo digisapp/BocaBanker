@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import type { UIMessage } from 'ai';
 
@@ -18,7 +19,7 @@ function getToolName(part: UIMessage['parts'][number]): string {
   return typeof part.type === 'string' ? part.type.replace(/^tool-/, '') : '';
 }
 
-export function ChatMessage({ role, content, parts, createdAt }: ChatMessageProps) {
+function ChatMessageImpl({ role, content, parts, createdAt }: ChatMessageProps) {
   const isUser = role === 'user';
 
   const formattedTime = createdAt
@@ -167,3 +168,8 @@ export function ChatMessage({ role, content, parts, createdAt }: ChatMessageProp
     </div>
   );
 }
+
+// Memoized: during streaming only the in-progress message gets new props
+// (useChat keeps earlier message objects referentially stable), so the rest
+// of the transcript doesn't re-render on every token.
+export const ChatMessage = memo(ChatMessageImpl);

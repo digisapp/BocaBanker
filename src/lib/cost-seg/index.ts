@@ -31,6 +31,7 @@ export {
   ASSET_CLASSES,
   TYPICAL_RECLASSIFICATION,
   getDefaultAllocation,
+  getAllocationFromBuildingValue,
 } from './asset-classes';
 export type { AssetClass, AllocationBreakdown } from './asset-classes';
 
@@ -42,7 +43,7 @@ export {
 export type { DepreciationEntry } from './depreciation';
 
 // Bonus Depreciation
-export { calculateBonusDepreciation } from './bonus-depreciation';
+export { calculateBonusDepreciation, getBonusRateForYear } from './bonus-depreciation';
 export type { BonusDepreciationResult } from './bonus-depreciation';
 
 // Tax Savings

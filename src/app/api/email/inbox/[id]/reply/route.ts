@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger';
 import { emails } from '@/db/schema';
 import { sendEmail, type SendEmailAttachment } from '@/lib/email/resend';
 import { eq, and, or, isNull } from 'drizzle-orm';
+import { isUuid } from '@/lib/email/ids';
 
 /**
  * POST /api/email/inbox/[id]/reply
@@ -20,6 +21,7 @@ export async function POST(
   try {
     const user = await requireAdmin();
     const { id } = await params;
+    if (!isUuid(id)) return apiError('Email not found', 404);
     const body = await request.json();
     const { html, subject: customSubject, attachments: rawAttachments } = body;
 

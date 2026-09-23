@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { leads } from '@/db/schema';
 import { eq, and, ilike, or, desc } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
+import { escapeLike } from '@/lib/api/params';
 
 const CSV_COLUMNS = [
   { key: 'propertyAddress', label: 'Property Address' },
@@ -37,12 +38,26 @@ const CSV_COLUMNS = [
 
 function escapeCsvField(value: unknown): string {
   if (value == null) return '';
-  const str = Array.isArray(value) ? value.join(', ') : String(value);
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+  let str = Array.isArray(value)
+    ? value.join(', ')
+    : value instanceof Date
+      ? value.toISOString()
+      : String(value);
+  // CSV/formula injection: spreadsheet apps execute cells starting with
+  // = + - @ (or tab/CR). Prefix with a quote so they render as text.
+  // Plain negative numbers are left alone.
+  if (/^[=+\-@\t\r]/.test(str) && !/^-\d+(\.\d+)?$/.test(str)) {
+    str = `'${str}`;
+  }
+  if (/[",\r\n]/.test(str)) {
     return `"${str.replace(/"/g, '""')}"`;
   }
   return str;
 }
+
+// Upper bound on exported rows so a single request can't pull an unbounded
+// result set into lambda memory.
+const MAX_EXPORT_ROWS = 50_000;
 
 export async function GET(request: NextRequest) {
   try {
@@ -59,13 +74,14 @@ export async function GET(request: NextRequest) {
     const conditions = [eq(leads.userId, user.id)];
 
     if (search) {
+      const term = `%${escapeLike(search)}%`;
       conditions.push(
         or(
-          ilike(leads.propertyAddress, `%${search}%`),
-          ilike(leads.buyerName, `%${search}%`),
-          ilike(leads.buyerCompany, `%${search}%`),
-          ilike(leads.propertyCity, `%${search}%`),
-          ilike(leads.propertyCounty, `%${search}%`)
+          ilike(leads.propertyAddress, term),
+          ilike(leads.buyerName, term),
+          ilike(leads.buyerCompany, term),
+          ilike(leads.propertyCity, term),
+          ilike(leads.propertyCounty, term)
         )!
       );
     }
@@ -92,7 +108,8 @@ export async function GET(request: NextRequest) {
       .select()
       .from(leads)
       .where(whereClause)
-      .orderBy(desc(leads.createdAt));
+      .orderBy(desc(leads.createdAt))
+      .limit(MAX_EXPORT_ROWS);
 
     // Build CSV
     const header = CSV_COLUMNS.map((c) => c.label).join(',');

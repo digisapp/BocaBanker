@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { logger } from '@/lib/logger'
+import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/utils'
 import {
   ArrowLeft,
@@ -155,8 +156,8 @@ export default function LeadDetailPage() {
       const res = await fetch(`/api/leads/${params.id}/convert`, {
         method: 'POST',
       })
-      if (!res.ok) throw new Error('Failed to convert')
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || 'Failed to convert lead')
       // Redirect to the new property so user can start a study or run calculators
       if (data.propertyId) {
         router.push(`/properties/${data.propertyId}`)
@@ -165,6 +166,7 @@ export default function LeadDetailPage() {
       }
     } catch (error) {
       logger.error('lead-detail', 'Failed to convert lead', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to convert lead')
       setConverting(false)
     }
   }
@@ -182,6 +184,7 @@ export default function LeadDetailPage() {
       router.push('/leads')
     } catch (error) {
       logger.error('lead-detail', 'Failed to delete lead', error)
+      toast.error('Failed to delete lead')
     }
   }
 
@@ -209,9 +212,10 @@ export default function LeadDetailPage() {
       const res = await fetch(`/api/leads/${params.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        // PUT is a partial update — send only the fields this form edits.
+        // (Echoing propertyAddress back failed validation for leads with no
+        // address, silently breaking save.)
         body: JSON.stringify({
-          propertyAddress: lead!.propertyAddress,
-          propertyType: lead!.propertyType,
           status: editForm.status,
           priority: editForm.priority,
           buyerEmail: editForm.buyerEmail || null,
@@ -221,12 +225,14 @@ export default function LeadDetailPage() {
           tags: editForm.tags,
         }),
       })
-      if (!res.ok) throw new Error('Failed to save')
-      const updated = await res.json()
+      const updated = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(updated.error || 'Failed to save lead')
       setLead(updated)
       setEditing(false)
+      toast.success('Lead updated')
     } catch (error) {
       logger.error('lead-detail', 'Failed to save lead', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to save lead')
     } finally {
       setSaving(false)
     }
@@ -253,6 +259,7 @@ export default function LeadDetailPage() {
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Go back"
             onClick={() => router.push('/leads')}
             className="text-gray-500 hover:text-amber-600"
           >
@@ -417,9 +424,9 @@ export default function LeadDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Status */}
             <div className="space-y-1.5">
-              <label className="text-xs text-gray-500 uppercase tracking-wider font-medium">Status</label>
+              <label htmlFor="lead-status" className="text-xs text-gray-500 uppercase tracking-wider font-medium">Status</label>
               <Select value={editForm.status} onValueChange={(v) => setEditForm((f) => ({ ...f, status: v }))}>
-                <SelectTrigger className="bg-white border-gray-200">
+                <SelectTrigger id="lead-status" className="bg-white border-gray-200">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200">
@@ -435,9 +442,9 @@ export default function LeadDetailPage() {
 
             {/* Priority */}
             <div className="space-y-1.5">
-              <label className="text-xs text-gray-500 uppercase tracking-wider font-medium">Priority</label>
+              <label htmlFor="lead-priority" className="text-xs text-gray-500 uppercase tracking-wider font-medium">Priority</label>
               <Select value={editForm.priority} onValueChange={(v) => setEditForm((f) => ({ ...f, priority: v }))}>
-                <SelectTrigger className="bg-white border-gray-200">
+                <SelectTrigger id="lead-priority" className="bg-white border-gray-200">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200">
@@ -450,8 +457,9 @@ export default function LeadDetailPage() {
 
             {/* Email */}
             <div className="space-y-1.5">
-              <label className="text-xs text-gray-500 uppercase tracking-wider font-medium">Buyer Email</label>
+              <label htmlFor="lead-email" className="text-xs text-gray-500 uppercase tracking-wider font-medium">Buyer Email</label>
               <Input
+                id="lead-email"
                 type="email"
                 value={editForm.buyerEmail}
                 onChange={(e) => setEditForm((f) => ({ ...f, buyerEmail: e.target.value }))}
@@ -462,8 +470,9 @@ export default function LeadDetailPage() {
 
             {/* Phone */}
             <div className="space-y-1.5">
-              <label className="text-xs text-gray-500 uppercase tracking-wider font-medium">Buyer Phone</label>
+              <label htmlFor="lead-phone" className="text-xs text-gray-500 uppercase tracking-wider font-medium">Buyer Phone</label>
               <Input
+                id="lead-phone"
                 type="tel"
                 value={editForm.buyerPhone}
                 onChange={(e) => setEditForm((f) => ({ ...f, buyerPhone: e.target.value }))}
@@ -474,8 +483,9 @@ export default function LeadDetailPage() {
 
             {/* Source */}
             <div className="space-y-1.5">
-              <label className="text-xs text-gray-500 uppercase tracking-wider font-medium">Source</label>
+              <label htmlFor="lead-source" className="text-xs text-gray-500 uppercase tracking-wider font-medium">Source</label>
               <Input
+                id="lead-source"
                 value={editForm.source}
                 onChange={(e) => setEditForm((f) => ({ ...f, source: e.target.value }))}
                 placeholder="e.g. county-records, referral"
@@ -485,8 +495,9 @@ export default function LeadDetailPage() {
 
             {/* Tags */}
             <div className="space-y-1.5">
-              <label className="text-xs text-gray-500 uppercase tracking-wider font-medium">Tags (comma-separated)</label>
+              <label htmlFor="lead-tags" className="text-xs text-gray-500 uppercase tracking-wider font-medium">Tags (comma-separated)</label>
               <Input
+                id="lead-tags"
                 value={editForm.tags}
                 onChange={(e) => setEditForm((f) => ({ ...f, tags: e.target.value }))}
                 placeholder="tag1, tag2, tag3"
@@ -497,8 +508,9 @@ export default function LeadDetailPage() {
 
           {/* Notes (full width) */}
           <div className="space-y-1.5">
-            <label className="text-xs text-gray-500 uppercase tracking-wider font-medium">Notes</label>
+            <label htmlFor="lead-notes" className="text-xs text-gray-500 uppercase tracking-wider font-medium">Notes</label>
             <Textarea
+              id="lead-notes"
               value={editForm.notes}
               onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))}
               placeholder="Add notes about this lead..."

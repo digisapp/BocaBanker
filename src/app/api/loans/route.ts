@@ -3,7 +3,8 @@ import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError, apiValidationError } from '@/lib/api/response';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
-import { loans } from '@/db/schema';
+import { parsePagination, escapeLike } from '@/lib/api/params';
+import { loans, leads } from '@/db/schema';
 import { eq, and, ilike, or, desc, asc, count } from 'drizzle-orm';
 import { loanSchema } from '@/lib/validation/schemas';
 
@@ -12,26 +13,25 @@ export async function GET(request: NextRequest) {
     const user = await requireAuth();
 
     const searchParams = request.nextUrl.searchParams;
-    const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
-    const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit') ?? '10')));
+    const { page, limit, offset } = parsePagination(searchParams, { defaultLimit: 10 });
     const search = searchParams.get('search') ?? '';
     const status = searchParams.get('status') ?? '';
     const loanType = searchParams.get('loanType') ?? '';
     const sort = searchParams.get('sort') ?? 'createdAt';
     const order = searchParams.get('order') ?? 'desc';
 
-    const offset = (page - 1) * limit;
 
     // Build where conditions
     const conditions = [eq(loans.userId, user.id)];
 
     if (search) {
+      const term = `%${escapeLike(search)}%`;
       conditions.push(
         or(
-          ilike(loans.borrowerName, `%${search}%`),
-          ilike(loans.propertyAddress, `%${search}%`),
-          ilike(loans.borrowerEmail, `%${search}%`),
-          ilike(loans.lenderName, `%${search}%`)
+          ilike(loans.borrowerName, term),
+          ilike(loans.propertyAddress, term),
+          ilike(loans.borrowerEmail, term),
+          ilike(loans.lenderName, term)
         )!
       );
     }
@@ -105,6 +105,18 @@ export async function POST(request: NextRequest) {
     }
 
     const data = parsed.data;
+
+    // A linked lead must belong to the same user
+    if (data.lead_id) {
+      const [ownedLead] = await db
+        .select({ id: leads.id })
+        .from(leads)
+        .where(and(eq(leads.id, data.lead_id), eq(leads.userId, user.id)))
+        .limit(1);
+      if (!ownedLead) {
+        return apiError('Lead not found', 400);
+      }
+    }
 
     // Auto-calculate commission amount from loan amount and bps
     let commissionAmount: string | null = null;

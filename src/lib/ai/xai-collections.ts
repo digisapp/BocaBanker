@@ -23,6 +23,12 @@ const MANAGEMENT_API_BASE = 'https://management-api.x.ai/v1'
 const SEARCH_TIMEOUT_MS = 3000
 const MAX_CONTEXT_CHARS = 4000
 const MAX_RESULTS = 5
+const MANAGEMENT_TIMEOUT_MS = 20_000
+
+/** Path segment from a route param: encode so ids can't rewrite the upstream path. */
+function seg(value: string): string {
+  return encodeURIComponent(value)
+}
 
 // ─── Feature flag ────────────────────────────────────────────────────
 
@@ -155,6 +161,7 @@ export async function listCollections(): Promise<Collection[]> {
   const response = await fetch(`${MANAGEMENT_API_BASE}/collections`, {
     method: 'GET',
     headers: getManagementHeaders(),
+    signal: AbortSignal.timeout(MANAGEMENT_TIMEOUT_MS),
   })
   if (!response.ok) throw new Error(`Failed to list collections: ${response.status}`)
   const data = await response.json()
@@ -169,6 +176,7 @@ export async function createCollection(
     method: 'POST',
     headers: getManagementHeaders(),
     body: JSON.stringify({ collection_name: name, description }),
+    signal: AbortSignal.timeout(MANAGEMENT_TIMEOUT_MS),
   })
   if (!response.ok) {
     const body = await response.text()
@@ -194,11 +202,12 @@ export async function uploadDocument(
   formData.append('content_type', 'text/markdown')
 
   const response = await fetch(
-    `${MANAGEMENT_API_BASE}/collections/${collectionId}/documents`,
+    `${MANAGEMENT_API_BASE}/collections/${seg(collectionId)}/documents`,
     {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}` },
       body: formData,
+      signal: AbortSignal.timeout(MANAGEMENT_TIMEOUT_MS),
     },
   )
   if (!response.ok) {
@@ -210,8 +219,8 @@ export async function uploadDocument(
 
 export async function listDocuments(collectionId: string): Promise<unknown[]> {
   const response = await fetch(
-    `${MANAGEMENT_API_BASE}/collections/${collectionId}/documents`,
-    { method: 'GET', headers: getManagementHeaders() },
+    `${MANAGEMENT_API_BASE}/collections/${seg(collectionId)}/documents`,
+    { method: 'GET', headers: getManagementHeaders(), signal: AbortSignal.timeout(MANAGEMENT_TIMEOUT_MS) },
   )
   if (!response.ok) throw new Error(`Failed to list documents: ${response.status}`)
   const data = await response.json()
@@ -223,8 +232,8 @@ export async function deleteDocument(
   documentId: string,
 ): Promise<void> {
   const response = await fetch(
-    `${MANAGEMENT_API_BASE}/collections/${collectionId}/documents/${documentId}`,
-    { method: 'DELETE', headers: getManagementHeaders() },
+    `${MANAGEMENT_API_BASE}/collections/${seg(collectionId)}/documents/${seg(documentId)}`,
+    { method: 'DELETE', headers: getManagementHeaders(), signal: AbortSignal.timeout(MANAGEMENT_TIMEOUT_MS) },
   )
   if (!response.ok) throw new Error(`Failed to delete document: ${response.status}`)
 }

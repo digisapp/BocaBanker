@@ -170,6 +170,9 @@ function mapAttomPropertyType(
   return 'other';
 }
 
+// Up to 10 sequential upstream pages + inserts
+export const maxDuration = 300;
+
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAdmin();
@@ -195,8 +198,24 @@ export async function POST(request: NextRequest) {
         dateTo,
       } = body;
 
-      if (!attomApiKey) {
+      if (!attomApiKey || typeof attomApiKey !== 'string') {
         return apiError('attomApiKey is required for ATTOM source', 400);
+      }
+      if (typeof state !== 'string' || !/^[A-Za-z]{2}$|^\d{2}$/.test(state)) {
+        return apiError('state must be a 2-letter code or 2-digit FIPS code', 400);
+      }
+      if (!Array.isArray(propertyTypes)) {
+        return apiError('propertyTypes must be an array', 400);
+      }
+      if (
+        (minPrice !== undefined && (typeof minPrice !== 'number' || !Number.isFinite(minPrice))) ||
+        (maxPrice !== undefined && (typeof maxPrice !== 'number' || !Number.isFinite(maxPrice)))
+      ) {
+        return apiError('minPrice/maxPrice must be numbers', 400);
+      }
+      const isDateStr = (v: unknown) => typeof v === 'string' && /^\d{4}[-/]\d{2}[-/]\d{2}$/.test(v);
+      if ((dateFrom && !isDateStr(dateFrom)) || (dateTo && !isDateStr(dateTo))) {
+        return apiError('dateFrom/dateTo must be dates (YYYY-MM-DD)', 400);
       }
 
       // Build ATTOM property type filter
@@ -258,6 +277,9 @@ export async function POST(request: NextRequest) {
               apikey: attomApiKey,
               Accept: 'application/json',
             },
+            // Up to 10 sequential pages — bound each so one hung upstream
+            // call can't consume the whole function budget
+            signal: AbortSignal.timeout(20_000),
           });
 
           if (!response.ok) {
@@ -272,7 +294,7 @@ export async function POST(request: NextRequest) {
               return NextResponse.json(
                 {
                   error: `ATTOM API error: ${response.status} ${response.statusText}`,
-                  details: errorText,
+                  details: errorText.slice(0, 500),
                 },
                 { status: 502 }
               );

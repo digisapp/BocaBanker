@@ -22,6 +22,8 @@ import {
   Loader2,
   Landmark,
   Trash2,
+  AlertCircle,
+  RotateCcw,
 } from 'lucide-react';
 import { cn, getTextContent } from '@/lib/utils';
 import { useConversations } from '@/hooks/useConversations';
@@ -32,6 +34,17 @@ interface ChatInterfaceProps {
 }
 
 const DESKTOP_MEDIA_QUERY = '(min-width: 768px)';
+
+/** DefaultChatTransport surfaces non-2xx bodies as the error message; unwrap `{ error }` JSON. */
+function describeChatError(error: Error): string {
+  try {
+    const parsed = JSON.parse(error.message);
+    if (parsed && typeof parsed.error === 'string') return parsed.error;
+  } catch {
+    // not JSON
+  }
+  return error.message || 'Something went wrong. Please try again.';
+}
 
 function subscribeToViewport(callback: () => void) {
   const mql = window.matchMedia(DESKTOP_MEDIA_QUERY);
@@ -129,8 +142,13 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
     sendMessage,
     status,
     setMessages,
+    error,
+    regenerate,
+    clearError,
   } = useChat({
     transport,
+    // Batch streaming UI updates instead of re-rendering on every token.
+    experimental_throttle: 50,
     onFinish: () => {
       fetchConversations();
     },
@@ -164,13 +182,15 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
     // after the first message is sent, so nothing else to do here.
   }, [initialGuestHandoff, setMessages]);
 
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = useCallback((smooth: boolean) => {
+    messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
   }, []);
 
+  // Smooth-scrolling on every streamed chunk queues overlapping animations
+  // (janky); jump instantly while streaming.
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
+    scrollToBottom(status !== 'streaming');
+  }, [messages, status, scrollToBottom]);
 
   useEffect(() => {
     fetchConversations();
@@ -196,6 +216,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
   };
 
   const handleChatSubmit = (message: string) => {
+    if (error) clearError();
     sendMessage({ text: message });
   };
 
@@ -404,6 +425,24 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
                     </div>
                   </div>
                 )}
+              {error && !isLoading && (
+                <div
+                  role="alert"
+                  className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                >
+                  <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span className="flex-1">{describeChatError(error)}</span>
+                  {messages[messages.length - 1]?.role === 'user' && (
+                    <button
+                      onClick={() => regenerate()}
+                      className="flex items-center gap-1 text-xs font-medium text-red-700 hover:text-red-900"
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      Retry
+                    </button>
+                  )}
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
           )}

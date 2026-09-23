@@ -15,7 +15,7 @@ const ACTIONS = [
   {
     label: 'New Client',
     icon: UserPlus,
-    href: '/clients?action=new',
+    href: '/clients/new',
     description: 'Add a new client',
   },
   {
@@ -27,13 +27,13 @@ const ACTIONS = [
   {
     label: 'New Property',
     icon: Building2,
-    href: '/properties?action=new',
+    href: '/properties/new',
     description: 'Add a property',
   },
   {
     label: 'New Study',
     icon: FileText,
-    href: '/studies?action=new',
+    href: '/studies/new',
     description: 'Start a cost seg study',
   },
   {

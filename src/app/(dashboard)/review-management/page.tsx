@@ -76,28 +76,49 @@ export default function ReviewsManagementPage() {
   const [deleteReview, setDeleteReview] = useState<Review | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  const fetchReviews = useCallback(async () => {
+  // Debounce search so we don't query on every keystroke
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  const fetchReviews = useCallback(async (signal?: AbortSignal) => {
     setLoading(true)
     const params = new URLSearchParams({
       page: String(page),
       limit: String(limit),
     })
     if (statusFilter !== 'all') params.set('status', statusFilter)
-    if (search) params.set('search', search)
+    if (debouncedSearch) params.set('search', debouncedSearch)
 
-    const res = await fetch(`/api/reviews/admin?${params}`)
-    if (res.ok) {
+    try {
+      const res = await fetch(`/api/reviews/admin?${params}`, { signal })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(
+          res.status === 403
+            ? 'Admin access is required to manage reviews'
+            : data.error || 'Failed to load reviews'
+        )
+      }
       const data = await res.json()
       setReviews(data.reviews)
       setTotal(data.total)
       setStats(data.stats)
+      setLoading(false)
+    } catch (err) {
+      // A newer request superseded this one; leave its state alone
+      if (signal?.aborted) return
+      toast.error(err instanceof Error ? err.message : 'Failed to load reviews')
+      setLoading(false)
     }
-    setLoading(false)
-  }, [page, statusFilter, search])
+  }, [page, statusFilter, debouncedSearch])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching is a valid use of setState in effect
-    fetchReviews()
+    const controller = new AbortController()
+    fetchReviews(controller.signal)
+    return () => controller.abort()
   }, [fetchReviews])
 
   const updateStatus = async (id: string, status: 'approved' | 'rejected') => {
@@ -105,8 +126,8 @@ export default function ReviewsManagementPage() {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
-    })
-    if (res.ok) {
+    }).catch(() => null)
+    if (res?.ok) {
       toast.success(`Review ${status}`)
       fetchReviews()
     } else {
@@ -124,8 +145,8 @@ export default function ReviewsManagementPage() {
         status: 'approved',
         response_text: responseText,
       }),
-    })
-    if (res.ok) {
+    }).catch(() => null)
+    if (res?.ok) {
       toast.success('Response saved & review approved')
       setRespondReview(null)
       setResponseText('')
@@ -141,8 +162,8 @@ export default function ReviewsManagementPage() {
     setDeleting(true)
     const res = await fetch(`/api/reviews/${deleteReview.id}`, {
       method: 'DELETE',
-    })
-    if (res.ok) {
+    }).catch(() => null)
+    if (res?.ok) {
       toast.success('Review deleted')
       setDeleteReview(null)
       fetchReviews()
@@ -220,6 +241,7 @@ export default function ReviewsManagementPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             placeholder="Search reviews..."
+            aria-label="Search reviews"
             value={search}
             onChange={(e) => {
               setSearch(e.target.value)
@@ -296,7 +318,7 @@ export default function ReviewsManagementPage() {
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="shrink-0">
+                    <Button variant="ghost" size="sm" className="shrink-0" aria-label="Review actions">
                       Actions
                     </Button>
                   </DropdownMenuTrigger>
@@ -353,6 +375,7 @@ export default function ReviewsManagementPage() {
               size="sm"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
+              aria-label="Previous page"
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
@@ -361,6 +384,7 @@ export default function ReviewsManagementPage() {
               size="sm"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
+              aria-label="Next page"
             >
               <ChevronRight className="w-4 h-4" />
             </Button>
@@ -389,10 +413,11 @@ export default function ReviewsManagementPage() {
                 <p className="text-sm text-gray-600">{respondReview.title}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                <label htmlFor="review-response" className="text-sm font-medium text-gray-700 mb-1 block">
                   Your Response
                 </label>
                 <Textarea
+                  id="review-response"
                   value={responseText}
                   onChange={(e) => setResponseText(e.target.value)}
                   placeholder="Thank you for your kind words..."

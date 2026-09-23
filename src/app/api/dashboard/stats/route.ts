@@ -22,149 +22,89 @@ export async function GET(_request: NextRequest) {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Total clients
-    const [clientCount] = await db
-      .select({ total: count() })
-      .from(clients)
-      .where(eq(clients.userId, userId));
-
-    // New clients this month
-    const [newClientsCount] = await db
-      .select({ total: count() })
-      .from(clients)
-      .where(
-        and(
-          eq(clients.userId, userId),
-          gte(clients.createdAt, startOfMonth)
-        )
-      );
-
-    // Total properties
-    const [propertyCount] = await db
-      .select({ total: count() })
-      .from(properties)
-      .where(eq(properties.userId, userId));
-
-    // Total studies and completed
-    const [studyCount] = await db
-      .select({ total: count() })
-      .from(costSegStudies)
-      .where(eq(costSegStudies.userId, userId));
-
-    const [completedCount] = await db
-      .select({ total: count() })
-      .from(costSegStudies)
-      .where(
-        and(
-          eq(costSegStudies.userId, userId),
-          eq(costSegStudies.status, 'completed')
-        )
-      );
-
-    // Total tax savings across all studies
-    const [savingsResult] = await db
-      .select({
-        total: sql<string>`COALESCE(SUM(CAST(${costSegStudies.totalTaxSavings} AS DECIMAL)), 0)`,
-      })
-      .from(costSegStudies)
-      .where(eq(costSegStudies.userId, userId));
-
-    // Emails sent this month
-    const [emailCount] = await db
-      .select({ total: count() })
-      .from(emailLogs)
-      .where(
-        and(
-          eq(emailLogs.userId, userId),
-          gte(emailLogs.sentAt, startOfMonth)
-        )
-      );
-
-    // Lead metrics
-    const [leadCount] = await db
-      .select({ total: count() })
-      .from(leads)
-      .where(eq(leads.userId, userId));
-
-    const [newLeadsCount] = await db
-      .select({ total: count() })
-      .from(leads)
-      .where(
-        and(eq(leads.userId, userId), eq(leads.status, 'new'))
-      );
-
-    const [contactedLeadsCount] = await db
-      .select({ total: count() })
-      .from(leads)
-      .where(
-        and(eq(leads.userId, userId), eq(leads.status, 'contacted'))
-      );
-
-    const [qualifiedLeadsCount] = await db
-      .select({ total: count() })
-      .from(leads)
-      .where(
-        and(eq(leads.userId, userId), eq(leads.status, 'qualified'))
-      );
-
-    const [convertedLeadsCount] = await db
-      .select({ total: count() })
-      .from(leads)
-      .where(
-        and(eq(leads.userId, userId), eq(leads.status, 'converted'))
-      );
-
-    const [newLeadsThisMonthCount] = await db
-      .select({ total: count() })
-      .from(leads)
-      .where(
-        and(eq(leads.userId, userId), gte(leads.createdAt, startOfMonth))
-      );
-
-    // Portfolio value (sum of purchase prices)
-    const [portfolioResult] = await db
-      .select({
-        total: sql<string>`COALESCE(SUM(CAST(${properties.purchasePrice} AS DECIMAL)), 0)`,
-      })
-      .from(properties)
-      .where(eq(properties.userId, userId));
-
-    // Recent activity: last 10 created items across tables
-    // We simulate activity from recent clients, studies, and emails
-    const recentClients = await db
-      .select({
-        id: clients.id,
-        name: sql<string>`${clients.firstName} || ' ' || ${clients.lastName}`,
-        createdAt: clients.createdAt,
-      })
-      .from(clients)
-      .where(eq(clients.userId, userId))
-      .orderBy(desc(clients.createdAt))
-      .limit(5);
-
-    const recentStudies = await db
-      .select({
-        id: costSegStudies.id,
-        name: costSegStudies.studyName,
-        status: costSegStudies.status,
-        createdAt: costSegStudies.createdAt,
-      })
-      .from(costSegStudies)
-      .where(eq(costSegStudies.userId, userId))
-      .orderBy(desc(costSegStudies.createdAt))
-      .limit(5);
-
-    const recentEmails = await db
-      .select({
-        id: emailLogs.id,
-        toEmail: emailLogs.toEmail,
-        subject: emailLogs.subject,
-        sentAt: emailLogs.sentAt,
-      })
-      .from(emailLogs)
-      .where(eq(emailLogs.userId, userId))
-      .orderBy(desc(emailLogs.sentAt))
-      .limit(5);
+    // One aggregate query per table (COUNT ... FILTER) instead of 17
+    // sequential round-trips, all issued in parallel.
+    const [
+      [clientAgg],
+      [propertyAgg],
+      [studyAgg],
+      [emailAgg],
+      [leadAgg],
+      recentClients,
+      recentStudies,
+      recentEmails,
+    ] = await Promise.all([
+      db
+        .select({
+          total: count(),
+          newThisMonth: sql<number>`count(*) filter (where ${gte(clients.createdAt, startOfMonth)})`.mapWith(Number),
+        })
+        .from(clients)
+        .where(eq(clients.userId, userId)),
+      db
+        .select({
+          total: count(),
+          portfolioValue: sql<string>`COALESCE(SUM(${properties.purchasePrice}), 0)`,
+        })
+        .from(properties)
+        .where(eq(properties.userId, userId)),
+      db
+        .select({
+          total: count(),
+          completed: sql<number>`count(*) filter (where ${costSegStudies.status} = 'completed')`.mapWith(Number),
+          taxSavings: sql<string>`COALESCE(SUM(${costSegStudies.totalTaxSavings}), 0)`,
+        })
+        .from(costSegStudies)
+        .where(eq(costSegStudies.userId, userId)),
+      db
+        .select({ total: count() })
+        .from(emailLogs)
+        .where(and(eq(emailLogs.userId, userId), gte(emailLogs.sentAt, startOfMonth))),
+      db
+        .select({
+          total: count(),
+          newLeads: sql<number>`count(*) filter (where ${leads.status} = 'new')`.mapWith(Number),
+          contacted: sql<number>`count(*) filter (where ${leads.status} = 'contacted')`.mapWith(Number),
+          qualified: sql<number>`count(*) filter (where ${leads.status} = 'qualified')`.mapWith(Number),
+          converted: sql<number>`count(*) filter (where ${leads.status} = 'converted')`.mapWith(Number),
+          newThisMonth: sql<number>`count(*) filter (where ${gte(leads.createdAt, startOfMonth)})`.mapWith(Number),
+        })
+        .from(leads)
+        .where(eq(leads.userId, userId)),
+      // Recent activity: last created items across tables
+      db
+        .select({
+          id: clients.id,
+          name: sql<string>`${clients.firstName} || ' ' || ${clients.lastName}`,
+          createdAt: clients.createdAt,
+        })
+        .from(clients)
+        .where(eq(clients.userId, userId))
+        .orderBy(desc(clients.createdAt))
+        .limit(5),
+      db
+        .select({
+          id: costSegStudies.id,
+          name: costSegStudies.studyName,
+          status: costSegStudies.status,
+          createdAt: costSegStudies.createdAt,
+        })
+        .from(costSegStudies)
+        .where(eq(costSegStudies.userId, userId))
+        .orderBy(desc(costSegStudies.createdAt))
+        .limit(5),
+      db
+        .select({
+          id: emailLogs.id,
+          toEmail: emailLogs.toEmail,
+          subject: emailLogs.subject,
+          sentAt: emailLogs.sentAt,
+        })
+        .from(emailLogs)
+        .where(eq(emailLogs.userId, userId))
+        .orderBy(desc(emailLogs.sentAt))
+        .limit(5),
+    ]);
 
     // Combine and sort by date
     const recentActivity = [
@@ -194,20 +134,20 @@ export async function GET(_request: NextRequest) {
       .slice(0, 10);
 
     return NextResponse.json({
-      totalClients: clientCount?.total || 0,
-      newClientsThisMonth: newClientsCount?.total || 0,
-      totalProperties: propertyCount?.total || 0,
-      totalStudies: studyCount?.total || 0,
-      completedStudies: completedCount?.total || 0,
-      totalTaxSavings: parseFloat(savingsResult?.total || '0'),
-      emailsSentThisMonth: emailCount?.total || 0,
-      totalLeads: leadCount?.total || 0,
-      newLeads: newLeadsCount?.total || 0,
-      contactedLeads: contactedLeadsCount?.total || 0,
-      qualifiedLeads: qualifiedLeadsCount?.total || 0,
-      convertedLeads: convertedLeadsCount?.total || 0,
-      newLeadsThisMonth: newLeadsThisMonthCount?.total || 0,
-      totalPortfolioValue: parseFloat(portfolioResult?.total || '0'),
+      totalClients: clientAgg?.total || 0,
+      newClientsThisMonth: clientAgg?.newThisMonth || 0,
+      totalProperties: propertyAgg?.total || 0,
+      totalStudies: studyAgg?.total || 0,
+      completedStudies: studyAgg?.completed || 0,
+      totalTaxSavings: parseFloat(studyAgg?.taxSavings || '0'),
+      emailsSentThisMonth: emailAgg?.total || 0,
+      totalLeads: leadAgg?.total || 0,
+      newLeads: leadAgg?.newLeads || 0,
+      contactedLeads: leadAgg?.contacted || 0,
+      qualifiedLeads: leadAgg?.qualified || 0,
+      convertedLeads: leadAgg?.converted || 0,
+      newLeadsThisMonth: leadAgg?.newThisMonth || 0,
+      totalPortfolioValue: parseFloat(propertyAgg?.portfolioValue || '0'),
       recentActivity,
     });
   } catch (error) {

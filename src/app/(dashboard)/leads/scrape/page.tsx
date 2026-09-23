@@ -138,7 +138,7 @@ export default function LeadScrapePage() {
         body: JSON.stringify(body),
       })
 
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
 
       if (!res.ok) {
         setError(data.error || 'Import failed')
@@ -172,7 +172,7 @@ export default function LeadScrapePage() {
         body: JSON.stringify(body),
       })
 
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
 
       if (!res.ok) {
         setError(data.error || 'Failed to fetch county data')
@@ -196,7 +196,7 @@ export default function LeadScrapePage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.push('/dashboard/leads')}
+          onClick={() => router.push('/leads')}
           className="text-gray-500 hover:text-gray-700 -ml-2"
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
@@ -383,7 +383,7 @@ export default function LeadScrapePage() {
                 variant="outline"
                 size="sm"
                 className="ml-auto border-green-200 text-green-700 hover:bg-green-100"
-                onClick={() => router.push('/dashboard/leads')}
+                onClick={() => router.push('/leads')}
               >
                 View Leads
               </Button>
@@ -510,7 +510,7 @@ export default function LeadScrapePage() {
                 <p className="text-xs text-gray-500">
                   When importing county CSV data, map your columns to these headers before uploading on the{' '}
                   <button
-                    onClick={() => router.push('/dashboard/leads/import')}
+                    onClick={() => router.push('/leads')}
                     className="text-amber-600 hover:underline"
                   >
                     leads import page

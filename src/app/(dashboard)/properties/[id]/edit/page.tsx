@@ -176,6 +176,7 @@ export default function EditPropertyPage() {
             variant="ghost"
             size="icon"
             className="text-gray-500 hover:text-amber-600 hover:bg-amber-50"
+            aria-label="Go back"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>

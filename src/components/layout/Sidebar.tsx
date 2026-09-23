@@ -63,7 +63,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {/* Logo */}
         <div className="flex items-center h-16 px-4 border-b border-gray-200">
           <Link href="/dashboard" className="flex items-center gap-2 overflow-hidden">
-            <BocaBankerAvatar size={32} />
+            <BocaBankerAvatar size={32} priority />
             {!collapsed && (
               <span className="font-serif text-xl font-bold text-gray-900 whitespace-nowrap">
                 Boca Banker

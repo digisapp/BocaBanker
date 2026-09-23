@@ -51,6 +51,7 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
         placeholder="Ask Boca Banker about banking, mortgages, cost segregation, or tax strategy..."
         className="min-h-[44px] max-h-[96px] resize-none bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus-visible:border-amber-500 focus-visible:ring-amber-500/20 text-sm"
         rows={1}
+        maxLength={8000}
         onKeyDown={handleKeyDown}
         onInput={handleInput}
         disabled={isLoading}

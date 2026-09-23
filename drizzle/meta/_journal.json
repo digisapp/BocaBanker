@@ -64,6 +64,20 @@
       "when": 1781240436324,
       "tag": "0008_sweet_shadow_king",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790205266486,
+      "tag": "0009_add_query_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790205449341,
+      "tag": "0010_add_email_chat_indexes",
+      "breakpoints": true
     }
   ]
 }

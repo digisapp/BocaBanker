@@ -46,7 +46,7 @@ export default function StudyTaxParamsStep({
           <Label className="text-gray-500">Bonus Depreciation Rate (%)</Label>
           <Input type="number" value={bonusDepreciationRate} onChange={(e) => onBonusDepreciationRateChange(Number(e.target.value))} min={0} max={100} step={1} className="mt-1.5 bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20" />
           {errors.bonus_depreciation_rate && <p className="text-xs text-red-400 mt-1">{errors.bonus_depreciation_rate}</p>}
-          <p className="text-xs text-gray-400 mt-1">Section 168(k) rate for eligible assets</p>
+          <p className="text-xs text-gray-400 mt-1">Section 168(k) rate for eligible assets. Defaults to the statutory rate for the study year (100% for property acquired after Jan 19, 2025; TCJA phase-down otherwise: 60% 2024, 40% 2025).</p>
         </div>
         <div>
           <Label className="text-gray-500">Study Year</Label>

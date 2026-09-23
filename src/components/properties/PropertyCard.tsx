@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Building2, MapPin, Ruler } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency } from '@/lib/utils'
@@ -43,8 +43,6 @@ interface PropertyCardProps {
 }
 
 export default function PropertyCard({ property }: PropertyCardProps) {
-  const router = useRouter()
-
   const purchasePrice = typeof property.purchasePrice === 'string'
     ? parseFloat(property.purchasePrice)
     : property.purchasePrice
@@ -69,9 +67,9 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   const location = [property.city, property.state].filter(Boolean).join(', ')
 
   return (
-    <div
-      className="bg-white rounded-2xl border border-gray-100 hover:shadow-md hover:border-amber-200 transition-all p-5 cursor-pointer group"
-      onClick={() => router.push(`/properties/${property.id}`)}
+    <Link
+      href={`/properties/${property.id}`}
+      className="block bg-white rounded-2xl border border-gray-100 hover:shadow-md hover:border-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 transition-all p-5 cursor-pointer group"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
@@ -161,6 +159,6 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           </span>
         )}
       </div>
-    </div>
+    </Link>
   )
 }

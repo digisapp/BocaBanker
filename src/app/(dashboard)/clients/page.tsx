@@ -5,7 +5,12 @@ import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { useRouter } from 'next/navigation'
 import { Plus, Upload, Users, Loader2 } from 'lucide-react'
-import { ClientsTable, type ClientRow } from '@/components/clients/ClientsTable'
+import type { PaginationState, SortingState } from '@tanstack/react-table'
+import {
+  ClientsTable,
+  CLIENT_SORT_KEYS,
+  type ClientRow,
+} from '@/components/clients/ClientsTable'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -27,18 +32,42 @@ export default function ClientsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  })
+  const [sorting, setSorting] = useState<SortingState>([])
 
-  // Debounce search
+  // Debounce search; any filter change returns to the first page
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search)
+      setPagination((p) => (p.pageIndex === 0 ? p : { ...p, pageIndex: 0 }))
+    }, 300)
     return () => clearTimeout(timer)
   }, [search])
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value)
+    setPagination((p) => ({ ...p, pageIndex: 0 }))
+  }
+
+  const handleSortingChange = (next: SortingState) => {
+    setSorting(next)
+    setPagination((p) => ({ ...p, pageIndex: 0 }))
+  }
 
   const fetchClients = useCallback(async (signal?: AbortSignal) => {
     setLoading(true)
     try {
+      const sortCol = sorting[0]
       const params = new URLSearchParams({
-        limit: '100',
+        page: String(pagination.pageIndex + 1),
+        limit: String(pagination.pageSize),
+        ...(sortCol && CLIENT_SORT_KEYS[sortCol.id] && {
+          sort: CLIENT_SORT_KEYS[sortCol.id],
+          order: sortCol.desc ? 'desc' : 'asc',
+        }),
         ...(debouncedSearch && { search: debouncedSearch }),
         ...(statusFilter !== 'all' && { status: statusFilter }),
       })
@@ -57,7 +86,7 @@ export default function ClientsPage() {
       toast.error('Failed to load clients')
       setLoading(false)
     }
-  }, [debouncedSearch, statusFilter])
+  }, [debouncedSearch, statusFilter, pagination, sorting])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -71,7 +100,13 @@ export default function ClientsPage() {
     try {
       const res = await fetch(`/api/clients/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Failed to delete')
-      fetchClients()
+      toast.success('Client deleted')
+      // Step back a page if we just removed the last row on this one
+      if (clients.length === 1 && pagination.pageIndex > 0) {
+        setPagination((p) => ({ ...p, pageIndex: p.pageIndex - 1 }))
+      } else {
+        fetchClients()
+      }
     } catch (error) {
       logger.error('clients-page', 'Failed to delete client', error)
       toast.error('Failed to delete client')
@@ -127,12 +162,13 @@ export default function ClientsPage() {
       <div className="flex flex-col sm:flex-row gap-3">
         <Input
           placeholder="Search clients..."
+          aria-label="Search clients"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
         />
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[160px] bg-gray-50 border-gray-200 text-gray-900">
+        <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+          <SelectTrigger aria-label="Filter by status" className="w-[160px] bg-gray-50 border-gray-200 text-gray-900">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent className="bg-white border-gray-200">
@@ -150,7 +186,15 @@ export default function ClientsPage() {
           <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
         </div>
       ) : (
-        <ClientsTable data={clients} onDelete={handleDelete} />
+        <ClientsTable
+          data={clients}
+          rowCount={total}
+          pagination={pagination}
+          onPaginationChange={setPagination}
+          sorting={sorting}
+          onSortingChange={handleSortingChange}
+          onDelete={handleDelete}
+        />
       )}
     </div>
   )

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
-import { apiError } from '@/lib/api/response';
+import { apiError, apiValidationError } from '@/lib/api/response';
+import { userSettingsUpdateSchema } from '@/lib/validation/update-schemas';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 
@@ -12,7 +13,7 @@ export async function GET(_request: NextRequest) {
       .from('user_settings')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (!settings) {
       return NextResponse.json({
@@ -41,19 +42,24 @@ export async function PUT(request: NextRequest) {
     const user = await requireAuth();
 
     const body = await request.json();
+    const parsed = userSettingsUpdateSchema.safeParse(body ?? {});
+    if (!parsed.success) {
+      return apiValidationError(parsed.error);
+    }
+    const d = parsed.data;
 
     // Check if row exists
     const { data: existing } = await supabaseAdmin
       .from('user_settings')
       .select('id')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     const payload = {
-      arive_link: body.ariveLink ?? null,
-      arive_company_name: body.ariveCompanyName ?? null,
-      rate_alert_enabled: body.rateAlertEnabled ?? false,
-      rate_alert_threshold_bps: body.rateAlertThresholdBps ?? null,
+      arive_link: d.ariveLink ?? null,
+      arive_company_name: d.ariveCompanyName ?? null,
+      rate_alert_enabled: d.rateAlertEnabled ?? false,
+      rate_alert_threshold_bps: d.rateAlertThresholdBps ?? null,
       updated_at: new Date().toISOString(),
     };
 

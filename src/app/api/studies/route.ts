@@ -6,16 +6,17 @@ import { costSegStudies, properties, clients, studyAssets } from '@/db/schema'
 import { logger } from '@/lib/logger'
 import { eq, and, desc, count } from 'drizzle-orm'
 import { studySchema } from '@/lib/validation/schemas'
+import { studyAssetInputSchema } from '@/lib/validation/update-schemas'
+import { parsePagination } from '@/lib/api/params'
+import { z } from 'zod'
 
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth()
 
     const { searchParams } = new URL(request.url)
-    const page = Math.max(1, Number(searchParams.get('page') ?? '1') || 1)
-    const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit') ?? '20') || 20))
+    const { page, limit, offset } = parsePagination(searchParams, { defaultLimit: 20 })
     const status = searchParams.get('status') || ''
-    const offset = (page - 1) * limit
 
     const conditions = [eq(costSegStudies.userId, user.id)]
 
@@ -25,37 +26,36 @@ export async function GET(request: NextRequest) {
 
     const whereClause = and(...conditions)
 
-    // Get total count
-    const [totalResult] = await db
-      .select({ value: count() })
-      .from(costSegStudies)
-      .where(whereClause)
-
-    // Get studies with joins
-    const results = await db
-      .select({
-        id: costSegStudies.id,
-        studyName: costSegStudies.studyName,
-        status: costSegStudies.status,
-        studyYear: costSegStudies.studyYear,
-        totalFirstYearDeduction: costSegStudies.totalFirstYearDeduction,
-        totalTaxSavings: costSegStudies.totalTaxSavings,
-        npvTaxSavings: costSegStudies.npvTaxSavings,
-        createdAt: costSegStudies.createdAt,
-        propertyId: costSegStudies.propertyId,
-        propertyAddress: properties.address,
-        propertyCity: properties.city,
-        clientId: costSegStudies.clientId,
-        clientFirstName: clients.firstName,
-        clientLastName: clients.lastName,
-      })
-      .from(costSegStudies)
-      .leftJoin(properties, eq(costSegStudies.propertyId, properties.id))
-      .leftJoin(clients, eq(costSegStudies.clientId, clients.id))
-      .where(whereClause)
-      .orderBy(desc(costSegStudies.createdAt))
-      .limit(limit)
-      .offset(offset)
+    const [[totalResult], results] = await Promise.all([
+      db
+        .select({ value: count() })
+        .from(costSegStudies)
+        .where(whereClause),
+      db
+        .select({
+          id: costSegStudies.id,
+          studyName: costSegStudies.studyName,
+          status: costSegStudies.status,
+          studyYear: costSegStudies.studyYear,
+          totalFirstYearDeduction: costSegStudies.totalFirstYearDeduction,
+          totalTaxSavings: costSegStudies.totalTaxSavings,
+          npvTaxSavings: costSegStudies.npvTaxSavings,
+          createdAt: costSegStudies.createdAt,
+          propertyId: costSegStudies.propertyId,
+          propertyAddress: properties.address,
+          propertyCity: properties.city,
+          clientId: costSegStudies.clientId,
+          clientFirstName: clients.firstName,
+          clientLastName: clients.lastName,
+        })
+        .from(costSegStudies)
+        .leftJoin(properties, and(eq(costSegStudies.propertyId, properties.id), eq(properties.userId, user.id)))
+        .leftJoin(clients, and(eq(costSegStudies.clientId, clients.id), eq(clients.userId, user.id)))
+        .where(whereClause)
+        .orderBy(desc(costSegStudies.createdAt))
+        .limit(limit)
+        .offset(offset),
+    ])
 
     const formatted = results.map((row) => ({
       ...row,
@@ -98,31 +98,38 @@ export async function POST(request: NextRequest) {
     const data = parsed.data
 
     // Validate assets before touching the database
-    const hasAssets = assetsData && Array.isArray(assetsData) && assetsData.length > 0
-    if (hasAssets) {
-      const badAssets = (assetsData as {
-        category?: string
-        description?: string
-        amount?: number
-        recoveryPeriod?: number
-        bonusEligible?: boolean
-      }[])
-        .map((asset, index) => ({ asset, index }))
-        .filter(
-          ({ asset }) =>
-            asset.amount == null ||
-            (asset.amount as unknown) === '' ||
-            isNaN(Number(asset.amount))
-        )
+    const assetsParsed = z
+      .array(studyAssetInputSchema)
+      .max(500)
+      .optional()
+      .nullable()
+      .safeParse(assetsData)
+    if (!assetsParsed.success) {
+      return apiValidationError(assetsParsed.error)
+    }
+    const assetInputs = assetsParsed.data ?? []
+    const hasAssets = assetInputs.length > 0
 
-      if (badAssets.length > 0) {
-        return apiError(
-          `Invalid asset amount for asset(s): ${badAssets
-            .map(({ asset, index }) => asset.description || asset.category || `#${index + 1}`)
-            .join(', ')}`,
-          400
-        )
-      }
+    // property_id / client_id come from the body — both must belong to the
+    // caller, otherwise the study GET/export/calculate joins would expose
+    // another user's property and client details.
+    const [[ownedProperty], [ownedClient]] = await Promise.all([
+      db
+        .select({ id: properties.id })
+        .from(properties)
+        .where(and(eq(properties.id, data.property_id), eq(properties.userId, user.id)))
+        .limit(1),
+      db
+        .select({ id: clients.id })
+        .from(clients)
+        .where(and(eq(clients.id, data.client_id), eq(clients.userId, user.id)))
+        .limit(1),
+    ])
+    if (!ownedProperty) {
+      return apiError('Property not found', 400)
+    }
+    if (!ownedClient) {
+      return apiError('Client not found', 400)
     }
 
     // Create the study and its assets atomically
@@ -144,23 +151,17 @@ export async function POST(request: NextRequest) {
 
       // Insert study assets if provided
       if (hasAssets) {
-        const assetRows = assetsData.map((asset: {
-          category: string
-          description: string
-          amount: number
-          recoveryPeriod: number
-          bonusEligible: boolean
-        }) => ({
-          studyId: study.id,
-          assetName: asset.description || asset.category,
-          assetCategory: asset.category as typeof studyAssets.$inferInsert['assetCategory'],
-          // recoveryPeriod is a real column — pass fractional values (e.g. 27.5) directly
-          recoveryPeriod: asset.recoveryPeriod,
-          costBasis: asset.amount.toString(),
-          bonusEligible: asset.bonusEligible,
-        }))
-
-        await tx.insert(studyAssets).values(assetRows)
+        await tx.insert(studyAssets).values(
+          assetInputs.map((asset) => ({
+            studyId: study.id,
+            assetName: asset.description || asset.category,
+            assetCategory: asset.category,
+            // recoveryPeriod is a real column — fractional values (27.5) are fine
+            recoveryPeriod: asset.recoveryPeriod,
+            costBasis: asset.amount.toString(),
+            bonusEligible: asset.bonusEligible,
+          }))
+        )
       }
 
       return study

@@ -6,23 +6,26 @@ import { properties, clients } from '@/db/schema'
 import { logger } from '@/lib/logger'
 import { eq, and, desc, sql, count } from 'drizzle-orm'
 import { propertySchema } from '@/lib/validation/schemas'
+import { parsePagination, escapeLike, isUuid } from '@/lib/api/params'
+import { resolveOwnedClientId } from '@/lib/api/ownership'
 
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth()
 
     const { searchParams } = new URL(request.url)
-    const page = Math.max(1, Number(searchParams.get('page') ?? '1') || 1)
-    const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit') ?? '12') || 12))
+    const { page, limit, offset } = parsePagination(searchParams, { defaultLimit: 12 })
     const search = searchParams.get('search') || ''
     const clientId = searchParams.get('client_id') || ''
     const propertyType = searchParams.get('property_type') || ''
-    const offset = (page - 1) * limit
 
     // Build conditions array
     const conditions = [eq(properties.userId, user.id)]
 
     if (clientId) {
+      if (!isUuid(clientId)) {
+        return apiError('Invalid client_id', 400)
+      }
       conditions.push(eq(properties.clientId, clientId))
     }
 
@@ -31,46 +34,47 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
+      const term = `%${escapeLike(search)}%`
       conditions.push(
-        sql`(${properties.address} ILIKE ${'%' + search + '%'} OR ${properties.city} ILIKE ${'%' + search + '%'})`
+        sql`(${properties.address} ILIKE ${term} OR ${properties.city} ILIKE ${term})`
       )
     }
 
     const whereClause = and(...conditions)
 
-    // Get total count
-    const [totalResult] = await db
-      .select({ value: count() })
-      .from(properties)
-      .where(whereClause)
-
-    // Get paginated results with client info
-    const results = await db
-      .select({
-        id: properties.id,
-        address: properties.address,
-        city: properties.city,
-        state: properties.state,
-        zip: properties.zip,
-        propertyType: properties.propertyType,
-        purchasePrice: properties.purchasePrice,
-        purchaseDate: properties.purchaseDate,
-        buildingValue: properties.buildingValue,
-        landValue: properties.landValue,
-        squareFootage: properties.squareFootage,
-        yearBuilt: properties.yearBuilt,
-        description: properties.description,
-        clientId: properties.clientId,
-        clientFirstName: clients.firstName,
-        clientLastName: clients.lastName,
-        createdAt: properties.createdAt,
-      })
-      .from(properties)
-      .leftJoin(clients, eq(properties.clientId, clients.id))
-      .where(whereClause)
-      .orderBy(desc(properties.createdAt))
-      .limit(limit)
-      .offset(offset)
+    // Total count and paginated results (with client info) in parallel
+    const [[totalResult], results] = await Promise.all([
+      db
+        .select({ value: count() })
+        .from(properties)
+        .where(whereClause),
+      db
+        .select({
+          id: properties.id,
+          address: properties.address,
+          city: properties.city,
+          state: properties.state,
+          zip: properties.zip,
+          propertyType: properties.propertyType,
+          purchasePrice: properties.purchasePrice,
+          purchaseDate: properties.purchaseDate,
+          buildingValue: properties.buildingValue,
+          landValue: properties.landValue,
+          squareFootage: properties.squareFootage,
+          yearBuilt: properties.yearBuilt,
+          description: properties.description,
+          clientId: properties.clientId,
+          clientFirstName: clients.firstName,
+          clientLastName: clients.lastName,
+          createdAt: properties.createdAt,
+        })
+        .from(properties)
+        .leftJoin(clients, and(eq(properties.clientId, clients.id), eq(clients.userId, user.id)))
+        .where(whereClause)
+        .orderBy(desc(properties.createdAt))
+        .limit(limit)
+        .offset(offset),
+    ])
 
     const formattedResults = results.map((row) => ({
       ...row,
@@ -107,8 +111,14 @@ export async function POST(request: NextRequest) {
     }
 
     const data = parsed.data
-    const clientId = body.client_id || null
-    const description = body.description || null
+    const ownedClient = await resolveOwnedClientId(body.client_id, user.id)
+    if (ownedClient === false) {
+      return apiError('Client not found', 400)
+    }
+    const clientId = ownedClient
+    const description = typeof body.description === 'string' && body.description
+      ? body.description.slice(0, 5000)
+      : null
 
     const [newProperty] = await db
       .insert(properties)

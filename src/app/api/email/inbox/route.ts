@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { emails, clients } from '@/db/schema';
 import { eq, desc, and, count, ilike, or, inArray, isNull, sql } from 'drizzle-orm';
+import { isUuid, escapeLike, parseEmailIds } from '@/lib/email/ids';
 
 /**
  * These routes are admin-only (requireAdmin). The admin can see emails
@@ -28,8 +29,11 @@ export async function GET(request: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '30') || 30));
     const readFilter = searchParams.get('read');
-    const search = searchParams.get('search')?.trim();
+    const search = searchParams.get('search')?.trim().slice(0, 200);
     const threadIdParam = searchParams.get('thread_id');
+    if (threadIdParam && !isUuid(threadIdParam)) {
+      return apiError('Invalid thread_id', 400);
+    }
 
     const offset = (page - 1) * limit;
 
@@ -62,7 +66,8 @@ export async function GET(request: NextRequest) {
           adminOwnerFilter(user.id),
           or(eq(emails.id, threadIdParam), eq(emails.threadId, threadIdParam)),
         ))
-        .orderBy(emails.createdAt);
+        .orderBy(emails.createdAt)
+        .limit(100);
 
       return NextResponse.json({ emails: threadEmails, thread: true });
     }
@@ -76,19 +81,22 @@ export async function GET(request: NextRequest) {
     if (readFilter === 'false') conditions.push(eq(emails.isRead, false));
 
     if (search) {
+      const pattern = `%${escapeLike(search)}%`;
       conditions.push(
         or(
-          ilike(emails.fromEmail, `%${search}%`),
-          ilike(emails.fromName, `%${search}%`),
-          ilike(emails.subject, `%${search}%`),
-          ilike(clients.firstName, `%${search}%`),
-          ilike(clients.lastName, `%${search}%`),
+          ilike(emails.fromEmail, pattern),
+          ilike(emails.fromName, pattern),
+          ilike(emails.subject, pattern),
+          ilike(clients.firstName, pattern),
+          ilike(clients.lastName, pattern),
         )!
       );
     }
 
     const whereClause = and(...conditions);
 
+    // List view: no bodies/drafts (can be hundreds of KB each) — the detail
+    // endpoint loads those on demand.
     const results = await db
       .select({
         id: emails.id,
@@ -96,7 +104,6 @@ export async function GET(request: NextRequest) {
         fromName: emails.fromName,
         toEmail: emails.toEmail,
         subject: emails.subject,
-        bodyText: emails.bodyText,
         status: emails.status,
         isRead: emails.isRead,
         threadId: emails.threadId,
@@ -108,7 +115,6 @@ export async function GET(request: NextRequest) {
         aiCategory: emails.aiCategory,
         aiConfidence: emails.aiConfidence,
         aiSummary: emails.aiSummary,
-        aiDraftHtml: emails.aiDraftHtml,
       })
       .from(emails)
       .leftJoin(clients, eq(emails.clientId, clients.id))
@@ -117,20 +123,21 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
-    const [totalResult] = await db
-      .select({ total: count() })
-      .from(emails)
-      .leftJoin(clients, eq(emails.clientId, clients.id))
-      .where(whereClause);
-
-    const [unreadResult] = await db
-      .select({ total: count() })
-      .from(emails)
-      .where(and(
-        adminOwnerFilter(user.id),
-        eq(emails.direction, 'inbound'),
-        eq(emails.isRead, false),
-      ));
+    const [[totalResult], [unreadResult]] = await Promise.all([
+      db
+        .select({ total: count() })
+        .from(emails)
+        .leftJoin(clients, eq(emails.clientId, clients.id))
+        .where(whereClause),
+      db
+        .select({ total: count() })
+        .from(emails)
+        .where(and(
+          adminOwnerFilter(user.id),
+          eq(emails.direction, 'inbound'),
+          eq(emails.isRead, false),
+        )),
+    ]);
 
     return NextResponse.json({
       emails: results,
@@ -158,8 +165,8 @@ export async function PATCH(request: NextRequest) {
     const user = await requireAdmin();
     const body = await request.json();
 
-    const ids: string[] = body.emailIds || (body.emailId ? [body.emailId] : []);
-    if (ids.length === 0) return apiError('emailId or emailIds required', 400);
+    const ids = parseEmailIds(body);
+    if (!ids) return apiError('emailId or emailIds (UUIDs, max 500) required', 400);
 
     // Always mark read; only flip status to 'read' from 'received' so
     // replied/forwarded statuses are preserved.
@@ -195,8 +202,8 @@ export async function DELETE(request: NextRequest) {
     const user = await requireAdmin();
     const body = await request.json();
 
-    const ids: string[] = body.emailIds || (body.emailId ? [body.emailId] : []);
-    if (ids.length === 0) return apiError('emailId or emailIds required', 400);
+    const ids = parseEmailIds(body);
+    if (!ids) return apiError('emailId or emailIds (UUIDs, max 500) required', 400);
 
     // Verify ownership first, then clean up thread references and delete —
     // all inside a transaction so references are never cleared for emails

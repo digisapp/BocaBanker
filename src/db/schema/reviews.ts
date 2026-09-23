@@ -6,6 +6,7 @@ import {
   boolean,
   date,
   timestamp,
+  index,
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
@@ -47,4 +48,9 @@ export const reviews = pgTable('reviews', {
   reviewDate: date('review_date'),
   createdAt: timestamp('created_at').default(sql`now()`),
   updatedAt: timestamp('updated_at').default(sql`now()`),
-})
+}, (table) => [
+  // Public listing: WHERE status = 'approved' ORDER BY review_date DESC
+  index('reviews_status_review_date_idx').on(table.status, table.reviewDate),
+  // Admin listing: ORDER BY created_at DESC
+  index('reviews_created_at_idx').on(table.createdAt),
+])

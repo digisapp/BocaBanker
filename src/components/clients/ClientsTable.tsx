@@ -1,17 +1,14 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
   type ColumnDef,
+  type PaginationState,
   type SortingState,
-  type ColumnFiltersState,
+  type Updater,
 } from '@tanstack/react-table'
 import { ArrowUpDown, MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react'
 import {
@@ -22,7 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -58,16 +54,43 @@ const statusColorMap: Record<string, string> = {
   inactive: 'bg-gray-100 text-gray-500 border-gray-200',
 }
 
+/**
+ * Column ids the API can sort by (GET /api/clients `sort` param). Pagination
+ * and sorting are server-side: `data` holds only the current page.
+ */
+export const CLIENT_SORT_KEYS: Record<string, string> = {
+  name: 'firstName',
+  email: 'email',
+  company: 'company',
+  status: 'status',
+  createdAt: 'createdAt',
+}
+
 interface ClientsTableProps {
   data: ClientRow[]
+  /** Total matching rows on the server */
+  rowCount: number
+  pagination: PaginationState
+  onPaginationChange: (next: PaginationState) => void
+  sorting: SortingState
+  onSortingChange: (next: SortingState) => void
   onDelete?: (id: string) => void
 }
 
-export function ClientsTable({ data, onDelete }: ClientsTableProps) {
+function resolve<T>(updater: Updater<T>, prev: T): T {
+  return typeof updater === 'function' ? (updater as (old: T) => T)(prev) : updater
+}
+
+export function ClientsTable({
+  data,
+  rowCount,
+  pagination,
+  onPaginationChange,
+  sorting,
+  onSortingChange,
+  onDelete,
+}: ClientsTableProps) {
   const router = useRouter()
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
 
   const columns: ColumnDef<ClientRow>[] = [
     {
@@ -92,6 +115,7 @@ export function ClientsTable({ data, onDelete }: ClientsTableProps) {
     {
       accessorKey: 'phone',
       header: 'Phone',
+      enableSorting: false,
       cell: ({ row }) => (
         <span className="text-gray-500">
           {row.original.phone || '--'}
@@ -184,6 +208,7 @@ export function ClientsTable({ data, onDelete }: ClientsTableProps) {
                 size="icon-xs"
                 className="text-gray-500 hover:text-amber-600"
                 onClick={(e) => e.stopPropagation()}
+                aria-label={`Actions for ${client.firstName} ${client.lastName}`}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -232,38 +257,25 @@ export function ClientsTable({ data, onDelete }: ClientsTableProps) {
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onPaginationChange: setPagination,
+    manualPagination: true,
+    manualSorting: true,
+    enableMultiSort: false,
+    rowCount,
+    onSortingChange: (updater) => onSortingChange(resolve(updater, sorting)),
+    onPaginationChange: (updater) =>
+      onPaginationChange(resolve(updater, pagination)),
     state: {
       sorting,
-      columnFilters,
       pagination,
     },
   })
 
   const handlePageSizeChange = (value: string) => {
-    setPagination({ pageIndex: 0, pageSize: Number(value) })
+    onPaginationChange({ pageIndex: 0, pageSize: Number(value) })
   }
 
   return (
     <div className="space-y-4">
-      {/* Search Input */}
-      <div className="flex items-center gap-4">
-        <Input
-          placeholder="Search..."
-          value={
-            (table.getColumn('name')?.getFilterValue() as string) ?? ''
-          }
-          onChange={(event) =>
-            table.getColumn('name')?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
-        />
-      </div>
 
       {/* Table */}
       <div className="rounded-lg border border-gray-200 overflow-x-auto">
@@ -354,7 +366,7 @@ export function ClientsTable({ data, onDelete }: ClientsTableProps) {
           </Select>
           <span className="ml-2">
             Page {table.getState().pagination.pageIndex + 1} of{' '}
-            {table.getPageCount()}
+            {Math.max(1, table.getPageCount())}
           </span>
         </div>
         <div className="flex items-center gap-2">

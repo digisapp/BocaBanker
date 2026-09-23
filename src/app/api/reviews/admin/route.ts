@@ -5,18 +5,17 @@ import { db } from '@/db';
 import { reviews } from '@/db/schema';
 import { eq, and, ilike, or, desc, count } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
+import { parsePagination, escapeLike } from '@/lib/api/params';
 
 export async function GET(request: NextRequest) {
   try {
     await requireAdmin();
 
     const searchParams = request.nextUrl.searchParams;
-    const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
-    const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit') ?? '20')));
+    const { page, limit, offset } = parsePagination(searchParams, { defaultLimit: 20 });
     const status = searchParams.get('status') ?? '';
     const search = searchParams.get('search') ?? '';
 
-    const offset = (page - 1) * limit;
 
     // Build where conditions
     const conditions = [];
@@ -26,11 +25,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
+      const term = `%${escapeLike(search)}%`;
       conditions.push(
         or(
-          ilike(reviews.reviewerName, `%${search}%`),
-          ilike(reviews.title, `%${search}%`),
-          ilike(reviews.body, `%${search}%`)
+          ilike(reviews.reviewerName, term),
+          ilike(reviews.title, term),
+          ilike(reviews.body, term)
         )!
       );
     }

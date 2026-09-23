@@ -4,7 +4,9 @@ import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { clients } from '@/db/schema';
-import { eq, and, isNotNull } from 'drizzle-orm';
+import { eq, and, isNotNull, inArray } from 'drizzle-orm';
+import { rateLimit } from '@/lib/rate-limit';
+import { isUuid } from '@/lib/email/ids';
 import { sendEmail } from '@/lib/email/resend';
 import {
   outreachTemplate,
@@ -16,6 +18,13 @@ import {
 export const maxDuration = 300;
 
 const VALID_TEMPLATES = ['outreach', 'follow-up', 'report-delivery'] as const;
+
+/**
+ * At ~0.5–1 s per recipient, more than this cannot finish inside maxDuration
+ * (300 s); the function would be killed mid-loop with no accounting returned
+ * and some clients silently skipped.
+ */
+const MAX_RECIPIENTS = 250;
 
 /**
  * Simple rate-limited delay.
@@ -34,6 +43,12 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
 
+    // One bulk campaign at a time per user (each run can take minutes).
+    const rl = await rateLimit(`email-bulk:${user.id}`, { maxRequests: 3, windowMs: 10 * 60_000 });
+    if (!rl.success) {
+      return apiError('Too many bulk sends. Please wait a few minutes and try again.', 429);
+    }
+
     const body = await request.json();
     const {
       clientIds,
@@ -43,7 +58,7 @@ export async function POST(request: NextRequest) {
       customMessage,
     } = body;
 
-    if (!template || !subject) {
+    if (!template || typeof subject !== 'string' || !subject.trim() || subject.length > 300) {
       return apiError('template and subject are required', 400);
     }
 
@@ -58,14 +73,19 @@ export async function POST(request: NextRequest) {
     let recipientList: { id: string; email: string | null; firstName: string; lastName: string }[];
 
     if (clientIds && Array.isArray(clientIds) && clientIds.length > 0) {
-      // Specific client IDs
-      const allClients = await db.query.clients.findMany({
+      // Specific client IDs (filtered in SQL, scoped to the caller)
+      const ids = clientIds.filter(isUuid);
+      if (ids.length === 0) return apiError('No valid recipients found', 400);
+      if (ids.length > MAX_RECIPIENTS) {
+        return apiError(`Too many recipients (max ${MAX_RECIPIENTS} per bulk send)`, 400);
+      }
+      recipientList = await db.query.clients.findMany({
         where: and(
           eq(clients.userId, user.id),
-          isNotNull(clients.email)
+          isNotNull(clients.email),
+          inArray(clients.id, ids)
         ),
       });
-      recipientList = allClients.filter((c) => clientIds.includes(c.id));
     } else {
       // Filter-based
       const conditions = [eq(clients.userId, user.id), isNotNull(clients.email)];
@@ -88,6 +108,12 @@ export async function POST(request: NextRequest) {
 
     if (validRecipients.length === 0) {
       return apiError('No valid recipients found', 400);
+    }
+    if (validRecipients.length > MAX_RECIPIENTS) {
+      return apiError(
+        `Too many recipients (${validRecipients.length}). Bulk sends are limited to ${MAX_RECIPIENTS} per batch — narrow the filter or select specific clients.`,
+        400
+      );
     }
 
     const senderName = user.user_metadata?.full_name || 'Boca Banker';

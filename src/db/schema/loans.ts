@@ -87,6 +87,8 @@ export const loans = pgTable('loans', {
   updatedAt: timestamp('updated_at').default(sql`now()`),
 }, (table) => [
   index('loans_user_id_idx').on(table.userId),
+  index('loans_user_id_status_idx').on(table.userId, table.status),
+  index('loans_user_id_created_at_idx').on(table.userId, table.createdAt),
   index('loans_lead_id_idx').on(table.leadId),
 ])
 

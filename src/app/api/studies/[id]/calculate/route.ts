@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, ApiError } from '@/lib/api/auth'
 import { apiError } from '@/lib/api/response'
+import { requireUuid } from '@/lib/api/params'
 import { db } from '@/db'
 import { costSegStudies, studyAssets, properties } from '@/db/schema'
 import { logger } from '@/lib/logger'
@@ -12,8 +13,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
     const user = await requireAuth()
+    const id = requireUuid((await params).id, 'Study not found')
 
     // Load the study
     const studyRows = await db
@@ -28,32 +29,42 @@ export async function POST(
 
     const study = studyRows[0]
 
-    // Load property details
-    const propertyRows = study.propertyId
-      ? await db
-          .select()
-          .from(properties)
-          .where(eq(properties.id, study.propertyId))
-          .limit(1)
-      : []
+    // Load property details and study assets in parallel
+    const [propertyRows, assets] = await Promise.all([
+      study.propertyId
+        ? db
+            .select()
+            .from(properties)
+            .where(and(eq(properties.id, study.propertyId), eq(properties.userId, user.id)))
+            .limit(1)
+        : Promise.resolve([]),
+      db
+        .select()
+        .from(studyAssets)
+        .where(eq(studyAssets.studyId, id)),
+    ])
 
     const property = propertyRows[0]
     if (!property) {
       return apiError('Property not found for this study', 404)
     }
 
-    // Load study assets
-    const assets = await db
-      .select()
-      .from(studyAssets)
-      .where(eq(studyAssets.studyId, id))
-
     if (assets.length === 0) {
       return apiError('No assets found for this study. Add assets before calculating.', 400)
     }
 
+    // Real property uses the mid-month convention, so the month placed in
+    // service matters. Use the purchase month when it falls in the study year
+    // (look-back studies keep the January default).
+    let placedInServiceMonth = 1
+    if (property.purchaseDate) {
+      const [y, m] = property.purchaseDate.split('-').map(Number)
+      if (y === study.studyYear && m >= 1 && m <= 12) placedInServiceMonth = m
+    }
+
     // Build report input
     const reportInput = {
+      placedInServiceMonth,
       propertyAddress: property.address,
       propertyType: property.propertyType,
       purchasePrice: parseFloat(property.purchasePrice),
@@ -87,7 +98,7 @@ export async function POST(
         status: 'completed',
         updatedAt: new Date(),
       })
-      .where(eq(costSegStudies.id, id))
+      .where(and(eq(costSegStudies.id, id), eq(costSegStudies.userId, user.id)))
       .returning()
 
     return NextResponse.json({

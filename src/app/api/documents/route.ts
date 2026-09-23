@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
-import { apiError } from '@/lib/api/response';
+import { apiError, apiValidationError } from '@/lib/api/response';
+import { isUuid } from '@/lib/api/params';
+import { resolveOwnedClientId, resolveOwnedStudyId } from '@/lib/api/ownership';
+import { documentCreateSchema } from '@/lib/validation/update-schemas';
 import { db } from '@/db';
 import { documents, clients } from '@/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
 
+// Hard cap on list size (the UI has no pagination; avoids unbounded scans)
+const MAX_LIST = 1000;
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 const ALLOWED_TYPES = [
   'application/pdf',
@@ -27,6 +32,10 @@ export async function GET(request: NextRequest) {
     const clientId = request.nextUrl.searchParams.get('clientId');
     const studyId = request.nextUrl.searchParams.get('studyId');
 
+    if ((clientId && !isUuid(clientId)) || (studyId && !isUuid(studyId))) {
+      return apiError('Invalid clientId or studyId', 400);
+    }
+
     const conditions = [eq(documents.userId, user.id)];
     if (clientId) conditions.push(eq(documents.clientId, clientId));
     if (studyId) conditions.push(eq(documents.studyId, studyId));
@@ -45,9 +54,10 @@ export async function GET(request: NextRequest) {
         clientLastName: clients.lastName,
       })
       .from(documents)
-      .leftJoin(clients, eq(documents.clientId, clients.id))
+      .leftJoin(clients, and(eq(documents.clientId, clients.id), eq(clients.userId, user.id)))
       .where(and(...conditions))
-      .orderBy(desc(documents.createdAt));
+      .orderBy(desc(documents.createdAt))
+      .limit(MAX_LIST);
 
     const result = rows.map(({ clientFirstName, clientLastName, ...rest }) => ({
       ...rest,
@@ -69,11 +79,11 @@ export async function POST(request: NextRequest) {
     const user = await requireAuth();
 
     const body = await request.json();
-    const { fileName, fileType, fileSize, storagePath, clientId, studyId } = body;
-
-    if (!fileName || !storagePath) {
-      return apiError('fileName and storagePath are required', 400);
+    const parsed = documentCreateSchema.safeParse(body);
+    if (!parsed.success) {
+      return apiValidationError(parsed.error);
     }
+    const { fileName, fileType, fileSize, storagePath } = parsed.data;
 
     // Validate file type and size
     if (fileType && !ALLOWED_TYPES.includes(fileType)) {
@@ -85,16 +95,32 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify storagePath belongs to this user (must start with their userId)
-    if (!storagePath.startsWith(`${user.id}/`)) {
+    // and contains no traversal segments
+    if (
+      !storagePath.startsWith(`${user.id}/`) ||
+      storagePath.split('/').some((seg) => seg === '..' || seg === '.' || seg === '')
+    ) {
       return apiError('Invalid storage path', 403);
+    }
+
+    // Linked client/study must belong to the caller
+    const [clientId, studyId] = await Promise.all([
+      resolveOwnedClientId(parsed.data.clientId, user.id),
+      resolveOwnedStudyId(parsed.data.studyId, user.id),
+    ]);
+    if (clientId === false) {
+      return apiError('Client not found', 400);
+    }
+    if (studyId === false) {
+      return apiError('Study not found', 400);
     }
 
     const [created] = await db
       .insert(documents)
       .values({
         userId: user.id,
-        clientId: clientId || null,
-        studyId: studyId || null,
+        clientId,
+        studyId,
         fileName,
         fileType: fileType || null,
         fileSize: fileSize || null,

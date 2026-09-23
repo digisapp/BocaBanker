@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { logger } from '@/lib/logger'
+import { toast } from 'sonner'
 import {
   ArrowLeft,
   Pencil,
@@ -67,32 +68,35 @@ export default function ClientDetailPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const controller = new AbortController()
+    const { signal } = controller
+
     const fetchClient = async () => {
+      // Client and its properties are independent — fetch in parallel
+      const clientReq = fetch(`/api/clients/${params.id}`, { signal })
+      const propsReq = fetch(`/api/properties?client_id=${params.id}&limit=50`, { signal })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null) // Properties fetch is non-critical
+
       try {
-        const res = await fetch(`/api/clients/${params.id}`)
+        const res = await clientReq
         if (!res.ok) throw new Error('Not found')
         const data = await res.json()
         setClient(data)
       } catch {
+        if (signal.aborted) return
         router.push('/clients')
         return
       }
 
-      // Fetch properties for this client
-      try {
-        const propsRes = await fetch(`/api/properties?client_id=${params.id}&limit=50`)
-        if (propsRes.ok) {
-          const propsData = await propsRes.json()
-          setProperties(propsData.properties || [])
-        }
-      } catch {
-        // Properties fetch is non-critical
-      }
-
+      const propsData = await propsReq
+      if (signal.aborted) return
+      setProperties(propsData?.properties || [])
       setLoading(false)
     }
 
     fetchClient()
+    return () => controller.abort()
   }, [params.id, router])
 
   const handleDelete = async () => {
@@ -105,9 +109,11 @@ export default function ClientDetailPage() {
         method: 'DELETE',
       })
       if (!res.ok) throw new Error('Failed to delete')
+      toast.success('Client deleted')
       router.push('/clients')
     } catch (error) {
       logger.error('clients-page', 'Failed to delete client', error)
+      toast.error('Failed to delete client')
     }
   }
 
@@ -133,6 +139,7 @@ export default function ClientDetailPage() {
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Go back"
             onClick={() => router.push('/clients')}
             className="text-gray-500 hover:text-amber-600"
           >

@@ -26,23 +26,57 @@ export interface BonusDepreciationResult {
 const BONUS_ELIGIBLE_MAX_PERIOD = 20;
 
 /**
- * Section 168(k) bonus depreciation rate by placed-in-service year.
- *
- * TCJA phase-down: 100% through 2022, 80% in 2023, 60% in 2024.
- * The One Big Beautiful Bill Act (July 2025) restored permanent 100% bonus
- * for property acquired after January 19, 2025 — treated here as 100% for
- * all of 2025+ as a practical simplification.
+ * Date (inclusive) from which OBBBA's permanent 100% bonus applies:
+ * property acquired after January 19, 2025.
  */
-export function getBonusRateForYear(placedInService: Date | number): number {
-  const year =
-    typeof placedInService === 'number'
-      ? placedInService
-      : placedInService.getFullYear();
+const OBBBA_ACQUIRED_AFTER = Date.UTC(2025, 0, 20); // 2025-01-20
 
+function toYear(d: Date | number): number {
+  return typeof d === 'number' ? d : d.getFullYear();
+}
+
+/**
+ * Section 168(k) bonus depreciation rate.
+ *
+ * - Property acquired after January 19, 2025 (One Big Beautiful Bill Act):
+ *   permanent 100%.
+ * - Otherwise the TCJA phase-down by placed-in-service year applies:
+ *   100% through 2022, 80% 2023, 60% 2024, 40% 2025, 20% 2026, 0% 2027+.
+ *
+ * When no acquisition date is supplied, property placed in service in 2025+
+ * is assumed to have been acquired after January 19, 2025 (100%). Pass the
+ * acquisition (binding-contract) date to get the TCJA rate for property
+ * acquired earlier — e.g. acquired Dec 2024, placed in service 2025 = 40%.
+ *
+ * @param placedInService - Placed-in-service date or year
+ * @param acquired - Optional acquisition date (Date, or 'YYYY-MM-DD' string)
+ */
+export function getBonusRateForYear(
+  placedInService: Date | number,
+  acquired?: Date | string | null
+): number {
+  const year = toYear(placedInService);
+
+  let acquiredTime: number | null = null;
+  if (acquired) {
+    const t =
+      typeof acquired === 'string'
+        ? Date.parse(/^\d{4}-\d{2}-\d{2}$/.test(acquired) ? `${acquired}T00:00:00Z` : acquired)
+        : Date.UTC(acquired.getFullYear(), acquired.getMonth(), acquired.getDate());
+    if (Number.isFinite(t)) acquiredTime = t;
+  }
+
+  const obbbaEligible =
+    year >= 2025 && (acquiredTime === null || acquiredTime >= OBBBA_ACQUIRED_AFTER);
+  if (obbbaEligible) return 100;
+
+  // TCJA phase-down (Section 168(k)(6)) by placed-in-service year
   if (year <= 2022) return 100;
   if (year === 2023) return 80;
   if (year === 2024) return 60;
-  return 100; // 2025+ under OBBBA
+  if (year === 2025) return 40;
+  if (year === 2026) return 20;
+  return 0;
 }
 
 /**
@@ -55,14 +89,16 @@ export function getBonusRateForYear(placedInService: Date | number): number {
  * @param costBasis - The depreciable cost basis of the asset
  * @param recoveryPeriod - The MACRS recovery period (5, 7, 15, 27.5, or 39)
  * @param bonusRate - Bonus depreciation rate as a percentage (0-100), default 100
+ * @param placedInServiceMonth - 1-12; mid-month column for 27.5/39-year property (default 1)
  * @returns Object with bonus amount, remaining basis, and total first-year deduction
  */
 export function calculateBonusDepreciation(
   costBasis: number,
   recoveryPeriod: MacrsRecoveryPeriod,
-  bonusRate: number = 100
+  bonusRate: number = 100,
+  placedInServiceMonth: number = 1
 ): BonusDepreciationResult {
-  if (costBasis <= 0) {
+  if (!Number.isFinite(costBasis) || costBasis <= 0) {
     return {
       bonusAmount: 0,
       remainingBasis: 0,
@@ -73,7 +109,7 @@ export function calculateBonusDepreciation(
   const isEligible = recoveryPeriod <= BONUS_ELIGIBLE_MAX_PERIOD;
 
   // Clamp so bad stored values (e.g. 150) can't produce a negative basis
-  const clampedRate = Math.min(100, Math.max(0, bonusRate));
+  const clampedRate = Number.isFinite(bonusRate) ? Math.min(100, Math.max(0, bonusRate)) : 0;
 
   // Calculate bonus depreciation
   const bonusAmount = isEligible
@@ -83,7 +119,7 @@ export function calculateBonusDepreciation(
   const remainingBasis = Math.round((costBasis - bonusAmount) * 100) / 100;
 
   // Get the first-year MACRS rate for the remaining basis
-  const rates = getMacrsRates(recoveryPeriod);
+  const rates = getMacrsRates(recoveryPeriod, placedInServiceMonth);
   const firstYearMacrsRate = rates[0] / 100;
   const firstYearMacrs = Math.round(remainingBasis * firstYearMacrsRate * 100) / 100;
 

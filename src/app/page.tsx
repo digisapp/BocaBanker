@@ -1,6 +1,3 @@
-'use client'
-
-import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import {
   Brain,
@@ -11,84 +8,22 @@ import {
   Landmark,
   Search,
   ChevronDown,
-  Star,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
-import GuestChatWidget from '@/components/landing/GuestChatWidget'
 import MobileChatButton from '@/components/landing/MobileChatButton'
+import {
+  Reveal,
+  CountUp,
+  LandingNav,
+  ScrollButton,
+  HeroChatWidget,
+  ReviewsPreview,
+} from '@/components/landing/LandingClient'
 
-/* ─── Scroll Reveal ─── */
-function Reveal({
-  children,
-  className,
-  delay = 0,
-}: {
-  children: ReactNode
-  className?: string
-  delay?: number
-}) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.unobserve(el) } },
-      { threshold: 0.12, rootMargin: '0px 0px -30px 0px' }
-    )
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [])
-
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        'transition-all duration-700 ease-out',
-        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8',
-        className
-      )}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {children}
-    </div>
-  )
-}
-
-/* ─── Count Up ─── */
-function CountUp({ target, suffix = '', prefix = '' }: { target: number; suffix?: string; prefix?: string }) {
-  const ref = useRef<HTMLSpanElement>(null)
-  const [count, setCount] = useState(0)
-  const started = useRef(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting && !started.current) {
-          started.current = true
-          const t0 = performance.now()
-          const tick = (now: number) => {
-            const p = Math.min((now - t0) / 2000, 1)
-            const eased = 1 - Math.pow(1 - p, 3)
-            setCount(Math.floor(eased * target))
-            if (p < 1) requestAnimationFrame(tick)
-          }
-          requestAnimationFrame(tick)
-        }
-      },
-      { threshold: 0.5 }
-    )
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [target])
-
-  return <span ref={ref}>{prefix}{count.toLocaleString()}{suffix}</span>
-}
+// Server component: static marketing markup ships as HTML; interactive bits
+// (scroll reveal, count-up, nav shadow, chat, reviews) are client islands.
 
 /* ─── Data ─── */
 
@@ -144,135 +79,17 @@ const stats = [
   { value: 500, suffix: '+', label: 'Cost Seg Studies', prefix: '', emoji: '📊' },
 ]
 
-/* ─── Star Display ─── */
-function Stars({ rating }: { rating: number }) {
-  return (
-    <div className="flex gap-0.5">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          className={cn(
-            'h-4 w-4',
-            i < rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'
-          )}
-        />
-      ))}
-    </div>
-  )
-}
-
-/* ─── Reviews Preview ─── */
-function ReviewsPreview() {
-  const [reviews, setReviews] = useState<Array<{
-    id: string
-    reviewerName: string
-    reviewerCity?: string
-    reviewerState?: string
-    rating: number
-    title: string
-    body: string
-  }>>([])
-  const [stats, setStats] = useState({ averageRating: 5, totalReviews: 0 })
-
-  useEffect(() => {
-    fetch('/api/reviews?limit=3')
-      .then(r => r.json())
-      .then(data => {
-        if (data.reviews) setReviews(data.reviews)
-        if (data.averageRating) setStats({ averageRating: data.averageRating, totalReviews: data.totalReviews })
-      })
-      .catch(() => {})
-  }, [])
-
-  if (reviews.length === 0) return null
-
-  return (
-    <section aria-label="Client reviews" className="py-20 sm:py-28 px-6 bg-gradient-to-b from-white to-amber-50/30">
-      <div className="mx-auto max-w-6xl">
-        <Reveal>
-          <div className="text-center mb-14">
-            <p className="text-sm font-semibold tracking-widest uppercase text-amber-600 mb-3">
-              Client Reviews
-            </p>
-            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">
-              Trusted by{' '}
-              <span className="bg-gradient-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent">
-                real clients
-              </span>
-            </h2>
-            <div className="mt-4 flex items-center justify-center gap-2">
-              <Stars rating={5} />
-              <span className="text-gray-600 font-medium">{stats.averageRating.toFixed(2)}</span>
-              <span className="text-gray-400">from {stats.totalReviews}+ reviews</span>
-            </div>
-          </div>
-        </Reveal>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {reviews.map((review, i) => (
-            <Reveal key={review.id} delay={i * 80}>
-              <div className="h-full rounded-2xl border border-amber-200/60 bg-white p-7 shadow-sm hover:shadow-lg hover:shadow-black/5 transition-all duration-300 hover:-translate-y-1">
-                <Stars rating={review.rating} />
-                <h3 className="font-serif text-lg font-semibold text-gray-900 mt-3 mb-2 line-clamp-1">
-                  {review.title}
-                </h3>
-                <p className="text-sm text-gray-500 leading-relaxed line-clamp-4 mb-4">
-                  {review.body}
-                </p>
-                <div className="mt-auto pt-3 border-t border-gray-100">
-                  <p className="text-sm font-medium text-gray-700">{review.reviewerName}</p>
-                  {(review.reviewerCity || review.reviewerState) && (
-                    <p className="text-xs text-gray-400">
-                      {[review.reviewerCity, review.reviewerState].filter(Boolean).join(', ')}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-
-        <Reveal delay={300}>
-          <div className="text-center mt-10">
-            <Button asChild variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-50 hover:text-amber-800">
-              <Link href="/reviews">
-                See All {stats.totalReviews}+ Reviews
-              </Link>
-            </Button>
-          </div>
-        </Reveal>
-      </div>
-    </section>
-  )
-}
-
 /* ─── Page ─── */
 
 export default function Home() {
-  const [scrolled, setScrolled] = useState(false)
-
-  useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 40)
-    window.addEventListener('scroll', fn, { passive: true })
-    return () => window.removeEventListener('scroll', fn)
-  }, [])
-
   return (
     <div className="min-h-screen bg-[#FAFAF8]">
       {/* ── NAV ── */}
       <header>
-        <nav
-          aria-label="Main navigation"
-          className={cn(
-            'fixed top-0 left-0 right-0 z-50 transition-all duration-500',
-            scrolled
-              ? 'bg-white/90 backdrop-blur-xl shadow-sm border-b border-gray-100'
-              : 'bg-transparent'
-          )}
-        >
+        <LandingNav>
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
             <Link href="/" className="flex items-center gap-2.5">
-              <BocaBankerAvatar size={36} />
+              <BocaBankerAvatar size={36} priority />
               <span className="font-serif text-xl font-bold text-gray-900 hidden sm:block">
                 Boca Banker
               </span>
@@ -286,7 +103,7 @@ export default function Home() {
               </Button>
             </div>
           </div>
-        </nav>
+        </LandingNav>
       </header>
 
       <main>
@@ -307,7 +124,10 @@ export default function Home() {
           <div className="flex flex-col lg:flex-row items-center gap-6 sm:gap-10 lg:gap-16">
             {/* Text side */}
             <div className="flex-1 text-center lg:text-left">
-              <Reveal>
+              {/* Hero copy is the LCP element: render it immediately rather than
+                  behind a JS-driven scroll reveal (which kept it opacity-0 until
+                  hydration). */}
+              <div>
                 <h1 className="font-serif font-bold tracking-tight text-gray-900 leading-[1.1]">
                   <span className="block text-3xl sm:text-4xl md:text-5xl lg:text-6xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-500 bg-clip-text text-transparent">
                     Boca Banker
@@ -316,14 +136,14 @@ export default function Home() {
                     South Florida&apos;s Mortgage &amp; Real Estate Finance Expert
                   </span>
                 </h1>
-              </Reveal>
+              </div>
 
-              <Reveal delay={200}>
+              <div className="animate-fade-in">
                 <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-gray-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
                   Your AI-powered mortgage specialist. He knows home loans, refinancing, and real estate finance
                   inside and out, never takes a coffee break, and has the best tan in fintech.
                 </p>
-              </Reveal>
+              </div>
 
 
             </div>
@@ -331,7 +151,7 @@ export default function Home() {
             {/* Live chat widget (desktop only — mobile uses floating button) */}
             <Reveal delay={200} className="hidden lg:block flex-1 min-w-0 w-full lg:max-w-lg">
               <div className="bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-500 rounded-[28px] p-3 shadow-2xl shadow-blue-500/25">
-                <GuestChatWidget />
+                <HeroChatWidget />
               </div>
             </Reveal>
           </div>
@@ -362,7 +182,7 @@ export default function Home() {
       {/* ══════════════════════════════════════
          FEATURES — Fun cards
          ══════════════════════════════════════ */}
-      <section aria-label="Features" className="py-20 sm:py-28 px-6 bg-white">
+      <section id="features" aria-label="Features" className="py-20 sm:py-28 px-6 bg-white">
         <div className="mx-auto max-w-6xl">
           <Reveal>
             <div className="text-center mb-14">
@@ -410,7 +230,7 @@ export default function Home() {
       {/* ══════════════════════════════════════
          HOW IT WORKS
          ══════════════════════════════════════ */}
-      <section aria-label="How it works" className="py-20 sm:py-28 px-6 bg-gradient-to-b from-sky-50 to-white">
+      <section id="how-it-works" aria-label="How it works" className="py-20 sm:py-28 px-6 bg-gradient-to-b from-sky-50 to-white">
         <div className="mx-auto max-w-4xl">
           <Reveal>
             <div className="text-center mb-16">
@@ -457,7 +277,7 @@ export default function Home() {
       {/* ══════════════════════════════════════
          FAQ
          ══════════════════════════════════════ */}
-      <section aria-label="Frequently asked questions" className="py-20 sm:py-28 px-6 bg-white">
+      <section id="faq" aria-label="Frequently asked questions" className="py-20 sm:py-28 px-6 bg-white">
         <div className="mx-auto max-w-3xl">
           <Reveal>
             <div className="text-center mb-14">
@@ -543,13 +363,12 @@ export default function Home() {
               Ask him about home loans, refinancing, or cost segregation — he&apos;s ready to chat right now.
               Zero vacation days required.
             </p>
-            <button
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            <ScrollButton
               className="mt-8 inline-flex items-center gap-2 bg-white text-sky-700 font-bold text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl hover:bg-white/90 shadow-xl shadow-black/10 transition-opacity"
             >
               <MessageCircle className="h-5 w-5" />
               Chat Now
-            </button>
+            </ScrollButton>
           </div>
         </Reveal>
       </section>
@@ -578,10 +397,10 @@ export default function Home() {
             <div>
               <h3 className="font-semibold text-gray-900 text-sm mb-4">Platform</h3>
               <nav aria-label="Footer navigation" className="flex flex-col gap-2.5 text-sm text-gray-500">
-                <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-left hover:text-gray-900 transition-colors">AI Chat</button>
-                <button onClick={() => document.querySelector('[aria-label="Features"]')?.scrollIntoView({ behavior: 'smooth' })} className="text-left hover:text-gray-900 transition-colors">Features</button>
-                <button onClick={() => document.querySelector('[aria-label="How it works"]')?.scrollIntoView({ behavior: 'smooth' })} className="text-left hover:text-gray-900 transition-colors">How It Works</button>
-                <button onClick={() => document.querySelector('[aria-label="Frequently asked questions"]')?.scrollIntoView({ behavior: 'smooth' })} className="text-left hover:text-gray-900 transition-colors">FAQ</button>
+                <ScrollButton className="text-left hover:text-gray-900 transition-colors">AI Chat</ScrollButton>
+                <ScrollButton targetId="features" className="text-left hover:text-gray-900 transition-colors">Features</ScrollButton>
+                <ScrollButton targetId="how-it-works" className="text-left hover:text-gray-900 transition-colors">How It Works</ScrollButton>
+                <ScrollButton targetId="faq" className="text-left hover:text-gray-900 transition-colors">FAQ</ScrollButton>
                 <Link href="/reviews" className="text-left hover:text-gray-900 transition-colors">Reviews</Link>
               </nav>
             </div>

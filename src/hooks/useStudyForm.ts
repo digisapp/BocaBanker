@@ -3,7 +3,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
-import { getDefaultAllocation, ASSET_CLASSES, type AllocationBreakdown } from '@/lib/cost-seg/asset-classes'
+import {
+  getDefaultAllocation,
+  getAllocationFromBuildingValue,
+  ASSET_CLASSES,
+  type AllocationBreakdown,
+} from '@/lib/cost-seg/asset-classes'
+import { getBonusRateForYear } from '@/lib/cost-seg/bonus-depreciation'
 
 export interface PropertyOption {
   id: string
@@ -68,6 +74,45 @@ export const CATEGORY_RECOVERY: Record<string, number> = {
   land: 0,
 }
 
+function toNumber(v: string | number | null | undefined): number {
+  if (v === null || v === undefined || v === '') return NaN
+  return typeof v === 'string' ? parseFloat(v) : v
+}
+
+/**
+ * Seed the asset breakdown. When the property records its own building value,
+ * split THAT across the asset classes (the report's straight-line baseline is
+ * the building value, so the assets must sum to it). Otherwise fall back to
+ * the typical allocation of the purchase price (20% land).
+ */
+function allocationFor(
+  type: string,
+  prop: PropertyOption,
+  purchasePrice: number
+): AllocationBreakdown[] {
+  const buildingValue = toNumber(prop.buildingValue)
+  if (Number.isFinite(buildingValue) && buildingValue > 0) {
+    const landValue = toNumber(prop.landValue)
+    return getAllocationFromBuildingValue(
+      type,
+      buildingValue,
+      Number.isFinite(landValue) ? landValue : null,
+      Number.isFinite(purchasePrice) ? purchasePrice : null
+    )
+  }
+  return getDefaultAllocation(type, Number.isFinite(purchasePrice) ? purchasePrice : 0)
+}
+
+function toAssetRows(allocation: AllocationBreakdown[]): AssetRow[] {
+  return allocation.map((a) => ({
+    category: a.category,
+    description: a.description,
+    amount: a.amount,
+    recoveryPeriod: a.recoveryPeriod,
+    bonusEligible: a.recoveryPeriod > 0 && a.recoveryPeriod <= 20,
+  }))
+}
+
 interface UseStudyFormParams {
   properties: PropertyOption[]
   clients: ClientOption[]
@@ -89,8 +134,28 @@ export function useStudyForm({
   const [clientId, setClientId] = useState('')
   const [taxRate, setTaxRate] = useState(37)
   const [discountRate, setDiscountRate] = useState(5)
-  const [bonusDepreciationRate, setBonusDepreciationRate] = useState(100)
-  const [studyYear, setStudyYear] = useState(new Date().getFullYear())
+  const [bonusDepreciationRate, setBonusDepreciationRateState] = useState(() =>
+    getBonusRateForYear(new Date().getFullYear())
+  )
+  const [studyYear, setStudyYearState] = useState(new Date().getFullYear())
+  // Once the user edits the bonus rate by hand, stop re-deriving it from the
+  // study year (e.g. property acquired before Jan 20, 2025 under TCJA rules).
+  const bonusRateTouchedRef = useRef(false)
+
+  const setBonusDepreciationRate = useCallback((value: number) => {
+    bonusRateTouchedRef.current = true
+    setBonusDepreciationRateState(value)
+  }, [])
+
+  const setStudyYear = useCallback((year: number) => {
+    setStudyYearState(year)
+    // Default the §168(k) rate to the statutory rate for the placed-in-service
+    // year (60% for 2024, 80% for 2023, 100% for 2025+ under OBBBA) instead
+    // of leaving a hard-coded 100% that overstates pre-2025 studies.
+    if (!bonusRateTouchedRef.current && year >= 2000 && year <= 2100) {
+      setBonusDepreciationRateState(getBonusRateForYear(year))
+    }
+  }, [])
   const [assets, setAssets] = useState<AssetRow[]>([])
 
   const selectedProperty = properties.find((p) => p.id === propertyId)
@@ -117,27 +182,9 @@ export function useStudyForm({
         other: 'commercial',
       }
       const lookupType = typeMap[prop.propertyType] || prop.propertyType
-      const allocation = getDefaultAllocation(lookupType, purchasePrice)
-      setAssets(
-        allocation.map((a: AllocationBreakdown) => ({
-          category: a.category,
-          description: a.description,
-          amount: a.amount,
-          recoveryPeriod: a.recoveryPeriod,
-          bonusEligible: a.recoveryPeriod > 0 && a.recoveryPeriod <= 20,
-        }))
-      )
+      setAssets(toAssetRows(allocationFor(lookupType, prop, purchasePrice)))
     } catch {
-      const allocation = getDefaultAllocation('commercial', purchasePrice)
-      setAssets(
-        allocation.map((a: AllocationBreakdown) => ({
-          category: a.category,
-          description: a.description,
-          amount: a.amount,
-          recoveryPeriod: a.recoveryPeriod,
-          bonusEligible: a.recoveryPeriod > 0 && a.recoveryPeriod <= 20,
-        }))
-      )
+      setAssets(toAssetRows(allocationFor('commercial', prop, purchasePrice)))
     }
   }, [])
 

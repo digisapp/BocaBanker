@@ -47,6 +47,14 @@ export default function BulkEmailModal({ trigger }: BulkEmailModalProps) {
   const [recipientCount, setRecipientCount] = useState<number | null>(null);
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [resultMessage, setResultMessage] = useState('');
+
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    // Load the count for the default filter when the modal opens (it was
+    // previously only fetched after the filter was changed).
+    if (next && recipientCount === null) void handleFilterChange(filter);
+  }
 
   async function handleFilterChange(value: string) {
     setFilter(value);
@@ -82,11 +90,20 @@ export default function BulkEmailModal({ trigger }: BulkEmailModalProps) {
         }),
       });
 
+      // A timeout/proxy error may not be JSON
+      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to send bulk emails');
+        throw new Error(data?.error || 'Failed to send bulk emails');
       }
 
+      const sent = Number(data?.sent ?? 0);
+      const failed = Number(data?.failed ?? 0);
+      if (sent === 0 && failed > 0) {
+        throw new Error(`All ${failed} emails failed to send`);
+      }
+      setResultMessage(
+        failed > 0 ? `Sent ${sent} emails, ${failed} failed.` : `Sent ${sent} emails.`
+      );
       setStatus('success');
       setTimeout(() => {
         setOpen(false);
@@ -103,7 +120,7 @@ export default function BulkEmailModal({ trigger }: BulkEmailModalProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || (
           <Button
@@ -172,7 +189,7 @@ export default function BulkEmailModal({ trigger }: BulkEmailModalProps) {
           {status === 'success' && (
             <div className="flex items-center gap-2 text-emerald-500 text-sm">
               <CheckCircle className="h-4 w-4" />
-              Bulk emails queued successfully!
+              {resultMessage || 'Bulk emails sent.'}
             </div>
           )}
           {status === 'error' && (

@@ -1,10 +1,26 @@
 'use client'
 
 import { DollarSign, TrendingUp, Percent, Calculator } from 'lucide-react'
-import AssetBreakdownChart from './AssetBreakdownChart'
-import DepreciationChart from './DepreciationChart'
-import TaxSavingsChart from './TaxSavingsChart'
 import { formatCurrency } from '@/lib/utils'
+
+import dynamic from 'next/dynamic'
+
+// recharts is heavy; load the chart components lazily on the client
+function ChartSkeleton() {
+  return <div className="h-[300px] w-full animate-pulse rounded-lg bg-gray-50" />
+}
+const AssetBreakdownChart = dynamic(() => import('@/components/studies/AssetBreakdownChart'), {
+  ssr: false,
+  loading: ChartSkeleton,
+})
+const DepreciationChart = dynamic(() => import('@/components/studies/DepreciationChart'), {
+  ssr: false,
+  loading: ChartSkeleton,
+})
+const TaxSavingsChart = dynamic(() => import('@/components/studies/TaxSavingsChart'), {
+  ssr: false,
+  loading: ChartSkeleton,
+})
 
 interface StudyResultsProps {
   results: {

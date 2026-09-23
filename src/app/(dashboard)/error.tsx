@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { logger } from '@/lib/logger'
 
 export default function DashboardError({
   error,
@@ -10,7 +11,8 @@ export default function DashboardError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('Dashboard error:', error)
+    // Report to Sentry (via logger) — console.error alone never left the browser
+    logger.error('dashboard-error-boundary', error.digest ? `Unhandled error (digest ${error.digest})` : 'Unhandled error', error)
   }, [error])
 
   return (

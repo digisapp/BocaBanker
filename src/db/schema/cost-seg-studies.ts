@@ -26,4 +26,5 @@ export const costSegStudies = pgTable('cost_seg_studies', {
   index('cost_seg_studies_property_id_idx').on(table.propertyId),
   index('cost_seg_studies_client_id_idx').on(table.clientId),
   index('cost_seg_studies_user_id_idx').on(table.userId),
+  index('cost_seg_studies_user_id_created_at_idx').on(table.userId, table.createdAt),
 ]);

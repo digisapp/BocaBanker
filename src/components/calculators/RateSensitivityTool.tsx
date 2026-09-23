@@ -35,6 +35,7 @@ import {
   type RateSensitivityResult,
 } from '@/lib/mortgage/calculations';
 import { formatCurrency } from '@/lib/utils';
+import { formatCurrencyCents } from '@/lib/mortgage/format';
 
 const LOAN_TERMS = [
   { value: '10', label: '10 Years' },
@@ -178,7 +179,7 @@ export default function RateSensitivityTool({ initialValues }: RateSensitivityTo
                 <DollarSign className="h-4 w-4 text-amber-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Base Payment</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(result.basePayment)}</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrencyCents(result.basePayment)}</p>
               <p className="text-xs text-gray-400 mt-1">at {result.baseRate}%</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -186,7 +187,7 @@ export default function RateSensitivityTool({ initialValues }: RateSensitivityTo
                 <TrendingDown className="h-4 w-4 text-emerald-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Lowest</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(minEntry.monthlyPayment)}</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrencyCents(minEntry.monthlyPayment)}</p>
               <p className="text-xs text-gray-400 mt-1">at {minEntry.rate}%</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -194,7 +195,7 @@ export default function RateSensitivityTool({ initialValues }: RateSensitivityTo
                 <TrendingUp className="h-4 w-4 text-red-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Highest</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(maxEntry.monthlyPayment)}</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrencyCents(maxEntry.monthlyPayment)}</p>
               <p className="text-xs text-gray-400 mt-1">at {maxEntry.rate}%</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -287,7 +288,7 @@ export default function RateSensitivityTool({ initialValues }: RateSensitivityTo
                         )}
                       </TableCell>
                       <TableCell className="text-gray-900 text-right">
-                        {formatCurrency(entry.monthlyPayment)}
+                        {formatCurrencyCents(entry.monthlyPayment)}
                       </TableCell>
                       <TableCell className="text-gray-900 text-right">
                         {formatCurrency(entry.totalInterest)}

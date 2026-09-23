@@ -42,10 +42,19 @@ const RECOVERY_PERIODS: { value: string; label: string }[] = [
   { value: '39', label: '39-Year Nonresidential' },
 ];
 
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
 export default function DepreciationCalculator() {
   const [assetValue, setAssetValue] = useState('');
   const [recoveryPeriod, setRecoveryPeriod] = useState('5');
   const [bonusRate, setBonusRate] = useState(100);
+  // Month placed in service: drives the mid-month convention column for
+  // 27.5/39-year real property (IRS Pub 946 Tables A-6 / A-7a)
+  const [placedMonth, setPlacedMonth] = useState('1');
+  const isRealProperty = recoveryPeriod === '27.5' || recoveryPeriod === '39';
   const [schedule, setSchedule] = useState<DepreciationScheduleItem[]>([]);
   const [calculated, setCalculated] = useState(false);
 
@@ -54,7 +63,7 @@ export default function DepreciationCalculator() {
     if (isNaN(costBasis) || costBasis <= 0) return;
 
     const period = parseFloat(recoveryPeriod) as MacrsRecoveryPeriod;
-    const result = calculateDepreciation(costBasis, period, bonusRate);
+    const result = calculateDepreciation(costBasis, period, bonusRate, parseInt(placedMonth, 10));
     setSchedule(result);
     setCalculated(true);
   }
@@ -63,6 +72,7 @@ export default function DepreciationCalculator() {
     setAssetValue('');
     setRecoveryPeriod('5');
     setBonusRate(100);
+    setPlacedMonth('1');
     setSchedule([]);
     setCalculated(false);
   }
@@ -120,6 +130,31 @@ export default function DepreciationCalculator() {
               </SelectContent>
             </Select>
           </div>
+
+          {isRealProperty && (
+            <div className="space-y-2">
+              <Label className="text-gray-500">Month Placed in Service</Label>
+              <Select value={placedMonth} onValueChange={setPlacedMonth}>
+                <SelectTrigger className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-gray-200">
+                  {MONTHS.map((m, i) => (
+                    <SelectItem
+                      key={m}
+                      value={String(i + 1)}
+                      className="text-gray-900 focus:bg-amber-50 focus:text-amber-700"
+                    >
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-400">
+                Mid-month convention; not eligible for bonus depreciation
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label className="text-gray-500">

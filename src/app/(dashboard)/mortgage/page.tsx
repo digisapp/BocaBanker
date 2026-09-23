@@ -14,11 +14,20 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { RateTrendChart } from '@/components/mortgage/RateTrendChart'
-import { PipelineSummary } from '@/components/mortgage/PipelineSummary'
+import dynamic from 'next/dynamic'
 import { MortgageQuickActions } from '@/components/mortgage/MortgageQuickActions'
 import { LoanStatusBadge } from '@/components/mortgage/LoanStatusBadge'
 import { useRouter } from 'next/navigation'
+
+// recharts is heavy; load the chart components lazily on the client
+const RateTrendChart = dynamic(
+  () => import('@/components/mortgage/RateTrendChart').then((m) => m.RateTrendChart),
+  { ssr: false, loading: () => <div className="h-[250px] w-full animate-pulse rounded-lg bg-gray-50" /> }
+)
+const PipelineSummary = dynamic(
+  () => import('@/components/mortgage/PipelineSummary').then((m) => m.PipelineSummary),
+  { ssr: false, loading: () => <div className="h-[250px] w-full animate-pulse rounded-lg bg-gray-50" /> }
+)
 
 interface MortgageStats {
   currentRate30yr: number | null

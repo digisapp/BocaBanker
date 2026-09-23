@@ -7,9 +7,25 @@ import { formatCurrency } from '@/lib/utils'
 import { ArrowLeft, Printer, Download, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import AssetBreakdownChart from '@/components/studies/AssetBreakdownChart'
-import DepreciationChart from '@/components/studies/DepreciationChart'
-import TaxSavingsChart from '@/components/studies/TaxSavingsChart'
+
+import dynamic from 'next/dynamic'
+
+// recharts is heavy; load the chart components lazily on the client
+function ChartSkeleton() {
+  return <div className="h-[300px] w-full animate-pulse rounded-lg bg-gray-50" />
+}
+const AssetBreakdownChart = dynamic(() => import('@/components/studies/AssetBreakdownChart'), {
+  ssr: false,
+  loading: ChartSkeleton,
+})
+const DepreciationChart = dynamic(() => import('@/components/studies/DepreciationChart'), {
+  ssr: false,
+  loading: ChartSkeleton,
+})
+const TaxSavingsChart = dynamic(() => import('@/components/studies/TaxSavingsChart'), {
+  ssr: false,
+  loading: ChartSkeleton,
+})
 
 interface StudyDetail {
   id: string

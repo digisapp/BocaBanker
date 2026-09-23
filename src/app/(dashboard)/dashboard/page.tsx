@@ -15,20 +15,19 @@ import {
   Briefcase,
   Landmark,
 } from 'lucide-react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from 'recharts';
+import dynamic from 'next/dynamic';
+import { Skeleton } from '@/components/ui/skeleton';
 import MetricCard from '@/components/dashboard/MetricCard';
 import QuickActions from '@/components/dashboard/QuickActions';
 import RecentActivity from '@/components/dashboard/RecentActivity';
 import type { DashboardStats } from '@/types';
+
+// recharts is large (~350KB); load it after first paint so the metric cards
+// render without waiting on the chart bundle.
+const LeadPipelineChart = dynamic(
+  () => import('@/components/dashboard/LeadPipelineChart'),
+  { ssr: false, loading: () => <Skeleton className="h-full w-full rounded-lg" /> },
+);
 
 interface MortgageQuickStats {
   currentRate30yr: number | null;
@@ -42,6 +41,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [mortgageStats, setMortgageStats] = useState<MortgageQuickStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     async function fetchStats() {
@@ -51,18 +51,24 @@ export default function DashboardPage() {
           fetch('/api/mortgage/stats'),
         ]);
         if (dashRes.ok) setStats(await dashRes.json());
+        else setLoadError(true);
         if (mtgRes.ok) {
           const mtg = await mtgRes.json();
           setMortgageStats({
             currentRate30yr: mtg.currentRate30yr ?? null,
-            rateChangeBps: mtg.rateChangeBps ?? null,
-            pipelineCount: mtg.pipelineCount ?? 0,
-            pipelineVolume: mtg.pipelineVolume ?? 0,
+            // API returns the week-over-week change in percentage points
+            rateChangeBps:
+              typeof mtg.rateChange30yr === 'number'
+                ? Math.round(mtg.rateChange30yr * 100)
+                : null,
+            pipelineCount: mtg.pipelineSummary?.total ?? 0,
+            pipelineVolume: mtg.pipelineSummary?.totalVolume ?? 0,
             commissionYTD: mtg.commissionYTD ?? 0,
           });
         }
       } catch (err) {
         logger.error('dashboard-page', 'Failed to fetch dashboard stats', err);
+        setLoadError(true);
       } finally {
         setLoading(false);
       }
@@ -109,6 +115,12 @@ export default function DashboardPage() {
           Your business at a glance
         </p>
       </div>
+
+      {loadError && (
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          Some dashboard data failed to load. Figures below may be incomplete — try refreshing.
+        </div>
+      )}
 
       {/* Row 1: Core Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -202,39 +214,7 @@ export default function DashboardPage() {
           <h3 className="font-semibold text-gray-900 mb-4">Lead Pipeline</h3>
           <div className="h-[250px] sm:h-[320px]">
             {totalLeads > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={pipelineChartData}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="rgba(0,0,0,0.06)"
-                  />
-                  <XAxis
-                    dataKey="stage"
-                    stroke="#D1D5DB"
-                    tick={{ fill: '#6B7280', fontSize: 12 }}
-                  />
-                  <YAxis
-                    stroke="#D1D5DB"
-                    tick={{ fill: '#6B7280', fontSize: 12 }}
-                    allowDecimals={false}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#FFFFFF',
-                      border: '1px solid #E5E7EB',
-                      borderRadius: '8px',
-                      color: '#111827',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                    }}
-                    formatter={(value) => [String(value), 'Leads']}
-                  />
-                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                    {pipelineChartData.map((entry, index) => (
-                      <Cell key={index} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <LeadPipelineChart data={pipelineChartData} />
             ) : (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { logger } from '@/lib/logger';
 import {
   Mail, Inbox, Send, Loader2, MailOpen, Reply, Trash2, X, Search,
@@ -31,7 +31,6 @@ interface InboxEmail {
   fromEmail: string;
   fromName: string | null;
   subject: string;
-  bodyText: string | null;
   status: string;
   isRead: boolean;
   threadId: string | null;
@@ -43,7 +42,6 @@ interface InboxEmail {
   aiCategory: string | null;
   aiConfidence: number | null;
   aiSummary: string | null;
-  aiDraftHtml: string | null;
 }
 
 interface EmailDetail {
@@ -245,7 +243,7 @@ export default function EmailPage() {
         </button>
       </div>
 
-      {activeTab === 'inbox' && <InboxTab onUnreadChange={setUnreadCount} />}
+      {activeTab === 'inbox' && <InboxTab unreadCount={unreadCount} onUnreadChange={setUnreadCount} />}
       {activeTab === 'sent' && <SentTab />}
     </div>
   );
@@ -339,7 +337,9 @@ function ComposeDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v
 
 // ── Inbox Tab ──────────────────────────────────────────────────────
 
-function InboxTab({ onUnreadChange }: { onUnreadChange: (n: number) => void }) {
+function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnreadChange: (n: number) => void }) {
+  const unreadRef = useRef(unreadCount);
+  useEffect(() => { unreadRef.current = unreadCount; }, [unreadCount]);
   const [emailList, setEmailList] = useState<InboxEmail[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
@@ -354,30 +354,46 @@ function InboxTab({ onUnreadChange }: { onUnreadChange: (n: number) => void }) {
   const [replyBody, setReplyBody] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [listError, setListError] = useState<string | null>(null);
+  // Latest detail request wins: clicking through emails quickly must not let
+  // a slow earlier response replace the email the user clicked last.
+  const detailRequestRef = useRef(0);
 
-  const fetchInbox = useCallback(async () => {
+  const fetchInbox = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
+    setListError(null);
     try {
       const params = new URLSearchParams({ page: page.toString(), limit: '30' });
       if (readFilter === 'unread') params.set('read', 'false');
       if (readFilter === 'read') params.set('read', 'true');
       if (search) params.set('search', search);
-      const res = await fetch(`/api/email/inbox?${params}`);
+      const res = await fetch(`/api/email/inbox?${params}`, { signal });
       if (res.ok) {
         const data = await res.json();
         setEmailList(data.emails);
         setTotal(data.total);
         setTotalPages(data.totalPages);
         onUnreadChange(data.unread);
+      } else {
+        const data = await res.json().catch(() => null);
+        setListError(data?.error || 'Failed to load inbox');
       }
     } catch (err) {
+      if (signal?.aborted) return;
       logger.error('inbox', 'Fetch failed', err);
+      setListError('Failed to load inbox');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, [page, readFilter, search, onUnreadChange]);
 
-  useEffect(() => { fetchInbox(); }, [fetchInbox]);
+  // Abort the in-flight request when filters/page change so a stale response
+  // can't overwrite the newer one.
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchInbox(controller.signal);
+    return () => controller.abort();
+  }, [fetchInbox]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -392,20 +408,28 @@ function InboxTab({ onUnreadChange }: { onUnreadChange: (n: number) => void }) {
   }, [selectedEmail]);
 
   async function openEmail(id: string) {
+    const requestId = ++detailRequestRef.current;
+    const wasUnread = emailList.some((e) => e.id === id && !e.isRead);
     setLoadingDetail(true);
     setShowReply(false);
     setReplyBody('');
     try {
       const res = await fetch(`/api/email/inbox/${id}`);
+      if (requestId !== detailRequestRef.current) return;
       if (res.ok) {
         const data = await res.json();
+        if (requestId !== detailRequestRef.current) return;
         setSelectedEmail(data);
         setEmailList((prev) => prev.map((e) => (e.id === id ? { ...e, isRead: true } : e)));
+        if (wasUnread) onUnreadChange(Math.max(0, unreadRef.current - 1));
+      } else {
+        toast.error('Failed to open email');
       }
     } catch (err) {
       logger.error('inbox', 'Fetch detail failed', err);
+      if (requestId === detailRequestRef.current) toast.error('Failed to open email');
     } finally {
-      setLoadingDetail(false);
+      if (requestId === detailRequestRef.current) setLoadingDetail(false);
     }
   }
 
@@ -417,11 +441,15 @@ function InboxTab({ onUnreadChange }: { onUnreadChange: (n: number) => void }) {
         body: JSON.stringify({ emailIds: ids }),
       });
       if (res.ok) {
+        const unreadDeleted = emailList.filter((e) => ids.includes(e.id) && !e.isRead).length;
         setEmailList((prev) => prev.filter((e) => !ids.includes(e.id)));
         if (selectedEmail && ids.includes(selectedEmail.id)) setSelectedEmail(null);
         setSelectedIds(new Set());
-        setTotal((prev) => prev - ids.length);
+        setTotal((prev) => Math.max(0, prev - ids.length));
+        if (unreadDeleted > 0) onUnreadChange(Math.max(0, unreadRef.current - unreadDeleted));
         toast.success(`Deleted ${ids.length} email${ids.length > 1 ? 's' : ''}`);
+      } else {
+        toast.error('Delete failed');
       }
     } catch { toast.error('Delete failed'); }
   }
@@ -435,7 +463,9 @@ function InboxTab({ onUnreadChange }: { onUnreadChange: (n: number) => void }) {
         body: JSON.stringify({ emailIds: ids }),
       });
       if (!res.ok) throw new Error('Failed');
+      const newlyRead = emailList.filter((e) => ids.includes(e.id) && !e.isRead).length;
       setEmailList((prev) => prev.map((e) => ids.includes(e.id) ? { ...e, isRead: true } : e));
+      if (newlyRead > 0) onUnreadChange(Math.max(0, unreadRef.current - newlyRead));
       setSelectedIds(new Set());
       toast.success(`Marked ${ids.length} as read`);
     } catch { toast.error('Failed to mark as read'); }
@@ -544,10 +574,19 @@ function InboxTab({ onUnreadChange }: { onUnreadChange: (n: number) => void }) {
       {/* Two-panel */}
       <div className="flex gap-4 min-h-[600px]">
         {/* Email list */}
-        <div className="w-full lg:w-2/5 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+        {/* On < lg only one panel is visible: the list, or the open email. */}
+        <div className={`w-full lg:w-2/5 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-col ${
+          selectedEmail || loadingDetail ? 'hidden lg:flex' : 'flex'
+        }`}>
           {loading ? (
             <div className="flex items-center justify-center py-16 flex-1">
               <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+            </div>
+          ) : listError ? (
+            <div className="text-center py-16 flex-1">
+              <p className="text-sm text-red-600 mb-3">{listError}</p>
+              <Button variant="outline" size="sm" onClick={() => fetchInbox()}
+                className="border-gray-200 text-amber-600 hover:bg-amber-50">Retry</Button>
             </div>
           ) : emailList.length === 0 ? (
             <div className="text-center py-16 flex-1">
@@ -637,7 +676,9 @@ function InboxTab({ onUnreadChange }: { onUnreadChange: (n: number) => void }) {
         </div>
 
         {/* Detail panel */}
-        <div className="hidden lg:flex lg:w-3/5 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-col">
+        <div className={`w-full lg:w-3/5 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-col ${
+          selectedEmail || loadingDetail ? 'flex' : 'hidden lg:flex'
+        }`}>
           {loadingDetail ? (
             <div className="flex items-center justify-center flex-1"><Loader2 className="h-6 w-6 animate-spin text-amber-500" /></div>
           ) : selectedEmail ? (
@@ -785,24 +826,34 @@ function SentTab() {
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
 
-  const fetchSent = useCallback(async () => {
+  const fetchSent = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: page.toString(), limit: '30' });
       if (statusFilter !== 'all') params.set('status', statusFilter);
       if (search) params.set('search', search);
-      const res = await fetch(`/api/email/sent?${params}`);
+      const res = await fetch(`/api/email/sent?${params}`, { signal });
       if (res.ok) {
         const data = await res.json();
         setSentEmails(data.emails);
         setTotal(data.total);
         setTotalPages(data.totalPages);
+      } else {
+        toast.error('Failed to load sent emails');
       }
-    } catch (err) { logger.error('sent', 'Fetch failed', err); }
-    finally { setLoading(false); }
+    } catch (err) {
+      if (signal?.aborted) return;
+      logger.error('sent', 'Fetch failed', err);
+      toast.error('Failed to load sent emails');
+    }
+    finally { if (!signal?.aborted) setLoading(false); }
   }, [page, statusFilter, search]);
 
-  useEffect(() => { fetchSent(); }, [fetchSent]);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchSent(controller.signal);
+    return () => controller.abort();
+  }, [fetchSent]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();

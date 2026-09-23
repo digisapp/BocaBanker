@@ -155,6 +155,61 @@ export const MACRS_39_YEAR: readonly number[] = [
 ] as const;
 
 /**
+ * Real-property first-year rates by placed-in-service month (IRS Pub 946,
+ * Table A-6 for 27.5-year and Table A-7a for 39-year, mid-month convention).
+ * Index 0 = January ... index 11 = December.
+ */
+const FIRST_YEAR_27_5: readonly number[] = [
+  3.485, 3.182, 2.879, 2.576, 2.273, 1.970, 1.667, 1.364, 1.061, 0.758, 0.455, 0.152,
+];
+const FIRST_YEAR_39: readonly number[] = [
+  2.461, 2.247, 2.033, 1.819, 1.605, 1.391, 1.177, 0.963, 0.749, 0.535, 0.321, 0.107,
+];
+
+/**
+ * 27.5-year rates for a given placed-in-service month (Pub 946 Table A-6).
+ *
+ * Years 2-9 are 3.636% for every month. Years 10-27 alternate
+ * 3.637/3.636 — starting with 3.637 in year 10 for months 1-6, and with
+ * 3.636 for months 7-12. Months 1-6 finish in year 28; months 7-12 take a
+ * full 3.636% in year 28 and finish in year 29. Every column sums to 100%.
+ */
+function build27_5YearTable(month: number): number[] {
+  const firstHalf = month <= 6;
+  const rates: number[] = [FIRST_YEAR_27_5[month - 1]];
+  for (let year = 2; year <= 9; year++) rates.push(3.636);
+  for (let year = 10; year <= 27; year++) {
+    const even = year % 2 === 0;
+    rates.push(firstHalf === even ? 3.637 : 3.636);
+  }
+  if (firstHalf) {
+    // Year 28 remainder: 1.970, 2.273, 2.576, 2.879, 3.182, 3.485
+    rates.push(round3(1.970 + (month - 1) * 0.303));
+  } else {
+    rates.push(3.636);
+    // Year 29 remainder: 0.152, 0.455, 0.758, 1.061, 1.364, 1.667
+    rates.push(round3(0.152 + (month - 7) * 0.303));
+  }
+  return rates;
+}
+
+/**
+ * 39-year rates for a given placed-in-service month (Pub 946 Table A-7a).
+ * Years 2-39 are 2.564% for every month; year 40 is the remainder
+ * (0.107% for January ... 2.461% for December).
+ */
+function build39YearTable(month: number): number[] {
+  const rates: number[] = [FIRST_YEAR_39[month - 1]];
+  for (let year = 2; year <= 39; year++) rates.push(2.564);
+  rates.push(FIRST_YEAR_39[12 - month]);
+  return rates;
+}
+
+function round3(n: number): number {
+  return Math.round(n * 1000) / 1000;
+}
+
+/**
  * Map of recovery periods to their MACRS rate tables
  */
 const MACRS_TABLES: Record<MacrsRecoveryPeriod, readonly number[]> = {
@@ -168,16 +223,34 @@ const MACRS_TABLES: Record<MacrsRecoveryPeriod, readonly number[]> = {
 /**
  * Returns the MACRS depreciation rate table for the given recovery period.
  *
+ * 5/7/15-year property uses the half-year convention, so the
+ * placed-in-service month does not matter. 27.5/39-year real property uses
+ * the mid-month convention, so the first-year (and final-year) rate depends
+ * on the month the property was placed in service.
+ *
  * @param period - The MACRS recovery period (5, 7, 15, 27.5, or 39 years)
+ * @param placedInServiceMonth - 1 (January) through 12 (December); default 1.
+ *   Only affects 27.5 and 39-year property. Invalid values fall back to 1.
  * @returns Array of annual depreciation percentages
  * @throws Error if an invalid recovery period is provided
  */
-export function getMacrsRates(period: MacrsRecoveryPeriod): number[] {
+export function getMacrsRates(
+  period: MacrsRecoveryPeriod,
+  placedInServiceMonth: number = 1
+): number[] {
   const rates = MACRS_TABLES[period];
   if (!rates) {
     throw new Error(
       `Invalid MACRS recovery period: ${period}. Valid periods are: ${Object.keys(MACRS_TABLES).join(', ')}`
     );
   }
+  const month =
+    Number.isInteger(placedInServiceMonth) &&
+    placedInServiceMonth >= 1 &&
+    placedInServiceMonth <= 12
+      ? placedInServiceMonth
+      : 1;
+  if (period === 27.5 && month !== 1) return build27_5YearTable(month);
+  if (period === 39 && month !== 1) return build39YearTable(month);
   return [...rates];
 }

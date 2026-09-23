@@ -22,4 +22,5 @@ export const clients = pgTable('clients', {
   updatedAt: timestamp('updated_at').default(sql`now()`),
 }, (table) => [
   index('clients_user_id_idx').on(table.userId),
+  index('clients_user_id_created_at_idx').on(table.userId, table.createdAt),
 ]);

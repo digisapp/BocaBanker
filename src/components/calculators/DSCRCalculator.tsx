@@ -27,6 +27,7 @@ import {
   type DSCRResult,
 } from '@/lib/mortgage/calculations';
 import { formatCurrency } from '@/lib/utils';
+import { formatCurrencyCents } from '@/lib/mortgage/format';
 
 const LOAN_TERMS = [
   { value: '10', label: '10 Years' },
@@ -226,7 +227,7 @@ export default function DSCRCalculator({ initialValues }: DSCRCalculatorProps) {
                 <DollarSign className="h-4 w-4 text-amber-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Monthly Payment</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(result.monthlyDebtService)}</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrencyCents(result.monthlyDebtService)}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
