@@ -3,6 +3,7 @@ import { Inter, DM_Serif_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "@/components/ui/sonner";
+import { SITE_URL, SITE_NAME, SITE_TITLE, SITE_DESCRIPTION, siteJsonLd } from "@/lib/seo";
 import "./globals.css";
 
 const inter = Inter({
@@ -18,21 +19,16 @@ const dmSerif = DM_Serif_Display({
   display: "swap",
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://bocabanker.com";
-const SITE_NAME = "Boca Banker";
-const SITE_DESCRIPTION =
-  "South Florida's trusted mortgage expert with 40+ years of Boca Raton banking experience. Home loans, refinancing, and cost segregation analysis powered by AI.";
-
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#f59e0b",
+  themeColor: "#1E293B",
 };
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Boca Banker | South Florida Mortgage & Real Estate Finance Expert",
+    default: SITE_TITLE,
     template: "%s | Boca Banker",
   },
   description: SITE_DESCRIPTION,
@@ -73,16 +69,13 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: "Boca Banker | South Florida Mortgage & Real Estate Finance Expert",
+    title: SITE_TITLE,
     description: SITE_DESCRIPTION,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Boca Banker | South Florida Mortgage & Real Estate Finance Expert",
+    title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-  },
-  alternates: {
-    canonical: SITE_URL,
   },
   icons: {
     icon: [
@@ -95,83 +88,6 @@ export const metadata: Metadata = {
     ],
   },
   category: "finance",
-};
-
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Organization",
-      "@id": `${SITE_URL}/#organization`,
-      name: SITE_NAME,
-      url: SITE_URL,
-      logo: {
-        "@type": "ImageObject",
-        url: `${SITE_URL}/icon-512.png`,
-      },
-      description: SITE_DESCRIPTION,
-      areaServed: {
-        "@type": "Place",
-        name: "Boca Raton, Florida, United States",
-      },
-    },
-    {
-      "@type": "ProfessionalService",
-      "@id": `${SITE_URL}/#localbusiness`,
-      name: SITE_NAME,
-      description:
-        "South Florida mortgage and real estate finance expert serving homebuyers, investors, and property owners in Boca Raton and nationwide.",
-      url: SITE_URL,
-      image: `${SITE_URL}/icon-512.png`,
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: "Boca Raton",
-        addressRegion: "FL",
-        addressCountry: "US",
-      },
-      geo: {
-        "@type": "GeoCoordinates",
-        latitude: 26.3683,
-        longitude: -80.1289,
-      },
-      areaServed: [
-        { "@type": "State", name: "Florida" },
-        { "@type": "Country", name: "United States" },
-      ],
-      priceRange: "Free - Premium",
-      openingHoursSpecification: {
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: [
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-          "Sunday",
-        ],
-        opens: "00:00",
-        closes: "23:59",
-      },
-    },
-    {
-      "@type": "WebSite",
-      "@id": `${SITE_URL}/#website`,
-      url: SITE_URL,
-      name: SITE_NAME,
-      publisher: { "@id": `${SITE_URL}/#organization` },
-      description: SITE_DESCRIPTION,
-    },
-    {
-      "@type": "WebPage",
-      "@id": `${SITE_URL}/#webpage`,
-      url: SITE_URL,
-      name: "Boca Banker | South Florida Mortgage & Real Estate Finance Expert",
-      isPartOf: { "@id": `${SITE_URL}/#website` },
-      about: { "@id": `${SITE_URL}/#organization` },
-      description: SITE_DESCRIPTION,
-    },
-  ],
 };
 
 export default function RootLayout({
@@ -197,7 +113,7 @@ export default function RootLayout({
       >
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd()) }}
         />
         {children}
         <Toaster richColors position="top-right" />

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { and, avg, count, desc, eq } from 'drizzle-orm'
 import {
@@ -17,6 +18,7 @@ import { reviews } from '@/db/schema'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import { siteConfig, telHref } from '@/lib/site-config'
+import { SITE_URL, SITE_TITLE, SITE_DESCRIPTION } from '@/lib/seo'
 import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
 import MobileChatButton from '@/components/landing/MobileChatButton'
 import { Reveal, LandingNav, OpenChatButton, HeroChatWidget } from '@/components/landing/LandingClient'
@@ -26,9 +28,11 @@ import { Reveal, LandingNav, OpenChatButton, HeroChatWidget } from '@/components
 // render time and cached, so they're in the HTML and don't pop in.
 export const revalidate = 300
 
-/* ─── Data ─── */
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+}
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://bocabanker.com'
+/* ─── Data ─── */
 
 const paths = [
   {
@@ -189,22 +193,37 @@ export default async function Home() {
       : []),
   ]
 
-  const faqJsonLd = {
+  const pageJsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    '@id': `${SITE_URL}/#faq`,
-    mainEntity: faqs.map((f) => ({
-      '@type': 'Question',
-      name: f.q,
-      acceptedAnswer: { '@type': 'Answer', text: f.a },
-    })),
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        '@id': `${SITE_URL}/#webpage`,
+        url: SITE_URL,
+        name: SITE_TITLE,
+        description: SITE_DESCRIPTION,
+        isPartOf: { '@id': `${SITE_URL}/#website` },
+        about: { '@id': `${SITE_URL}/#organization` },
+        primaryImageOfPage: `${SITE_URL}/og-headshot.jpg`,
+        inLanguage: 'en-US',
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${SITE_URL}/#faq`,
+        mainEntity: faqs.map((f) => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a },
+        })),
+      },
+    ],
   }
 
   return (
     <div className="min-h-screen bg-cream text-navy">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(pageJsonLd) }}
       />
 
       {/* ── NAV ── */}

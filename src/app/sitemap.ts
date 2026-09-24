@@ -1,26 +1,28 @@
 import type { MetadataRoute } from 'next'
+import { eq, max } from 'drizzle-orm'
+import { db } from '@/db'
+import { reviews } from '@/db/schema'
+import { SITE_URL } from '@/lib/seo'
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bocabanker.com'
+export const revalidate = 3600
+
+// Only public, indexable pages belong here. Login and password reset are
+// noindex, and everything behind auth is disallowed in robots.ts.
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Both pages show approved reviews, so their newest change is a fair lastmod.
+  let latestReview: Date | undefined
+  try {
+    const [row] = await db
+      .select({ updatedAt: max(reviews.updatedAt) })
+      .from(reviews)
+      .where(eq(reviews.status, 'approved'))
+    latestReview = row?.updatedAt ?? undefined
+  } catch {
+    // Sitemap still works without the date
+  }
 
   return [
-    {
-      url: siteUrl,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 1.0,
-    },
-    {
-      url: `${siteUrl}/login`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.5,
-    },
-    {
-      url: `${siteUrl}/reset-password`,
-      lastModified: new Date(),
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
+    { url: SITE_URL, lastModified: latestReview },
+    { url: `${SITE_URL}/reviews`, lastModified: latestReview },
   ]
 }

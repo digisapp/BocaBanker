@@ -36,6 +36,17 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // One canonical host: www serves the same pages, so send it to the apex.
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.bocabanker.com" }],
+        destination: "https://bocabanker.com/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

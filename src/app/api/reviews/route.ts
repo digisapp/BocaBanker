@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { reviews } from '@/db/schema';
-import { eq, and, desc, count, avg } from 'drizzle-orm';
+import { getPublicReviews } from '@/lib/reviews';
 import { logger } from '@/lib/logger';
 import { reviewSubmissionSchema } from '@/lib/validation/schemas';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
@@ -12,93 +12,11 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const { page, limit, offset } = parsePagination(searchParams, { defaultLimit: 12, maxLimit: 50 });
-    const rating = searchParams.get('rating');
+    const rating = Number(searchParams.get('rating')) || null;
 
+    const result = await getPublicReviews({ limit, offset, rating });
 
-    // Build where conditions
-    const conditions = [eq(reviews.status, 'approved')];
-
-    if (rating) {
-      const ratingNum = Number(rating);
-      if (Number.isInteger(ratingNum) && ratingNum >= 1 && ratingNum <= 5) {
-        conditions.push(eq(reviews.rating, ratingNum));
-      }
-    }
-
-    const whereClause = and(...conditions);
-
-    // Public endpoint: select an explicit column list so reviewer_email (PII)
-    // and internal fields are never exposed. All queries run in parallel.
-    const [reviewRows, totalResult, [statsResult], breakdownRows] = await Promise.all([
-      db
-        .select({
-          id: reviews.id,
-          reviewerName: reviews.reviewerName,
-          reviewerCity: reviews.reviewerCity,
-          reviewerState: reviews.reviewerState,
-          rating: reviews.rating,
-          title: reviews.title,
-          body: reviews.body,
-          loanStatus: reviews.loanStatus,
-          loanType: reviews.loanType,
-          interestRateExperience: reviews.interestRateExperience,
-          closedOnTime: reviews.closedOnTime,
-          feesExperience: reviews.feesExperience,
-          loanTerm: reviews.loanTerm,
-          loanProgram: reviews.loanProgram,
-          isFirstTimeBuyer: reviews.isFirstTimeBuyer,
-          isSelfEmployed: reviews.isSelfEmployed,
-          status: reviews.status,
-          responseText: reviews.responseText,
-          responseDate: reviews.responseDate,
-          reviewDate: reviews.reviewDate,
-          createdAt: reviews.createdAt,
-        })
-        .from(reviews)
-        .where(whereClause)
-        .orderBy(desc(reviews.reviewDate))
-        .limit(limit)
-        .offset(offset),
-      db
-        .select({ total: count() })
-        .from(reviews)
-        .where(whereClause),
-      // Aggregate stats for all approved reviews
-      db
-        .select({
-          totalReviews: count(),
-          averageRating: avg(reviews.rating),
-        })
-        .from(reviews)
-        .where(eq(reviews.status, 'approved')),
-      // Rating breakdown
-      db
-        .select({
-          rating: reviews.rating,
-          count: count(),
-        })
-        .from(reviews)
-        .where(eq(reviews.status, 'approved'))
-        .groupBy(reviews.rating),
-    ]);
-
-    const ratingBreakdown: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-    for (const row of breakdownRows) {
-      ratingBreakdown[row.rating] = row.count;
-    }
-
-    const total = totalResult[0]?.total ?? 0;
-    const avgRating = statsResult?.averageRating ? parseFloat(statsResult.averageRating) : 0;
-
-    return NextResponse.json({
-      reviews: reviewRows,
-      total,
-      page,
-      limit,
-      averageRating: Math.round(avgRating * 100) / 100,
-      totalReviews: statsResult?.totalReviews ?? 0,
-      ratingBreakdown,
-    }, {
+    return NextResponse.json({ ...result, page, limit }, {
       // Approved reviews are public and identical for every visitor
       headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
     });

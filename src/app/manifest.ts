@@ -5,11 +5,11 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Boca Banker',
     short_name: 'BocaBanker',
     description:
-      'AI-powered cost segregation analysis and banking intelligence. Maximize tax savings with automated property studies.',
+      'Boca Raton mortgage banker. Home loans, refinancing, and cost segregation for investors.',
     start_url: '/dashboard',
     display: 'standalone',
     background_color: '#FAFAF8',
-    theme_color: '#f59e0b',
+    theme_color: '#1E293B',
     icons: [
       {
         src: '/favicon.ico',
