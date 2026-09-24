@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     if (!dailyResult.success) {
       return tooManyRequests(
         dailyResult.resetTime,
-        "You've reached today's guest chat limit. Sign up for free to keep chatting with Boca Banker."
+        "You've reached today's chat limit. Please come back tomorrow, or leave your details and Boca Banker will follow up."
       )
     }
 
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       totalChars += len
     }
     if (totalChars > MAX_TOTAL_CHARS) {
-      return apiError('Conversation is too long. Sign up to continue this conversation.', 400)
+      return apiError('This conversation has gotten long. Please start a new one to keep going.', 400)
     }
 
     // Use lead capture prompt on the 3rd message only, then revert to normal

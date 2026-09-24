@@ -2,33 +2,37 @@
 
 import { useState } from 'react';
 import { z } from 'zod';
-import { Loader2, CheckCircle2, Mail } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import BocaBankerAvatar from './BocaBankerAvatar';
 
 const formSchema = z.object({
-  name: z.string().min(1, { message: 'Name is required' }),
-  propertyLocation: z.string().min(1, { message: 'Property location is required' }),
-  email: z.string().email({ message: 'Enter a valid email' }),
+  name: z.string().trim().min(1, { message: 'Please enter your name' }),
+  email: z.string().trim().email({ message: 'Enter a valid email' }),
+  phone: z.string().trim().optional(),
 });
 
 interface InlineLeadCaptureCardProps {
+  /** The visitor's first question, sent along so the follow-up has context. */
+  question?: string;
   onDismiss: () => void;
-  onSuccess: () => void;
+  onSuccess: (name: string) => void;
 }
 
-export default function InlineLeadCaptureCard({ onDismiss, onSuccess }: InlineLeadCaptureCardProps) {
+const inputClass =
+  'w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40';
+
+export default function InlineLeadCaptureCard({ question, onDismiss, onSuccess }: InlineLeadCaptureCardProps) {
   const [name, setName] = useState('');
-  const [propertyLocation, setPropertyLocation] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    const parsed = formSchema.safeParse({ name, propertyLocation, email });
+    const parsed = formSchema.safeParse({ name, email, phone });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message || 'Please check your input');
       return;
@@ -36,20 +40,19 @@ export default function InlineLeadCaptureCard({ onDismiss, onSuccess }: InlineLe
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/auth/guest-signup', {
+      const res = await fetch('/api/chat/guest/lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, propertyLocation }),
+        body: JSON.stringify({ ...parsed.data, question: question?.slice(0, 500) }),
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || 'Something went wrong');
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'Something went wrong. Please try again.');
         return;
       }
 
-      setSuccess(true);
-      onSuccess();
+      onSuccess(parsed.data.name);
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -57,82 +60,66 @@ export default function InlineLeadCaptureCard({ onDismiss, onSuccess }: InlineLe
     }
   };
 
-  if (success) {
-    return (
-      <div className="flex gap-3 justify-start">
-        <BocaBankerAvatar size={32} className="flex-shrink-0 mt-1" />
-        <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-green-200 bg-green-50/50 px-5 py-4">
-          <div className="flex items-center gap-2 mb-1">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-            <p className="font-semibold text-sm text-gray-900">Check your email!</p>
-          </div>
-          <p className="text-xs text-gray-500 leading-relaxed">
-            We sent a confirmation to <span className="font-medium text-gray-700">{email}</span>.
-            Boca Banker will follow up with your personalized analysis.
-          </p>
-          <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-2">
-            <Mail className="h-3 w-3" />
-            Check spam if you don&apos;t see it
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex gap-3 justify-start">
       <BocaBankerAvatar size={32} className="flex-shrink-0 mt-1" />
-      <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-amber-200 bg-amber-50/50 px-5 py-4">
-        <p className="font-semibold text-sm text-gray-900 mb-1">
-          I&apos;d love to dig deeper for you!
+      <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-amber-200 bg-cream px-5 py-4">
+        <p className="font-semibold text-sm text-navy mb-1">
+          Want Boca Banker to follow up personally?
         </p>
         <p className="text-xs text-gray-500 mb-3">
-          Drop your info so I can follow up with a personalized analysis.
+          Leave your details and he&apos;ll reach out about your situation. No obligation.
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-2" noValidate>
           <input
             type="text"
+            autoComplete="name"
+            aria-label="Your name"
             placeholder="Your name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
-          />
-          <input
-            type="text"
-            placeholder="Property location (e.g. Miami, FL)"
-            value={propertyLocation}
-            onChange={(e) => setPropertyLocation(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
+            className={inputClass}
           />
           <input
             type="email"
+            autoComplete="email"
+            aria-label="Email address"
             placeholder="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
+            className={inputClass}
+          />
+          <input
+            type="tel"
+            autoComplete="tel"
+            aria-label="Phone (optional)"
+            placeholder="Phone (optional)"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className={inputClass}
           />
 
           {error && (
-            <p className="text-xs text-red-500">{error}</p>
+            <p role="alert" className="text-xs text-red-600">{error}</p>
           )}
 
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold text-sm rounded-lg py-2.5 hover:opacity-90 disabled:opacity-50 transition-opacity"
+            className="w-full bg-navy text-white font-semibold text-sm rounded-lg py-2.5 hover:bg-navy-light disabled:opacity-50 transition-colors"
           >
             {submitting ? (
               <Loader2 className="h-4 w-4 animate-spin mx-auto" />
             ) : (
-              'Send Magic Link'
+              'Have him reach out'
             )}
           </button>
 
           <button
             type="button"
             onClick={onDismiss}
-            className="block mx-auto text-xs text-gray-400 hover:text-gray-600 transition-colors py-2"
+            className="block mx-auto text-xs text-gray-500 hover:text-gray-700 transition-colors py-2"
           >
             Maybe later
           </button>

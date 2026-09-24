@@ -1,426 +1,564 @@
 import Link from 'next/link'
+import { and, avg, count, desc, eq } from 'drizzle-orm'
 import {
-  Brain,
-  Calculator,
-  MessageCircle,
+  ArrowRight,
   Building2,
-  DollarSign,
-  Landmark,
-  Search,
+  Check,
   ChevronDown,
+  Home as HomeIcon,
+  Mail,
+  MessageCircle,
+  Phone,
+  RefreshCw,
+  Star,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { db } from '@/db'
+import { reviews } from '@/db/schema'
+import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
+import { siteConfig, telHref } from '@/lib/site-config'
 import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
 import MobileChatButton from '@/components/landing/MobileChatButton'
-import {
-  Reveal,
-  CountUp,
-  LandingNav,
-  ScrollButton,
-  HeroChatWidget,
-  ReviewsPreview,
-} from '@/components/landing/LandingClient'
+import { Reveal, LandingNav, OpenChatButton, HeroChatWidget } from '@/components/landing/LandingClient'
 
 // Server component: static marketing markup ships as HTML; interactive bits
-// (scroll reveal, count-up, nav shadow, chat, reviews) are client islands.
+// (scroll reveal, nav shadow, chat) are client islands. Reviews are read at
+// render time and cached, so they're in the HTML and don't pop in.
+export const revalidate = 300
 
 /* ─── Data ─── */
 
-const features = [
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://bocabanker.com'
+
+const paths = [
   {
-    icon: Landmark,
-    title: 'Mortgage Expertise',
-    desc: 'Navigate rates, loan programs, and refinancing options with an advisor who understands South Florida home lending inside and out.',
-    color: 'bg-amber-100 text-amber-600',
-    border: 'border-amber-200',
+    icon: HomeIcon,
+    title: 'Buying a home',
+    desc: 'First home or fifth, find the loan program that fits and know your payment before you make an offer.',
+    points: ['Conventional, FHA, VA & jumbo', 'Pre-approval guidance', 'Payment estimates at today’s rates'],
+    cta: 'Ask about buying',
+    prompt: "I'm looking to buy a home in South Florida. Which loan programs should I be considering?",
   },
   {
-    icon: Brain,
-    title: 'AI Chat Assistant',
-    desc: 'Ask him anything about home loans, pre-approvals, refinancing, or cost segregation. He responds in seconds with decades of financial expertise.',
-    color: 'bg-sky-100 text-sky-600',
-    border: 'border-sky-200',
+    icon: RefreshCw,
+    title: 'Refinancing',
+    desc: 'Find out whether a refinance actually pays off for you, and how long it takes to earn back the closing costs.',
+    points: ['Break-even on closing costs', 'Rate-and-term vs. cash-out', 'Shorter term vs. lower payment'],
+    cta: 'Ask about refinancing',
+    prompt: 'Does it make sense for me to refinance my mortgage? What should I look at?',
   },
   {
     icon: Building2,
-    title: 'Real Estate Guidance',
-    desc: 'From first-time homebuyers to seasoned investors — get expert-level guidance on financing your next property.',
-    color: 'bg-teal-100 text-teal-600',
-    border: 'border-teal-200',
-  },
-  {
-    icon: DollarSign,
-    title: 'Rate & Payment Tools',
-    desc: 'Compare loan programs, estimate monthly payments, and find the best rate for your situation — conventional, FHA, VA, jumbo, and more.',
-    color: 'bg-violet-100 text-violet-600',
-    border: 'border-violet-200',
-  },
-  {
-    icon: Calculator,
-    title: 'Cost Segregation',
-    desc: 'For investment properties — get MACRS depreciation schedules, bonus depreciation estimates, and tax savings projections on the spot.',
-    color: 'bg-emerald-100 text-emerald-600',
-    border: 'border-emerald-200',
-  },
-  {
-    icon: Search,
-    title: 'Property Analysis',
-    desc: 'Get a quick assessment of any property\'s value, loan eligibility, or cost segregation potential — residential, commercial, or mixed-use.',
-    color: 'bg-rose-100 text-rose-600',
-    border: 'border-rose-200',
+    title: 'Investment property',
+    desc: 'Finance the next property and keep more of its income with accelerated depreciation.',
+    points: ['DSCR & investor loans', 'Cost segregation estimates', 'Bonus depreciation projections'],
+    cta: 'Ask about investing',
+    prompt: 'I own an investment property. How much could a cost segregation study save me in taxes?',
   },
 ]
 
-const stats = [
-  { value: 2, suffix: 'B+', label: 'In Loans Closed', prefix: '$', emoji: '🏠' },
-  { value: 61, suffix: '+', label: '5-Star Reviews', prefix: '', emoji: '⭐' },
-  { value: 40, suffix: '+', label: 'Years of Experience', prefix: '', emoji: '🏦' },
-  { value: 500, suffix: '+', label: 'Cost Seg Studies', prefix: '', emoji: '📊' },
+const steps = [
+  {
+    title: 'Ask anything',
+    desc: 'Rates, programs, refinancing, cost segregation. No signup, no forms, any hour of the day.',
+  },
+  {
+    title: 'Get real numbers',
+    desc: 'Payment estimates, break-even math, and tax savings projections based on your situation.',
+  },
+  {
+    title: 'Work with Boca Banker',
+    desc: 'When you’re ready, share your contact details in the chat and he follows up with you personally.',
+  },
 ]
+
+const faqs = [
+  {
+    q: 'Am I chatting with a real person?',
+    a: 'The chat is Boca Banker’s AI assistant, built on his 40+ years of South Florida lending experience. It answers questions and runs estimates instantly, day or night. When you’re ready to move forward, share your contact details in the chat and Boca Banker follows up with you personally.',
+  },
+  {
+    q: 'What mortgage options are available in South Florida?',
+    a: 'Conventional, FHA, VA, and jumbo loans for high-value homes, DSCR loans for investors, and commercial financing. The right fit depends on your credit, down payment, property type, and plans. Ask in the chat and you’ll get a recommendation for your situation.',
+  },
+  {
+    q: 'Are the chat’s answers a loan offer or tax advice?',
+    a: 'No. Estimates are for education only and are not a loan commitment, rate quote, or rate lock. Final terms depend on a full application. For cost segregation and tax questions, confirm the numbers with your CPA or tax advisor.',
+  },
+  {
+    q: 'What is cost segregation?',
+    a: 'A tax strategy that speeds up depreciation on investment and commercial real estate by reclassifying building components into shorter recovery periods (5, 7, or 15 years instead of 27.5 or 39). The result is larger deductions in the first years of ownership.',
+  },
+  {
+    q: 'How much can a cost segregation study save?',
+    a: 'Typically 15% to 40% of a property’s depreciable basis can be accelerated into the first few years. On a $1M property, that’s roughly $150,000 to $400,000 in accelerated deductions. The chat gives you an instant estimate for your property.',
+  },
+  {
+    q: 'What types of properties qualify for cost segregation?',
+    a: 'Almost any income-producing property: residential rentals, multifamily, office, retail, warehouses, hotels, restaurants, and mixed-use. Properties with a basis of about $500K or more usually see the most meaningful savings.',
+  },
+]
+
+interface ReviewSummary {
+  latest: {
+    id: string
+    reviewerName: string
+    reviewerCity: string | null
+    reviewerState: string | null
+    rating: number
+    title: string
+    body: string
+  }[]
+  total: number
+  average: number
+}
+
+async function getReviewSummary(): Promise<ReviewSummary> {
+  try {
+    const approved = eq(reviews.status, 'approved')
+    const [latest, [agg]] = await Promise.all([
+      db
+        .select({
+          id: reviews.id,
+          reviewerName: reviews.reviewerName,
+          reviewerCity: reviews.reviewerCity,
+          reviewerState: reviews.reviewerState,
+          rating: reviews.rating,
+          title: reviews.title,
+          body: reviews.body,
+        })
+        .from(reviews)
+        .where(and(approved, eq(reviews.rating, 5)))
+        .orderBy(desc(reviews.reviewDate))
+        .limit(3),
+      db.select({ total: count(), average: avg(reviews.rating) }).from(reviews).where(approved),
+    ])
+    return { latest, total: agg?.total ?? 0, average: agg?.average ? Number(agg.average) : 0 }
+  } catch (error) {
+    logger.error('landing', 'Failed to load reviews for homepage', error)
+    return { latest: [], total: 0, average: 0 }
+  }
+}
+
+/* ─── Small pieces ─── */
+
+function Stars({ rating, className }: { rating: number; className?: string }) {
+  return (
+    <div className="flex gap-0.5" role="img" aria-label={`${rating} out of 5 stars`}>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          aria-hidden="true"
+          className={cn(
+            'h-4 w-4',
+            i < Math.round(rating) ? 'fill-amber-400 text-amber-400' : 'text-gray-300',
+            className
+          )}
+        />
+      ))}
+    </div>
+  )
+}
+
+function Eyebrow({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <p className={cn('text-xs font-semibold tracking-[0.18em] uppercase text-gold-dark mb-3', className)}>
+      {children}
+    </p>
+  )
+}
+
+const primaryBtn =
+  'inline-flex items-center justify-center gap-2 rounded-xl bg-navy px-6 py-3.5 text-sm sm:text-base font-semibold text-white shadow-lg shadow-navy/20 transition-colors hover:bg-navy-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2'
+const secondaryBtn =
+  'inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-6 py-3.5 text-sm sm:text-base font-semibold text-navy transition-colors hover:border-navy/40 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2'
 
 /* ─── Page ─── */
 
-export default function Home() {
+export default async function Home() {
+  const reviewSummary = await getReviewSummary()
+  const hasReviews = reviewSummary.total > 0
+  const bankerName = siteConfig.ownerName || 'Boca Banker'
+
+  const stats = [
+    { value: '$2B+', label: 'in loans closed' },
+    { value: '40+', label: 'years in Boca Raton lending' },
+    { value: '500+', label: 'cost segregation studies' },
+    ...(hasReviews
+      ? [{ value: `${reviewSummary.average.toFixed(1)}★`, label: `from ${reviewSummary.total} client reviews` }]
+      : []),
+  ]
+
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': `${SITE_URL}/#faq`,
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  }
+
   return (
-    <div className="min-h-screen bg-[#FAFAF8]">
+    <div className="min-h-screen bg-cream text-navy">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+
       {/* ── NAV ── */}
       <header>
         <LandingNav>
-          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+          <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
             <Link href="/" className="flex items-center gap-2.5">
               <BocaBankerAvatar size={36} priority />
-              <span className="font-serif text-xl font-bold text-gray-900 hidden sm:block">
-                Boca Banker
-              </span>
+              <span className="font-serif text-xl text-navy">Boca Banker</span>
             </Link>
-            <div className="flex items-center gap-1">
-              <Button asChild variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm">
-                <Link href="/reviews">Reviews</Link>
-              </Button>
-              <Button asChild variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm">
-                <Link href="/login">Sign In</Link>
-              </Button>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="hidden md:flex items-center gap-1 text-sm text-gray-600">
+                <a href="#how-it-works" className="rounded-lg px-3 py-2 hover:text-navy">How it works</a>
+                <a href="#reviews" className="rounded-lg px-3 py-2 hover:text-navy">Reviews</a>
+                <a href="#faq" className="rounded-lg px-3 py-2 hover:text-navy">FAQ</a>
+              </div>
+              {siteConfig.phone && (
+                <a
+                  href={telHref(siteConfig.phone)}
+                  className="hidden sm:inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-navy hover:bg-white"
+                >
+                  <Phone className="h-4 w-4 text-gold" />
+                  {siteConfig.phone}
+                </a>
+              )}
+              <OpenChatButton className="inline-flex items-center gap-1.5 rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-navy-light">
+                <MessageCircle className="h-4 w-4" />
+                Ask a question
+              </OpenChatButton>
             </div>
           </div>
         </LandingNav>
       </header>
 
       <main>
-      {/* ══════════════════════════════════════
-         HERO — Light, fun, avatar-forward
-         ══════════════════════════════════════ */}
-      <section aria-label="Hero" className="relative pt-24 pb-16 sm:pt-32 sm:pb-24 px-6 overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-sky-50 via-white to-[#FAFAF8]" />
-        {/* Decorative blobs */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -top-20 -right-20 h-[400px] w-[400px] rounded-full bg-sky-200/30 blur-[80px]" />
-          <div className="absolute top-[40%] -left-20 h-[300px] w-[300px] rounded-full bg-amber-200/20 blur-[80px]" />
-          <div className="absolute bottom-0 right-[20%] h-[200px] w-[350px] rounded-full bg-teal-200/15 blur-[60px]" />
-        </div>
+        {/* ══════════ HERO ══════════ */}
+        <section aria-label="Introduction" className="relative overflow-hidden px-4 sm:px-6 pt-28 pb-16 sm:pt-36 sm:pb-24">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-32 right-[-10%] h-[520px] w-[520px] rounded-full bg-amber-100/60 blur-[100px]"
+          />
+          <div className="relative mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
+            <div className="text-center lg:text-left">
+              <Eyebrow>Boca Raton · Mortgage &amp; real estate finance</Eyebrow>
+              <h1 className="font-serif text-4xl leading-[1.08] tracking-tight text-navy sm:text-5xl lg:text-6xl">
+                Straight answers on South Florida mortgages.
+              </h1>
+              <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-gray-600 sm:text-lg lg:mx-0">
+                Home loans, refinancing, and cost segregation for investors, from a banker with
+                40+ years in Boca Raton. Ask his AI assistant anything, any hour. When you’re ready,
+                he takes it from there personally.
+              </p>
 
-        <div className="relative z-10 mx-auto max-w-6xl">
-          <div className="flex flex-col lg:flex-row items-center gap-6 sm:gap-10 lg:gap-16">
-            {/* Text side */}
-            <div className="flex-1 text-center lg:text-left">
-              {/* Hero copy is the LCP element: render it immediately rather than
-                  behind a JS-driven scroll reveal (which kept it opacity-0 until
-                  hydration). */}
-              <div>
-                <h1 className="font-serif font-bold tracking-tight text-gray-900 leading-[1.1]">
-                  <span className="block text-3xl sm:text-4xl md:text-5xl lg:text-6xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-500 bg-clip-text text-transparent">
-                    Boca Banker
-                  </span>
-                  <span className="block text-base sm:text-lg md:text-xl lg:text-2xl text-gray-500 font-medium mt-2">
-                    South Florida&apos;s Mortgage &amp; Real Estate Finance Expert
-                  </span>
-                </h1>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
+                <OpenChatButton className={primaryBtn}>
+                  <MessageCircle className="h-5 w-5" />
+                  Ask a question
+                </OpenChatButton>
+                {siteConfig.phone ? (
+                  <a href={telHref(siteConfig.phone)} className={secondaryBtn}>
+                    <Phone className="h-5 w-5 text-gold" />
+                    Call {siteConfig.phone}
+                  </a>
+                ) : (
+                  <a href="#paths" className={secondaryBtn}>
+                    See how he can help
+                    <ArrowRight className="h-4 w-4" />
+                  </a>
+                )}
               </div>
 
-              <div className="animate-fade-in">
-                <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-gray-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                  Your AI-powered mortgage specialist. He knows home loans, refinancing, and real estate finance
-                  inside and out, never takes a coffee break, and has the best tan in fintech.
-                </p>
+              <div className="mt-10 flex items-center justify-center gap-4 lg:justify-start">
+                <BocaBankerAvatar size={56} />
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-navy">
+                    {bankerName}
+                    {siteConfig.nmlsId && (
+                      <span className="font-normal text-gray-500"> · NMLS #{siteConfig.nmlsId}</span>
+                    )}
+                  </p>
+                  {hasReviews ? (
+                    <a href="#reviews" className="mt-0.5 flex items-center gap-2 text-sm text-gray-600 hover:text-navy">
+                      <Stars rating={reviewSummary.average} />
+                      <span>
+                        {reviewSummary.average.toFixed(1)} from {reviewSummary.total} client reviews
+                      </span>
+                    </a>
+                  ) : (
+                    <p className="mt-0.5 text-sm text-gray-600">40+ years in Boca Raton lending</p>
+                  )}
+                </div>
               </div>
-
-
             </div>
 
-            {/* Live chat widget (desktop only — mobile uses floating button) */}
-            <Reveal delay={200} className="hidden lg:block flex-1 min-w-0 w-full lg:max-w-lg">
-              <div className="bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-500 rounded-[28px] p-3 shadow-2xl shadow-blue-500/25">
+            {/* Live chat (desktop only — mobile opens a fullscreen overlay) */}
+            <Reveal delay={150} className="hidden lg:block min-w-0">
+              <div className="rounded-[28px] bg-navy p-2.5 shadow-2xl shadow-navy/25">
                 <HeroChatWidget />
               </div>
             </Reveal>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ══════════════════════════════════════
-         STATS BAR
-         ══════════════════════════════════════ */}
-      <section aria-label="Statistics" className="relative py-10 sm:py-16 px-4 sm:px-6 bg-white border-y border-gray-100">
-        <div className="mx-auto max-w-5xl">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
-            {stats.map((s, i) => (
-              <Reveal key={s.label} delay={i * 80}>
-                <div className="text-center">
-                  <div className="text-2xl mb-1">{s.emoji}</div>
-                  <div className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-gray-900">
-                    <CountUp target={s.value} suffix={s.suffix} prefix={s.prefix} />
+        {/* ══════════ TRUST STRIP ══════════ */}
+        <section aria-label="Track record" className="border-y border-gray-200 bg-white px-4 sm:px-6 py-10 sm:py-12">
+          <dl
+            className={cn(
+              'mx-auto grid max-w-5xl grid-cols-2 gap-x-6 gap-y-8 text-center',
+              stats.length === 4 ? 'md:grid-cols-4' : 'md:grid-cols-3'
+            )}
+          >
+            {stats.map((s) => (
+              <div key={s.label}>
+                <dt className="sr-only">{s.label}</dt>
+                <dd className="font-serif text-3xl text-navy sm:text-4xl">{s.value}</dd>
+                <dd className="mt-1 text-sm text-gray-500">{s.label}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        {/* ══════════ REVIEWS ══════════ */}
+        {reviewSummary.latest.length > 0 && (
+          <section id="reviews" aria-label="Client reviews" className="scroll-mt-20 px-4 sm:px-6 py-20 sm:py-24">
+            <div className="mx-auto max-w-6xl">
+              <Reveal>
+                <div className="mb-12 flex flex-col items-center gap-4 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
+                  <div>
+                    <Eyebrow>Client reviews</Eyebrow>
+                    <h2 className="font-serif text-3xl text-navy sm:text-4xl">What clients say</h2>
                   </div>
-                  <p className="mt-1 text-sm text-gray-500">{s.label}</p>
+                  <Link
+                    href="/reviews"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-gold-dark hover:text-navy"
+                  >
+                    Read all {reviewSummary.total} reviews
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
                 </div>
               </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* ══════════════════════════════════════
-         FEATURES — Fun cards
-         ══════════════════════════════════════ */}
-      <section id="features" aria-label="Features" className="py-20 sm:py-28 px-6 bg-white">
-        <div className="mx-auto max-w-6xl">
-          <Reveal>
-            <div className="text-center mb-14">
-              <p className="text-sm font-semibold tracking-widest uppercase text-amber-600 mb-3">
-                What He Can Do
-              </p>
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">
-                Way more than just{' '}
-                <span className="bg-gradient-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent">
-                  good looks
-                </span>
-              </h2>
-              <p className="mt-4 text-gray-500 max-w-lg mx-auto">
-                Just ask Boca Banker — he handles mortgage guidance, rate comparisons, real estate strategy, and cost segregation so you don&apos;t have to.
-              </p>
+              <div className="grid gap-5 md:grid-cols-3">
+                {reviewSummary.latest.map((review, i) => (
+                  <Reveal key={review.id} delay={i * 80}>
+                    <figure className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-6 sm:p-7">
+                      <Stars rating={review.rating} />
+                      <blockquote className="mt-4 flex-1">
+                        <p className="font-serif text-lg leading-snug text-navy line-clamp-2">
+                          {review.title}
+                        </p>
+                        <p className="mt-2 text-sm leading-relaxed text-gray-600 line-clamp-5">
+                          {review.body}
+                        </p>
+                      </blockquote>
+                      <figcaption className="mt-5 border-t border-gray-100 pt-4">
+                        <p className="text-sm font-semibold text-navy">{review.reviewerName}</p>
+                        {(review.reviewerCity || review.reviewerState) && (
+                          <p className="text-xs text-gray-500">
+                            {[review.reviewerCity, review.reviewerState].filter(Boolean).join(', ')}
+                          </p>
+                        )}
+                      </figcaption>
+                    </figure>
+                  </Reveal>
+                ))}
+              </div>
             </div>
-          </Reveal>
+          </section>
+        )}
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {features.map((f, i) => (
-              <Reveal
-                key={f.title}
-                delay={i * 70}
-              >
-                <div className={cn(
-                  'group h-full rounded-2xl border bg-white p-5 sm:p-6 md:p-7 transition-all duration-300 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-1',
-                  f.border
-                )}>
-                  <div className={cn('inline-flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl mb-4 sm:mb-5 transition-transform duration-300 group-hover:scale-110', f.color)}>
-                    <f.icon className="h-6 w-6" />
-                  </div>
-                  <h3 className="font-serif text-xl font-semibold text-gray-900 mb-2">
-                    {f.title}
-                  </h3>
-                  <p className="text-sm leading-relaxed text-gray-500">
-                    {f.desc}
-                  </p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+        {/* ══════════ PATHS ══════════ */}
+        <section id="paths" aria-label="How he can help" className="scroll-mt-20 bg-white px-4 sm:px-6 py-20 sm:py-24 border-y border-gray-200">
+          <div className="mx-auto max-w-6xl">
+            <Reveal>
+              <div className="mx-auto mb-12 max-w-2xl text-center">
+                <Eyebrow>How he can help</Eyebrow>
+                <h2 className="font-serif text-3xl text-navy sm:text-4xl">Start with where you are</h2>
+                <p className="mt-4 text-gray-600">
+                  Pick a topic and the conversation starts with your question already asked.
+                </p>
+              </div>
+            </Reveal>
 
-      {/* ══════════════════════════════════════
-         HOW IT WORKS
-         ══════════════════════════════════════ */}
-      <section id="how-it-works" aria-label="How it works" className="py-20 sm:py-28 px-6 bg-gradient-to-b from-sky-50 to-white">
-        <div className="mx-auto max-w-4xl">
-          <Reveal>
-            <div className="text-center mb-16">
-              <p className="text-sm font-semibold tracking-widest uppercase text-teal-600 mb-3">
-                How It Works
-              </p>
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">
-                Three steps.{' '}
-                <span className="bg-gradient-to-r from-teal-500 to-sky-500 bg-clip-text text-transparent">
-                  Seriously.
-                </span>
-              </h2>
-            </div>
-          </Reveal>
-
-          <div className="relative grid md:grid-cols-3 gap-10 md:gap-6">
-            {/* Connecting line */}
-            <div className="hidden md:block absolute top-14 left-[18%] right-[18%] h-0.5 bg-gradient-to-r from-sky-200 via-amber-200 to-teal-200 rounded-full" />
-
-            {[
-              { num: '01', icon: MessageCircle, title: 'Ask Boca Banker', desc: 'Start a conversation about your mortgage, home purchase, refinance, or investment property. No signup required — just start chatting.', color: 'bg-sky-100 text-sky-600' },
-              { num: '02', icon: Search, title: 'Get Expert Guidance', desc: 'Boca Banker analyzes your situation and recommends the best loan programs, rates, and financing strategies for your goals.', color: 'bg-amber-100 text-amber-600' },
-              { num: '03', icon: DollarSign, title: 'Save Money', desc: 'Get a personalized breakdown of your best options — from the lowest rates to cost segregation tax savings on investment properties.', color: 'bg-teal-100 text-teal-600' },
-            ].map((step, i) => (
-              <Reveal key={step.num} delay={i * 120}>
-                <div className="relative text-center flex flex-col items-center">
-                  <div className="relative mb-5">
-                    <div className={cn('flex h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 items-center justify-center rounded-2xl sm:rounded-3xl shadow-lg shadow-black/5 bg-white border border-gray-100')}>
-                      <step.icon className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 text-gray-700" />
+            <div className="grid gap-5 md:grid-cols-3">
+              {paths.map((p, i) => (
+                <Reveal key={p.title} delay={i * 80}>
+                  <div className="flex h-full flex-col rounded-2xl border border-gray-200 bg-cream p-6 sm:p-7">
+                    <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-navy text-amber-400">
+                      <p.icon className="h-5 w-5" />
                     </div>
-                    <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-xs font-bold text-white shadow-md">
-                      {step.num}
-                    </div>
+                    <h3 className="font-serif text-2xl text-navy">{p.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-gray-600">{p.desc}</p>
+                    <ul className="mt-5 flex-1 space-y-2">
+                      {p.points.map((point) => (
+                        <li key={point} className="flex items-start gap-2 text-sm text-navy">
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+                          {point}
+                        </li>
+                      ))}
+                    </ul>
+                    <OpenChatButton
+                      prompt={p.prompt}
+                      className="mt-6 inline-flex items-center justify-between gap-2 rounded-xl border border-navy/15 bg-white px-4 py-3 text-sm font-semibold text-navy transition-colors hover:border-navy hover:bg-navy hover:text-white"
+                    >
+                      {p.cta}
+                      <ArrowRight className="h-4 w-4" />
+                    </OpenChatButton>
                   </div>
-                  <h3 className="font-serif text-xl font-semibold text-gray-900 mb-2">{step.title}</h3>
-                  <p className="text-sm leading-relaxed text-gray-500 max-w-xs">{step.desc}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════
-         FAQ
-         ══════════════════════════════════════ */}
-      <section id="faq" aria-label="Frequently asked questions" className="py-20 sm:py-28 px-6 bg-white">
-        <div className="mx-auto max-w-3xl">
-          <Reveal>
-            <div className="text-center mb-14">
-              <p className="text-sm font-semibold tracking-widest uppercase text-amber-600 mb-3">
-                FAQ
-              </p>
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">
-                Common{' '}
-                <span className="bg-gradient-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent">
-                  questions
-                </span>
-              </h2>
+                </Reveal>
+              ))}
             </div>
-          </Reveal>
+          </div>
+        </section>
 
-          <div className="space-y-4">
-            {[
-              {
-                q: 'What mortgage options are available in South Florida?',
-                a: 'South Florida offers a wide range of lending options including conventional loans, FHA/VA, jumbo loans for high-value properties, DSCR loans for investors, and commercial financing. Boca Banker specializes in finding the right fit for each client \u2014 whether you\u2019re a first-time buyer, seasoned investor, or looking to refinance.',
-              },
-              {
-                q: 'What makes Boca Banker different from other loan officers?',
-                a: 'With 40+ years of banking experience in South Florida and a perfect 5-star rating from 61+ client reviews, Boca Banker combines deep local market knowledge with a genuinely personal approach. He\u2019s not just closing loans \u2014 he\u2019s building long-term relationships and helping clients make smart financial decisions for their future.',
-              },
-              {
-                q: 'How does Boca Banker work?',
-                a: 'Simply start a conversation with Boca Banker\u2019s AI chat. Describe your mortgage needs, home purchase, or refinance situation and he\u2019ll guide you to the best loan programs and rates \u2014 plus cost segregation analysis for investment properties \u2014 all powered by 40 years of Boca Raton banking expertise.',
-              },
-              {
-                q: 'What is cost segregation?',
-                a: 'Cost segregation is a tax strategy that accelerates depreciation deductions on commercial and investment real estate by reclassifying building components into shorter depreciation categories (5, 7, or 15 years instead of 27.5 or 39 years). This can generate significant tax savings in the first years of ownership.',
-              },
-              {
-                q: 'How much can I save with a cost segregation study?',
-                a: 'Typical savings range from 15% to 40% of a property\u2019s depreciable basis, accelerated into the first few years. For a $1M commercial property, this could mean $150,000\u2013$400,000 in accelerated depreciation deductions. Boca Banker provides instant AI-powered estimates based on your specific property.',
-              },
-              {
-                q: 'What types of properties qualify for cost segregation?',
-                a: 'Almost any commercial or investment property can benefit \u2014 office buildings, retail centers, warehouses, multifamily apartments, hotels, restaurants, and even mixed-use properties. Residential rental properties (27.5-year class) and commercial properties (39-year class) both qualify. Generally, properties valued at $500K or more see the most meaningful tax savings.',
-              },
-            ].map((faq, i) => (
-              <Reveal key={faq.q} delay={i * 60}>
-                <details className="group rounded-2xl border border-gray-200 bg-white overflow-hidden">
-                  <summary className="flex items-center justify-between cursor-pointer px-4 sm:px-6 py-4 sm:py-5 text-left font-semibold text-sm sm:text-base text-gray-900 hover:bg-gray-50 transition-colors">
+        {/* ══════════ HOW IT WORKS ══════════ */}
+        <section id="how-it-works" aria-label="How it works" className="scroll-mt-20 px-4 sm:px-6 py-20 sm:py-24">
+          <div className="mx-auto max-w-5xl">
+            <Reveal>
+              <div className="mb-12 text-center">
+                <Eyebrow>How it works</Eyebrow>
+                <h2 className="font-serif text-3xl text-navy sm:text-4xl">From question to closing</h2>
+              </div>
+            </Reveal>
+
+            <ol className="grid gap-8 md:grid-cols-3 md:gap-6">
+              {steps.map((step, i) => (
+                <Reveal key={step.title} delay={i * 100}>
+                  <li className="relative border-t-2 border-gold pt-6">
+                    <span className="font-serif text-4xl text-gold">{String(i + 1).padStart(2, '0')}</span>
+                    <h3 className="mt-3 text-lg font-semibold text-navy">{step.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-gray-600">{step.desc}</p>
+                  </li>
+                </Reveal>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* ══════════ FAQ ══════════ */}
+        <section id="faq" aria-label="Frequently asked questions" className="scroll-mt-20 bg-white px-4 sm:px-6 py-20 sm:py-24 border-t border-gray-200">
+          <div className="mx-auto max-w-3xl">
+            <Reveal>
+              <div className="mb-10 text-center">
+                <Eyebrow>FAQ</Eyebrow>
+                <h2 className="font-serif text-3xl text-navy sm:text-4xl">Common questions</h2>
+              </div>
+            </Reveal>
+
+            <div className="divide-y divide-gray-200 border-y border-gray-200">
+              {faqs.map((faq) => (
+                <details key={faq.q} className="group">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-left font-semibold text-navy [&::-webkit-details-marker]:hidden">
                     <span>{faq.q}</span>
-                    <ChevronDown className="h-5 w-5 text-gray-400 shrink-0 ml-2 sm:ml-4 transition-transform group-open:rotate-180" />
+                    <ChevronDown className="h-5 w-5 shrink-0 text-gray-400 transition-transform group-open:rotate-180" />
                   </summary>
-                  <div className="px-4 sm:px-6 pb-4 sm:pb-5 text-sm leading-relaxed text-gray-500">
-                    {faq.a}
-                  </div>
+                  <p className="pb-5 pr-9 text-sm leading-relaxed text-gray-600">{faq.a}</p>
                 </details>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════
-         REVIEWS — Social proof
-         ══════════════════════════════════════ */}
-      <ReviewsPreview />
-
-      {/* ══════════════════════════════════════
-         CTA
-         ══════════════════════════════════════ */}
-      <section aria-label="Call to action" className="py-24 sm:py-32 px-6 bg-gradient-to-br from-sky-500 via-sky-400 to-teal-400 relative overflow-hidden">
-        {/* Decorative */}
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-20 -right-20 h-[300px] w-[300px] rounded-full bg-white/10 blur-[60px]" />
-          <div className="absolute bottom-0 -left-20 h-[250px] w-[250px] rounded-full bg-amber-300/15 blur-[60px]" />
-        </div>
-
-        <Reveal>
-          <div className="relative z-10 mx-auto max-w-3xl text-center">
-            <div className="flex justify-center mb-6">
-              <BocaBankerAvatar size={80} className="drop-shadow-xl" />
+              ))}
             </div>
-            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight">
-              Ready to put him to work?
-            </h2>
-            <p className="mt-5 text-lg text-white/80 max-w-xl mx-auto">
-              Ask him about home loans, refinancing, or cost segregation — he&apos;s ready to chat right now.
-              Zero vacation days required.
-            </p>
-            <ScrollButton
-              className="mt-8 inline-flex items-center gap-2 bg-white text-sky-700 font-bold text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl hover:bg-white/90 shadow-xl shadow-black/10 transition-opacity"
-            >
-              <MessageCircle className="h-5 w-5" />
-              Chat Now
-            </ScrollButton>
           </div>
-        </Reveal>
-      </section>
+        </section>
 
+        {/* ══════════ CTA ══════════ */}
+        <section aria-label="Get started" className="bg-navy px-4 sm:px-6 py-20 sm:py-24">
+          <Reveal>
+            <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
+              <BocaBankerAvatar size={88} />
+              <h2 className="mt-6 font-serif text-3xl leading-tight text-white sm:text-4xl">
+                Have a question about your next loan?
+              </h2>
+              <p className="mt-4 max-w-xl text-white/70">
+                Ask now and get an answer in seconds. No signup, no pressure.
+              </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <OpenChatButton className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-400 px-7 py-3.5 font-semibold text-navy transition-colors hover:bg-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-navy">
+                  <MessageCircle className="h-5 w-5" />
+                  Ask a question
+                </OpenChatButton>
+                {siteConfig.phone && (
+                  <a
+                    href={telHref(siteConfig.phone)}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 px-7 py-3.5 font-semibold text-white transition-colors hover:bg-white/10"
+                  >
+                    <Phone className="h-5 w-5" />
+                    {siteConfig.phone}
+                  </a>
+                )}
+              </div>
+            </div>
+          </Reveal>
+        </section>
       </main>
 
-      {/* ══════════════════════════════════════
-         FOOTER
-         ══════════════════════════════════════ */}
-      <footer className="bg-gray-50 border-t border-gray-200 py-14 px-6">
+      {/* ══════════ FOOTER ══════════ */}
+      <footer className="border-t border-gray-200 bg-cream px-4 sm:px-6 pt-14 pb-24 lg:pb-14">
         <div className="mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
+          <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
             <div>
-              <div className="flex items-center gap-2.5 mb-4">
+              <div className="mb-4 flex items-center gap-2.5">
                 <BocaBankerAvatar size={32} />
-                <span className="font-serif text-lg font-bold text-gray-900">
-                  Boca Banker
-                </span>
+                <span className="font-serif text-lg text-navy">Boca Banker</span>
               </div>
-              <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
-                South Florida&apos;s trusted mortgage and real estate finance expert — powered by 40 years of Boca Raton banking experience. Home loans, refinancing, and cost segregation analysis.
+              <p className="max-w-xs text-sm leading-relaxed text-gray-600">
+                Mortgage and real estate finance guidance backed by 40+ years of Boca Raton banking.
+                Home loans, refinancing, and cost segregation.
               </p>
-              <p className="text-xs text-gray-400 mt-3">Boca Raton, FL</p>
             </div>
 
             <div>
-              <h3 className="font-semibold text-gray-900 text-sm mb-4">Platform</h3>
-              <nav aria-label="Footer navigation" className="flex flex-col gap-2.5 text-sm text-gray-500">
-                <ScrollButton className="text-left hover:text-gray-900 transition-colors">AI Chat</ScrollButton>
-                <ScrollButton targetId="features" className="text-left hover:text-gray-900 transition-colors">Features</ScrollButton>
-                <ScrollButton targetId="how-it-works" className="text-left hover:text-gray-900 transition-colors">How It Works</ScrollButton>
-                <ScrollButton targetId="faq" className="text-left hover:text-gray-900 transition-colors">FAQ</ScrollButton>
-                <Link href="/reviews" className="text-left hover:text-gray-900 transition-colors">Reviews</Link>
+              <h3 className="mb-4 text-sm font-semibold text-navy">Explore</h3>
+              <nav aria-label="Footer navigation" className="flex flex-col gap-2.5 text-sm text-gray-600">
+                <a href="#paths" className="hover:text-navy">How he can help</a>
+                <a href="#how-it-works" className="hover:text-navy">How it works</a>
+                <a href="#faq" className="hover:text-navy">FAQ</a>
+                <Link href="/reviews" className="hover:text-navy">Reviews</Link>
               </nav>
             </div>
 
             <div>
-              <h3 className="font-semibold text-gray-900 text-sm mb-4">Get Started</h3>
-              <nav className="flex flex-col gap-2.5 text-sm text-gray-500">
-                <Link href="/login" className="hover:text-gray-900 transition-colors">Sign In</Link>
-                <Link href="/reset-password" className="hover:text-gray-900 transition-colors">Reset Password</Link>
-              </nav>
+              <h3 className="mb-4 text-sm font-semibold text-navy">Contact</h3>
+              <div className="flex flex-col gap-2.5 text-sm text-gray-600">
+                {siteConfig.phone && (
+                  <a href={telHref(siteConfig.phone)} className="inline-flex items-center gap-2 hover:text-navy">
+                    <Phone className="h-4 w-4 text-gold" />
+                    {siteConfig.phone}
+                  </a>
+                )}
+                {siteConfig.email && (
+                  <a href={`mailto:${siteConfig.email}`} className="inline-flex items-center gap-2 hover:text-navy">
+                    <Mail className="h-4 w-4 text-gold" />
+                    {siteConfig.email}
+                  </a>
+                )}
+                <OpenChatButton className="inline-flex items-center gap-2 text-left hover:text-navy">
+                  <MessageCircle className="h-4 w-4 text-gold" />
+                  Ask in the chat
+                </OpenChatButton>
+                <p className="text-gray-500">Boca Raton, FL</p>
+              </div>
             </div>
           </div>
 
-          <div className="border-t border-gray-200 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-gray-400">
-              &copy; {new Date().getFullYear()} Boca Banker. All rights reserved.
+          <div className="mt-12 space-y-3 border-t border-gray-200 pt-6 text-xs leading-relaxed text-gray-500">
+            <p>
+              <span className="font-semibold text-gray-600">Equal Housing Opportunity.</span>
+              {siteConfig.nmlsId && <> {bankerName}, NMLS #{siteConfig.nmlsId}.</>}{' '}
+              Chat responses are generated by AI for general information only. They are not a loan
+              commitment, rate quote, or offer to lend, and are not tax, legal, or financial advice.
+              All loans are subject to credit approval and underwriting.
             </p>
-            <p className="text-xs text-gray-400">
-              Home mortgages &middot; Refinancing &middot; South Florida loans &middot; Cost segregation
-            </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p>&copy; {new Date().getFullYear()} Boca Banker. All rights reserved.</p>
+              <Link href="/login" className="hover:text-navy">Sign in</Link>
+            </div>
           </div>
         </div>
       </footer>

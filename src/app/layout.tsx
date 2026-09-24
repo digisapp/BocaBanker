@@ -171,68 +171,6 @@ const jsonLd = {
       about: { "@id": `${SITE_URL}/#organization` },
       description: SITE_DESCRIPTION,
     },
-    {
-      "@type": "SoftwareApplication",
-      name: SITE_NAME,
-      applicationCategory: "FinanceApplication",
-      operatingSystem: "Web",
-      description:
-        "AI-powered mortgage and real estate finance platform with home loan guidance, rate comparisons, cost segregation analysis, and client management tools.",
-      offers: {
-        "@type": "Offer",
-        price: "0",
-        priceCurrency: "USD",
-        description: "Free AI chat — sign up for full platform access",
-      },
-      featureList: [
-        "AI-powered cost segregation analysis",
-        "MACRS depreciation calculator",
-        "Bonus depreciation estimator",
-        "Tax savings projections",
-        "Client relationship management",
-        "Automated email outreach",
-        "Property portfolio management",
-        "Exportable study reports",
-      ],
-    },
-    {
-      "@type": "FAQPage",
-      "@id": `${SITE_URL}/#faq`,
-      mainEntity: [
-        {
-          "@type": "Question",
-          name: "What is cost segregation?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Cost segregation is a tax strategy that accelerates depreciation deductions on commercial real estate by reclassifying building components into shorter depreciation categories (5, 7, or 15 years instead of 27.5 or 39 years). This can generate significant tax savings in the first years of ownership.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "How much can I save with a cost segregation study?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Typical savings range from 15% to 40% of a property's depreciable basis, accelerated into the first few years. For a $1M commercial property, this could mean $150,000-$400,000 in accelerated depreciation deductions. Boca Banker provides instant AI-powered estimates based on your specific property.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "How does Boca Banker work?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Simply start a conversation with Boca Banker's AI chat. Describe your property and he'll analyze its cost segregation potential, estimate tax savings through MACRS and bonus depreciation, and provide expert guidance on banking and real estate strategy — all powered by 40 years of Boca Raton banking intelligence.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "Is the AI chat free?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Yes! You can chat with Boca Banker for free — no signup required. Ask about cost segregation, mortgages, tax strategy, or property analysis. Sign up for a free account to access the full platform including automated studies, client CRM, and email outreach tools.",
-          },
-        },
-      ],
-    },
   ],
 };
 

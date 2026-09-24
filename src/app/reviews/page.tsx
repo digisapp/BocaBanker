@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { Star, ChevronDown, Loader2, Send, CheckCircle2, MapPin, Clock, BadgeCheck } from 'lucide-react'
+import { Star, ChevronDown, Loader2, Send, CheckCircle2, MapPin, Clock, BadgeCheck, MessageCircle, ArrowLeft } from 'lucide-react'
 import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
+import { siteConfig } from '@/lib/site-config'
 import type { Review } from '@/types'
 
 function Stars({ rating, size = 16 }: { rating: number; size?: number }) {
@@ -66,11 +67,11 @@ function ReviewCard({ review }: { review: Review }) {
   if (review.isSelfEmployed) badges.push('Self employed')
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-2xl border border-gray-200 p-6">
       <div className="flex items-start justify-between gap-4 mb-3">
         <div>
           <Stars rating={review.rating} />
-          <h3 className="text-base font-semibold text-gray-900 mt-2">{review.title}</h3>
+          <h3 className="font-serif text-lg leading-snug text-navy mt-2">{review.title}</h3>
         </div>
         {review.reviewDate && (
           <span className="text-xs text-gray-400 whitespace-nowrap">
@@ -88,14 +89,14 @@ function ReviewCard({ review }: { review: Review }) {
       {isLong && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-amber-600 text-sm font-medium mt-1 hover:underline"
+          className="text-gold-dark text-sm font-medium mt-1 hover:underline"
         >
           {expanded ? 'Show less' : 'Read more'}
         </button>
       )}
 
       <div className="flex items-center gap-2 mt-3 text-sm text-gray-500">
-        <span className="font-medium text-gray-700">{review.reviewerName}</span>
+        <span className="font-medium text-navy">{review.reviewerName}</span>
         {review.reviewerCity && (
           <>
             <MapPin className="w-3 h-3" />
@@ -112,18 +113,18 @@ function ReviewCard({ review }: { review: Review }) {
           {badges.map((b) => (
             <span
               key={b}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-sky-700 border border-sky-100"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200"
             >
               {b}
             </span>
           ))}
           {review.closedOnTime && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200">
               <Clock className="w-3 h-3" /> Closed on time
             </span>
           )}
           {review.interestRateExperience === 'Lower than expected' && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200">
               <BadgeCheck className="w-3 h-3" /> Lower rate
             </span>
           )}
@@ -131,9 +132,9 @@ function ReviewCard({ review }: { review: Review }) {
       )}
 
       {review.responseText && (
-        <div className="mt-4 bg-amber-50 rounded-xl p-4 border border-amber-100">
-          <p className="text-xs font-semibold text-amber-700 mb-1">Response from Boca Banker</p>
-          <p className="text-sm text-amber-900/80 leading-relaxed">{review.responseText}</p>
+        <div className="mt-4 bg-cream rounded-xl p-4 border-l-2 border-gold">
+          <p className="text-xs font-semibold text-gold-dark mb-1">Response from Boca Banker</p>
+          <p className="text-sm text-gray-700 leading-relaxed">{review.responseText}</p>
         </div>
       )}
     </div>
@@ -250,49 +251,55 @@ export default function ReviewsPage() {
   const hasMore = reviews.length < total
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8]">
+    <div className="min-h-screen bg-cream text-navy">
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl shadow-sm border-b border-gray-100">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
-            <BocaBankerAvatar size={32} />
-            <span className="font-serif text-xl font-bold text-gray-900 hidden sm:block">
-              Boca Banker
-            </span>
+            <BocaBankerAvatar size={36} />
+            <span className="font-serif text-xl text-navy">Boca Banker</span>
           </Link>
-          <div className="flex items-center gap-3">
-            <Button
-              asChild
-              variant="ghost"
-              className="text-gray-600 hover:text-gray-900 text-sm"
-            >
-              <Link href="/login">Sign In</Link>
-            </Button>
-          </div>
+          <Link
+            href="/#chat"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-navy-light"
+          >
+            <MessageCircle className="h-4 w-4" />
+            Ask a question
+          </Link>
         </div>
       </nav>
 
-      <main className="pt-24 pb-16 px-4 sm:px-6">
+      <main className="pt-28 pb-20 px-4 sm:px-6">
         <div className="mx-auto max-w-5xl">
           {/* Header + Stats */}
           <div className="text-center mb-10">
-            <h1 className="font-serif text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
-              Client Reviews
+            <Link
+              href="/"
+              className="mb-6 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-navy"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to home
+            </Link>
+            <p className="text-xs font-semibold tracking-[0.18em] uppercase text-gold-dark mb-3">
+              Client reviews
+            </p>
+            <h1 className="font-serif text-4xl sm:text-5xl text-navy mb-6">
+              What clients say
             </h1>
 
             {/* Rating summary */}
             {totalReviews > 0 && (
-              <div className="inline-flex items-center gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-4">
+              <div className="inline-flex items-center gap-4 bg-white rounded-2xl border border-gray-200 px-6 py-4">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-gray-900">
+                  <div className="font-serif text-4xl text-navy">
                     {averageRating.toFixed(2)}
                   </div>
                   <Stars rating={Math.round(averageRating)} size={18} />
                 </div>
                 <div className="h-10 w-px bg-gray-200" />
                 <div className="text-left">
-                  <div className="text-lg font-semibold text-gray-900">
-                    {totalReviews} Reviews
+                  <div className="text-lg font-semibold text-navy">
+                    {totalReviews} reviews
                   </div>
                   <div className="flex items-center gap-3 mt-1">
                     {[5, 4, 3, 2, 1].map((r) => {
@@ -307,7 +314,7 @@ export default function ReviewsPage() {
                           className={cn(
                             'flex items-center gap-1 text-xs transition-colors',
                             ratingFilter === r
-                              ? 'text-amber-600 font-semibold'
+                              ? 'text-gold-dark font-semibold'
                               : 'text-gray-400 hover:text-gray-600'
                           )}
                         >
@@ -332,7 +339,7 @@ export default function ReviewsPage() {
               <div className="mt-3">
                 <button
                   onClick={() => setRatingFilter(null)}
-                  className="text-sm text-amber-600 hover:underline"
+                  className="text-sm text-gold-dark hover:underline"
                 >
                   Clear filter — showing {ratingFilter}-star reviews
                 </button>
@@ -343,7 +350,7 @@ export default function ReviewsPage() {
           {/* Write a Review CTA + Form */}
           <div className="mb-10" id="write-review">
             {submitted ? (
-              <div className="bg-white rounded-2xl border border-emerald-200 shadow-sm p-8 text-center max-w-lg mx-auto">
+              <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center max-w-lg mx-auto">
                 <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">
                   Thank you for your review!
@@ -357,13 +364,13 @@ export default function ReviewsPage() {
               <div className="text-center">
                 <Button
                   onClick={() => setShowForm(true)}
-                  className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
+                  className="bg-navy hover:bg-navy-light text-white gap-2"
                 >
                   <Star className="w-4 h-4" /> Write a Review
                 </Button>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 max-w-2xl mx-auto">
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 max-w-2xl mx-auto">
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">
                   Write a Review
                 </h2>
@@ -571,7 +578,7 @@ export default function ReviewsPage() {
                     <Button
                       type="submit"
                       disabled={submitting}
-                      className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
+                      className="bg-navy hover:bg-navy-light text-white gap-2"
                     >
                       {submitting ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -596,7 +603,7 @@ export default function ReviewsPage() {
           {/* Reviews grid */}
           {loading && reviews.length === 0 ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+              <Loader2 className="h-8 w-8 animate-spin text-navy" />
             </div>
           ) : (
             <>
@@ -632,6 +639,20 @@ export default function ReviewsPage() {
 
         </div>
       </main>
+
+      <footer className="border-t border-gray-200 px-4 sm:px-6 py-8">
+        <div className="mx-auto max-w-5xl space-y-2 text-xs leading-relaxed text-gray-500">
+          <p>
+            <span className="font-semibold text-gray-600">Equal Housing Opportunity.</span>
+            {siteConfig.nmlsId && <> {siteConfig.ownerName || 'Boca Banker'}, NMLS #{siteConfig.nmlsId}.</>}{' '}
+            Reviews are submitted by clients and approved before they appear.
+          </p>
+          <p>
+            &copy; {new Date().getFullYear()} Boca Banker ·{' '}
+            <Link href="/" className="hover:text-navy">Home</Link>
+          </p>
+        </div>
+      </footer>
     </div>
   )
 }
