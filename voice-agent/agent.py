@@ -33,7 +33,7 @@ logger = logging.getLogger("boca-banker-voice")
 AGENT_NAME = "boca-banker-phone"
 VOICE_MODEL = "grok-voice-think-fast-2.0"
 # Change without a redeploy: lk agent update-secrets --secrets AGENT_VOICE=<name>
-VOICE = os.environ.get("AGENT_VOICE", "rex").lower()
+VOICE = os.environ.get("AGENT_VOICE", "perseus").lower()
 
 
 class BocaBankerPhoneAgent(Agent):
