@@ -44,7 +44,11 @@ export default function InlineLeadCaptureCard({ question, onDismiss, onSuccess }
       const res = await fetch('/api/chat/guest/lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...parsed.data, question: question?.slice(0, 500) }),
+        body: JSON.stringify({
+          ...parsed.data,
+          question: question?.slice(0, 500),
+          page: window.location.pathname,
+        }),
       });
 
       if (!res.ok) {

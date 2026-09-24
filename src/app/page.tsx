@@ -7,7 +7,6 @@ import {
   Check,
   ChevronDown,
   Home as HomeIcon,
-  Mail,
   MessageCircle,
   Phone,
   RefreshCw,
@@ -22,6 +21,7 @@ import { SITE_URL, SITE_TITLE, SITE_DESCRIPTION } from '@/lib/seo'
 import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
 import MobileChatButton from '@/components/landing/MobileChatButton'
 import { Reveal, LandingNav, OpenChatButton, HeroChatWidget } from '@/components/landing/LandingClient'
+import { Eyebrow, SiteFooter, primaryBtn, secondaryBtn } from '@/components/marketing/site'
 
 // Server component: static marketing markup ships as HTML; interactive bits
 // (scroll reveal, nav shadow, chat) are client islands. Reviews are read at
@@ -38,6 +38,7 @@ const paths = [
   {
     icon: HomeIcon,
     title: 'Buying a home',
+    href: '/first-time-homebuyer',
     desc: 'First home or fifth, find the loan program that fits and know your payment before you make an offer.',
     points: ['Conventional, FHA, VA & jumbo', 'Pre-approval guidance', 'Payment estimates at today’s rates'],
     cta: 'Ask about buying',
@@ -46,6 +47,7 @@ const paths = [
   {
     icon: RefreshCw,
     title: 'Refinancing',
+    href: '/refinance',
     desc: 'Find out whether a refinance actually pays off for you, and how long it takes to earn back the closing costs.',
     points: ['Break-even on closing costs', 'Rate-and-term vs. cash-out', 'Shorter term vs. lower payment'],
     cta: 'Ask about refinancing',
@@ -54,6 +56,7 @@ const paths = [
   {
     icon: Building2,
     title: 'Investment property',
+    href: '/investors',
     desc: 'Finance the next property and keep more of its income with accelerated depreciation.',
     points: ['DSCR & investor loans', 'Cost segregation estimates', 'Bonus depreciation projections'],
     cta: 'Ask about investing',
@@ -163,19 +166,6 @@ function Stars({ rating, className }: { rating: number; className?: string }) {
     </div>
   )
 }
-
-function Eyebrow({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <p className={cn('text-xs font-semibold tracking-[0.18em] uppercase text-gold-dark mb-3', className)}>
-      {children}
-    </p>
-  )
-}
-
-const primaryBtn =
-  'inline-flex items-center justify-center gap-2 rounded-xl bg-navy px-6 py-3.5 text-sm sm:text-base font-semibold text-white shadow-lg shadow-navy/20 transition-colors hover:bg-navy-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2'
-const secondaryBtn =
-  'inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-6 py-3.5 text-sm sm:text-base font-semibold text-navy transition-colors hover:border-navy/40 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2'
 
 /* ─── Page ─── */
 
@@ -474,9 +464,16 @@ export default async function Home() {
                         </li>
                       ))}
                     </ul>
+                    <Link
+                      href={p.href}
+                      className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-gold-dark hover:text-navy"
+                    >
+                      Read the guide
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
                     <OpenChatButton
                       prompt={p.prompt}
-                      className="mt-6 inline-flex items-center justify-between gap-2 rounded-xl border border-navy/15 bg-white px-4 py-3 text-sm font-semibold text-navy transition-colors hover:border-navy hover:bg-navy hover:text-white"
+                      className="mt-4 inline-flex items-center justify-between gap-2 rounded-xl border border-navy/15 bg-white px-4 py-3 text-sm font-semibold text-navy transition-colors hover:border-navy hover:bg-navy hover:text-white"
                     >
                       {p.cta}
                       <ArrowRight className="h-4 w-4" />
@@ -567,70 +564,7 @@ export default async function Home() {
         </section>
       </main>
 
-      {/* ══════════ FOOTER ══════════ */}
-      <footer className="border-t border-gray-200 bg-cream px-4 sm:px-6 pt-14 pb-24 lg:pb-14">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
-            <div>
-              <div className="mb-4 flex items-center gap-2.5">
-                <BocaBankerAvatar size={32} />
-                <span className="font-serif text-lg text-navy">Boca Banker</span>
-              </div>
-              <p className="max-w-xs text-sm leading-relaxed text-gray-600">
-                Mortgage and real estate finance guidance backed by 40+ years of Boca Raton banking.
-                Home loans, refinancing, and cost segregation.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="mb-4 text-sm font-semibold text-navy">Explore</h3>
-              <nav aria-label="Footer navigation" className="flex flex-col gap-2.5 text-sm text-gray-600">
-                <a href="#paths" className="hover:text-navy">How he can help</a>
-                <a href="#how-it-works" className="hover:text-navy">How it works</a>
-                <a href="#faq" className="hover:text-navy">FAQ</a>
-                <Link href="/reviews" className="hover:text-navy">Reviews</Link>
-              </nav>
-            </div>
-
-            <div>
-              <h3 className="mb-4 text-sm font-semibold text-navy">Contact</h3>
-              <div className="flex flex-col gap-2.5 text-sm text-gray-600">
-                {siteConfig.phone && (
-                  <a href={telHref(siteConfig.phone)} className="inline-flex items-center gap-2 hover:text-navy">
-                    <Phone className="h-4 w-4 text-gold" />
-                    {siteConfig.phone}
-                  </a>
-                )}
-                {siteConfig.email && (
-                  <a href={`mailto:${siteConfig.email}`} className="inline-flex items-center gap-2 hover:text-navy">
-                    <Mail className="h-4 w-4 text-gold" />
-                    {siteConfig.email}
-                  </a>
-                )}
-                <OpenChatButton className="inline-flex items-center gap-2 text-left hover:text-navy">
-                  <MessageCircle className="h-4 w-4 text-gold" />
-                  Ask in the chat
-                </OpenChatButton>
-                <p className="text-gray-500">Boca Raton, FL</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-12 space-y-3 border-t border-gray-200 pt-6 text-xs leading-relaxed text-gray-500">
-            <p>
-              <span className="font-semibold text-gray-600">Equal Housing Opportunity.</span>
-              {siteConfig.nmlsId && <> {bankerName}, NMLS #{siteConfig.nmlsId}.</>}{' '}
-              Chat responses are generated by AI for general information only. They are not a loan
-              commitment, rate quote, or offer to lend, and are not tax, legal, or financial advice.
-              All loans are subject to credit approval and underwriting.
-            </p>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p>&copy; {new Date().getFullYear()} Boca Banker. All rights reserved.</p>
-              <Link href="/login" className="hover:text-navy">Sign in</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
 
       {/* Mobile floating chat button + fullscreen overlay */}
       <MobileChatButton />

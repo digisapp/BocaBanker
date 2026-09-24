@@ -3,6 +3,7 @@ import { eq, max } from 'drizzle-orm'
 import { db } from '@/db'
 import { reviews } from '@/db/schema'
 import { SITE_URL } from '@/lib/seo'
+import { topics } from '@/content/topics'
 
 export const revalidate = 3600
 
@@ -24,5 +25,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     { url: SITE_URL, lastModified: latestReview },
     { url: `${SITE_URL}/reviews`, lastModified: latestReview },
+    ...topics.map((t) => ({ url: `${SITE_URL}${t.slug}` })),
   ]
 }

@@ -10,12 +10,26 @@ interface FreddieMacRate {
 
 /**
  * Parse Freddie Mac PMMS CSV data.
- * The CSV has columns: date, 30yr, 15yr, 5/1 ARM (and sometimes more).
+ * Header: date,pmms30,pmms30p,pmms15,pmms15p,pmms51,… — columns are looked up
+ * by name so a reordering can't silently shift rates into the wrong field.
  * Dates are in MM/DD/YYYY format.
  */
-function parseCSV(csv: string): FreddieMacRate[] {
-  const lines = csv.trim().split('\n');
+export function parseCSV(csv: string): FreddieMacRate[] {
+  const lines = csv.trim().split(/\r?\n/);
   const rates: FreddieMacRate[] = [];
+
+  const header = (lines[0] ?? '').split(',').map((c) => c.trim().replace(/"/g, '').toLowerCase());
+  const col = (name: string, fallback: number) => {
+    const idx = header.indexOf(name);
+    return idx === -1 ? fallback : idx;
+  };
+  const i30 = col('pmms30', 1);
+  const i15 = col('pmms15', 2);
+  const iArm = col('pmms51', 3);
+  const num = (v: string | undefined) => {
+    const n = v ? parseFloat(v) : NaN;
+    return Number.isFinite(n) ? n : null;
+  };
 
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(',').map((c) => c.trim().replace(/"/g, ''));
@@ -34,17 +48,14 @@ function parseCSV(csv: string): FreddieMacRate[] {
       weekOf = dateStr;
     }
 
-    const rate30yr = cols[1] ? parseFloat(cols[1]) : null;
-    const rate15yr = cols[2] ? parseFloat(cols[2]) : null;
-    const rate5arm = cols[3] ? parseFloat(cols[3]) : null;
-
-    if (rate30yr === null || isNaN(rate30yr)) continue;
+    const rate30yr = num(cols[i30]);
+    if (rate30yr === null) continue;
 
     rates.push({
       weekOf,
-      rate30yr: isNaN(rate30yr) ? null : rate30yr,
-      rate15yr: rate15yr !== null && !isNaN(rate15yr) ? rate15yr : null,
-      rate5arm: rate5arm !== null && !isNaN(rate5arm) ? rate5arm : null,
+      rate30yr,
+      rate15yr: num(cols[i15]),
+      rate5arm: num(cols[iArm]),
     });
   }
 
@@ -56,9 +67,9 @@ function parseCSV(csv: string): FreddieMacRate[] {
  */
 export async function fetchFreddieMacRates(): Promise<FreddieMacRate[]> {
   try {
-    // Freddie Mac publishes weekly rates at this endpoint
+    // Freddie Mac's full weekly PMMS history (the old PMMS4.csv now 404s)
     const res = await fetch(
-      'https://www.freddiemac.com/pmms/docs/PMMS4.csv',
+      'https://www.freddiemac.com/pmms/docs/PMMS_history.csv',
       { next: { revalidate: 86400 } } // Cache for 24 hours
     );
 

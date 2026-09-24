@@ -4,7 +4,7 @@ import { createGuestLeadCapture } from '@/lib/ai/tool-executors'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
 
-// Contact form shown inside the homepage guest chat. Creates a lead in the
+// Contact form shown inside the guest chat (homepage and topic pages). Creates a lead in the
 // owner's pipeline (same path as the AI's capture_lead tool) — visitors never
 // get an account.
 
@@ -13,6 +13,8 @@ const schema = z.object({
   email: z.string().trim().email({ message: 'Enter a valid email' }).max(200),
   phone: z.string().trim().max(40).optional(),
   question: z.string().trim().max(500).optional(),
+  /** Path of the page the chat was on, so the lead shows where it came from. */
+  page: z.string().max(100).regex(/^\/[a-z0-9-]*$/).optional().catch(undefined),
 })
 
 export async function POST(request: Request) {
@@ -21,7 +23,7 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return apiError(parsed.error.issues[0]?.message || 'Validation failed', 400)
     }
-    const { name, email, phone, question } = parsed.data
+    const { name, email, phone, question, page } = parsed.data
 
     const ip = getClientIp(request)
     const rl = await rateLimit(`guest-lead-form:${ip}`, { maxRequests: 5, windowMs: 60 * 60_000 })
@@ -33,7 +35,8 @@ export async function POST(request: Request) {
       buyerName: name,
       buyerEmail: email,
       buyerPhone: phone || undefined,
-      interestType: 'Homepage chat contact form',
+      interestType:
+        page && page !== '/' ? `Chat contact form (${page})` : 'Homepage chat contact form',
       notes: question ? `Asked: "${question}"` : undefined,
     })
 
