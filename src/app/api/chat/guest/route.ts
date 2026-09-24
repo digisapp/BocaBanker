@@ -85,8 +85,6 @@ export async function POST(request: Request) {
       messages: chatMessages,
       systemPrompt: basePrompt,
       captureLeadExecutor: createGuestLeadCapture(ip),
-      maxSearchResults: 3,
-      searchSources: [{ type: 'web' }],
     })
 
     const newCount = count + 1

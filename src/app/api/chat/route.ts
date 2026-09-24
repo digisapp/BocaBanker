@@ -158,8 +158,6 @@ export async function POST(request: Request) {
       messages: messages.slice(-MODEL_CONTEXT_MESSAGES),
       systemPrompt: BOCA_BANKER_SYSTEM_PROMPT,
       captureLeadExecutor: createAuthLeadCapture(user.id),
-      maxSearchResults: 5,
-      searchSources: [{ type: 'web' }, { type: 'news' }],
       onFinish: async ({ text, steps }) => {
         // `text` is only the LAST step's text; with tool use the answer may
         // span multiple steps, so join all step texts.

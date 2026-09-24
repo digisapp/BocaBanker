@@ -21,8 +21,6 @@ export interface ChatStreamConfig {
   systemPrompt: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   captureLeadExecutor: (input: any) => Promise<any>
-  maxSearchResults?: number
-  searchSources?: Array<{ type: string }>
   onFinish?: (result: { text: string; steps: Array<{ text: string }> }) => Promise<void>
 }
 
@@ -65,8 +63,6 @@ export async function createChatStream(config: ChatStreamConfig) {
     messages,
     systemPrompt: basePrompt,
     captureLeadExecutor,
-    maxSearchResults = 5,
-    searchSources = [{ type: 'web' }, { type: 'news' }],
     onFinish,
   } = config
 
@@ -84,25 +80,18 @@ export async function createChatStream(config: ChatStreamConfig) {
   })
 
   return streamText({
-    model: xai('grok-4-1-fast-non-reasoning'),
+    // Responses API: xAI retired Live Search (searchParameters returns 410);
+    // web search is now a server-side agent tool.
+    model: xai.responses('grok-4-1-fast-non-reasoning'),
     system: systemPrompt,
     messages: coreMessages,
     tools: {
+      web_search: xai.tools.webSearch(),
       calculate_mortgage: calculateMortgage,
       capture_lead: captureLead,
       schedule_consultation: scheduleConsultation,
     },
     stopWhen: stepCountIs(5),
-    providerOptions: {
-      xai: {
-        searchParameters: {
-          mode: 'auto',
-          returnCitations: true,
-          maxSearchResults,
-          sources: searchSources,
-        },
-      },
-    },
     onFinish,
   })
 }
