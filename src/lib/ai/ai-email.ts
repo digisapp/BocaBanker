@@ -4,6 +4,7 @@ import { emails, platformSettings } from '@/db/schema';
 import { and, eq, gte, count } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
 import { sendEmail } from '@/lib/email/resend';
+import { EMAIL_MODEL, REASONING_EFFORT } from './models';
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -150,7 +151,8 @@ export async function classifyAndDraftReply(
   const content = bodyText || (bodyHtml ? htmlToText(bodyHtml) : '') || '';
 
   const response = await xai.chat.completions.create({
-    model: 'grok-3-mini',
+    model: EMAIL_MODEL,
+    reasoning_effort: REASONING_EFFORT,
     messages: [
       {
         role: 'system',

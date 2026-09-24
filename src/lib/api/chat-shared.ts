@@ -7,6 +7,8 @@ import {
   scheduleConsultation,
 } from '@/lib/ai/tools'
 import { augmentPromptWithContext } from '@/lib/ai/xai-collections'
+import type { XaiResponsesProviderOptions } from '@ai-sdk/xai'
+import { CHAT_MODEL, REASONING_EFFORT } from '@/lib/ai/models'
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -82,7 +84,10 @@ export async function createChatStream(config: ChatStreamConfig) {
   return streamText({
     // Responses API: xAI retired Live Search (searchParameters returns 410);
     // web search is now a server-side agent tool.
-    model: xai.responses('grok-4-1-fast-non-reasoning'),
+    model: xai.responses(CHAT_MODEL),
+    providerOptions: {
+      xai: { reasoningEffort: REASONING_EFFORT } satisfies XaiResponsesProviderOptions,
+    },
     system: systemPrompt,
     messages: coreMessages,
     tools: {
