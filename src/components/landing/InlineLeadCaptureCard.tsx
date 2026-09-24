@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
 import BocaBankerAvatar from './BocaBankerAvatar';
+import { siteConfig } from '@/lib/site-config';
 
 const formSchema = z.object({
   name: z.string().trim().min(1, { message: 'Please enter your name' }),
@@ -62,7 +63,17 @@ export default function InlineLeadCaptureCard({ question, onDismiss, onSuccess }
 
   return (
     <div className="flex gap-3 justify-start">
-      <BocaBankerAvatar size={32} className="flex-shrink-0 mt-1" />
+      {/* The follow-up comes from the real banker, so show him here when available. */}
+      {siteConfig.bankerPhoto ? (
+        <BocaBankerAvatar
+          size={32}
+          src={siteConfig.bankerPhoto}
+          alt={siteConfig.ownerName || 'Boca Banker'}
+          className="flex-shrink-0 mt-1"
+        />
+      ) : (
+        <BocaBankerAvatar size={32} className="flex-shrink-0 mt-1" />
+      )}
       <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-amber-200 bg-cream px-5 py-4">
         <p className="font-semibold text-sm text-navy mb-1">
           Want Boca Banker to follow up personally?

@@ -11,6 +11,13 @@ export const siteConfig = {
   phone: '',
   /** Public contact email. */
   email: '',
+  /**
+   * Real headshot of the banker, e.g. '/banker-photo.jpg'. The illustrated
+   * mascot stays the brand (logo, chat, icons); this photo appears only where a
+   * real person is promised: the hero byline, "Meet your banker", and the chat's
+   * follow-up card. Only set it to a genuine photo of the licensed banker.
+   */
+  bankerPhoto: '',
 }
 
 export function telHref(phone: string) {

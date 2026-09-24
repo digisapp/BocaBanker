@@ -9,9 +9,18 @@ interface AvatarProps {
    * instance/size and competed with the real LCP resources.
    */
   priority?: boolean
+  /** Defaults to the illustrated Boca Banker mascot. */
+  src?: string
+  alt?: string
 }
 
-export default function BocaBankerAvatar({ className, size = 200, priority = false }: AvatarProps) {
+export default function BocaBankerAvatar({
+  className,
+  size = 200,
+  priority = false,
+  src = '/boca-banker-profile.png',
+  alt = 'Boca Banker',
+}: AvatarProps) {
   const ring = Math.max(2, Math.round(size * 0.04))
 
   return (
@@ -35,8 +44,8 @@ export default function BocaBankerAvatar({ className, size = 200, priority = fal
         }}
       >
         <Image
-          src="/boca-banker-profile.png"
-          alt="Boca Banker"
+          src={src}
+          alt={alt}
           width={size}
           height={size}
           className="rounded-full object-cover w-full h-full"

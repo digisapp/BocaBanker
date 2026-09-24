@@ -217,6 +217,9 @@ export default async function Home() {
             </Link>
             <div className="flex items-center gap-1 sm:gap-2">
               <div className="hidden md:flex items-center gap-1 text-sm text-gray-600">
+                {siteConfig.bankerPhoto && (
+                  <a href="#banker" className="rounded-lg px-3 py-2 hover:text-navy">About</a>
+                )}
                 <a href="#how-it-works" className="rounded-lg px-3 py-2 hover:text-navy">How it works</a>
                 <a href="#reviews" className="rounded-lg px-3 py-2 hover:text-navy">Reviews</a>
                 <a href="#faq" className="rounded-lg px-3 py-2 hover:text-navy">FAQ</a>
@@ -277,7 +280,11 @@ export default async function Home() {
               </div>
 
               <div className="mt-10 flex items-center justify-center gap-4 lg:justify-start">
-                <BocaBankerAvatar size={56} />
+                {siteConfig.bankerPhoto ? (
+                  <BocaBankerAvatar size={56} src={siteConfig.bankerPhoto} alt={bankerName} />
+                ) : (
+                  <BocaBankerAvatar size={56} />
+                )}
                 <div className="text-left">
                   <p className="text-sm font-semibold text-navy">
                     {bankerName}
@@ -325,6 +332,49 @@ export default async function Home() {
             ))}
           </dl>
         </section>
+
+        {/* ══════════ MEET YOUR BANKER ══════════ */}
+        {siteConfig.bankerPhoto && (
+          <section id="banker" aria-label="Meet your banker" className="scroll-mt-20 px-4 sm:px-6 pt-20 sm:pt-24">
+            <Reveal>
+              <div className="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-[auto_1fr] md:gap-14">
+                <BocaBankerAvatar
+                  size={240}
+                  src={siteConfig.bankerPhoto}
+                  alt={bankerName}
+                  className="mx-auto"
+                />
+                <div className="text-center md:text-left">
+                  <Eyebrow>Meet your banker</Eyebrow>
+                  <h2 className="font-serif text-3xl text-navy sm:text-4xl">
+                    {siteConfig.ownerName || 'The banker behind Boca Banker'}
+                  </h2>
+                  {siteConfig.nmlsId && (
+                    <p className="mt-2 text-sm text-gray-500">NMLS #{siteConfig.nmlsId}</p>
+                  )}
+                  <p className="mx-auto mt-5 max-w-xl leading-relaxed text-gray-600 md:mx-0">
+                    Boca Banker’s AI assistant is built on more than 40 years of Boca Raton lending,
+                    over $2B in closed loans and 500+ cost segregation studies. The assistant handles
+                    the questions and the math, any hour. When you’re ready to move forward, you work
+                    with {siteConfig.ownerName ? siteConfig.ownerName.split(' ')[0] : 'him'} directly.
+                  </p>
+                  <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center md:justify-start">
+                    <OpenChatButton className={primaryBtn}>
+                      <MessageCircle className="h-5 w-5" />
+                      Ask a question
+                    </OpenChatButton>
+                    {siteConfig.phone && (
+                      <a href={telHref(siteConfig.phone)} className={secondaryBtn}>
+                        <Phone className="h-5 w-5 text-gold" />
+                        Call {siteConfig.phone}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          </section>
+        )}
 
         {/* ══════════ REVIEWS ══════════ */}
         {reviewSummary.latest.length > 0 && (

@@ -76,7 +76,7 @@ export default async function OGImage() {
               justifyContent: 'center',
             }}
           >
-            <img src={photoSrc} width={370} height={370} alt="" style={{ marginLeft: '6px', marginTop: '6px' }} />
+            <img src={photoSrc} width={324} height={324} alt="" />
           </div>
         </div>
       </div>
