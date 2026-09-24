@@ -7,6 +7,7 @@ Deploy:        lk agent create   (see README.md)
 from __future__ import annotations
 
 import logging
+import os
 
 from dotenv import load_dotenv
 from livekit import rtc
@@ -31,7 +32,8 @@ logger = logging.getLogger("boca-banker-voice")
 
 AGENT_NAME = "boca-banker-phone"
 VOICE_MODEL = "grok-voice-think-fast-2.0"
-VOICE = "rex"
+# Change without a redeploy: lk agent update-secrets --secrets AGENT_VOICE=<name>
+VOICE = os.environ.get("AGENT_VOICE", "rex").lower()
 
 
 class BocaBankerPhoneAgent(Agent):
