@@ -23,7 +23,10 @@ DECLARE
   t text;
 BEGIN
   FOR t IN
-    SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+    -- Only tables this role owns; app_user-owned tables (emails, reviews,
+    -- platform_settings, received_emails) already have RLS enabled.
+    SELECT tablename FROM pg_tables
+    WHERE schemaname = 'public' AND tableowner = current_user
   LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
     EXECUTE format('DROP POLICY IF EXISTS app_user_all ON public.%I', t);
