@@ -56,7 +56,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <aside
         aria-label="Main navigation"
         className={cn(
-          'hidden md:flex flex-col h-screen bg-white border-r border-gray-200 transition-all duration-300 relative z-40',
+          'hidden md:flex flex-col h-dvh bg-white border-r border-gray-200 transition-all duration-300 relative z-40',
           collapsed ? 'w-[68px]' : 'w-[240px]'
         )}
       >

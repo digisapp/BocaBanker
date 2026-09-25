@@ -356,6 +356,91 @@ export default function LeadsPage() {
       : <ArrowDown className="h-3 w-3 ml-1 text-amber-600" />
   }
 
+  // Row actions menu, shared by the desktop table and the mobile card list
+  const renderLeadActions = (lead: LeadRow, triggerClassName: string) => {
+    const status = lead.status ?? 'new'
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`text-gray-500 hover:text-amber-600 ${triggerClassName}`}
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Lead actions"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className="bg-white border-gray-200"
+        >
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation()
+              router.push(`/leads/${lead.id}`)
+            }}
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            View
+          </DropdownMenuItem>
+          {status !== 'converted' && (
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger onClick={(e) => e.stopPropagation()}>
+                <ArrowRightCircle className="h-4 w-4 mr-2" />
+                Change Status
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="bg-white border-gray-200">
+                {['new', 'contacted', 'qualified', 'proposal_sent', 'lost'].map((s) => (
+                  <DropdownMenuItem
+                    key={s}
+                    disabled={status === s}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleStatusChange(lead.id, s)
+                    }}
+                  >
+                    <span className={`w-2 h-2 rounded-full mr-2 ${
+                      s === 'new' ? 'bg-blue-500' :
+                      s === 'contacted' ? 'bg-amber-500' :
+                      s === 'qualified' ? 'bg-emerald-500' :
+                      s === 'proposal_sent' ? 'bg-purple-500' :
+                      'bg-red-500'
+                    }`} />
+                    {statusLabel[s] ?? s}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          )}
+          {status !== 'converted' && (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation()
+                handleConvert(lead.id)
+              }}
+            >
+              <UserCheck className="h-4 w-4 mr-2" />
+              Convert to Client
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator className="bg-gray-100" />
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={(e) => {
+              e.stopPropagation()
+              handleDelete(lead.id)
+            }}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
+
   const handleExportCsv = () => {
     const params = new URLSearchParams({
       ...(debouncedSearch && { search: debouncedSearch }),
@@ -389,14 +474,16 @@ export default function LeadsPage() {
           </Badge>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Below md the secondary actions collapse into the "More" menu so the
+            row fits a phone; the view toggle takes its own full-width row. */}
+        <div className="flex flex-wrap md:flex-nowrap items-center gap-2">
           {/* View Toggle */}
-          <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+          <div className="flex w-full md:w-auto items-center bg-gray-100 rounded-lg p-0.5">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setViewMode('leads')}
-              className={`h-8 px-3 rounded-md text-xs font-medium transition-all ${
+              className={`flex-1 md:flex-none h-8 px-3 rounded-md text-xs font-medium transition-all ${
                 viewMode === 'leads'
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
@@ -409,7 +496,7 @@ export default function LeadsPage() {
               variant="ghost"
               size="sm"
               onClick={() => setViewMode('portfolio')}
-              className={`h-8 px-3 rounded-md text-xs font-medium transition-all ${
+              className={`flex-1 md:flex-none h-8 px-3 rounded-md text-xs font-medium transition-all ${
                 viewMode === 'portfolio'
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
@@ -422,7 +509,7 @@ export default function LeadsPage() {
 
           <Button
             variant="outline"
-            className="border-gray-200 text-gray-700 hover:bg-gray-50"
+            className="hidden md:inline-flex border-gray-200 text-gray-700 hover:bg-gray-50"
             onClick={handleExportCsv}
           >
             <Download className="h-4 w-4 mr-2" />
@@ -432,7 +519,7 @@ export default function LeadsPage() {
             <Button
               variant="outline"
               onClick={() => router.push('/leads/scrape')}
-              className="border-gray-200 text-gray-700 hover:bg-gray-50"
+              className="hidden md:inline-flex border-gray-200 text-gray-700 hover:bg-gray-50"
             >
               <Sparkles className="h-4 w-4 mr-2" />
               Import Data
@@ -446,7 +533,7 @@ export default function LeadsPage() {
             >
               <Button
                 variant="outline"
-                className="border-gray-200 text-gray-700 hover:bg-gray-50"
+                className="hidden md:inline-flex border-gray-200 text-gray-700 hover:bg-gray-50"
               >
                 <Upload className="h-4 w-4 mr-2" />
                 Import CSV
@@ -462,6 +549,34 @@ export default function LeadsPage() {
               Add Lead
             </Button>
           </RoleGate>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="md:hidden border-gray-200 text-gray-700 hover:bg-gray-50"
+                aria-label="More actions"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-white border-gray-200">
+              <DropdownMenuItem onClick={handleExportCsv}>
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </DropdownMenuItem>
+              <RoleGate permission="canCreate">
+                <DropdownMenuItem onClick={() => router.push('/leads/scrape')}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Import Data
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setImportOpen(true)}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import CSV
+                </DropdownMenuItem>
+              </RoleGate>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -489,16 +604,16 @@ export default function LeadsPage() {
       {viewMode === 'leads' ? (
         <>
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-row">
             <Input
               placeholder="Search leads..."
               aria-label="Search leads"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="max-w-sm bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
+              className="col-span-2 max-w-sm bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
             />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[170px] bg-gray-50 border-gray-200 text-gray-900">
+              <SelectTrigger className="w-full sm:w-[170px] bg-gray-50 border-gray-200 text-gray-900">
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent className="bg-white border-gray-200">
@@ -512,7 +627,7 @@ export default function LeadsPage() {
               </SelectContent>
             </Select>
             <Select value={propertyTypeFilter} onValueChange={setPropertyTypeFilter}>
-              <SelectTrigger className="w-[170px] bg-gray-50 border-gray-200 text-gray-900">
+              <SelectTrigger className="w-full sm:w-[170px] bg-gray-50 border-gray-200 text-gray-900">
                 <SelectValue placeholder="All types" />
               </SelectTrigger>
               <SelectContent className="bg-white border-gray-200">
@@ -526,7 +641,7 @@ export default function LeadsPage() {
               </SelectContent>
             </Select>
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-[150px] bg-gray-50 border-gray-200 text-gray-900">
+              <SelectTrigger className="w-full sm:w-[150px] bg-gray-50 border-gray-200 text-gray-900">
                 <SelectValue placeholder="All priorities" />
               </SelectTrigger>
               <SelectContent className="bg-white border-gray-200">
@@ -545,28 +660,28 @@ export default function LeadsPage() {
                 <Target className="h-4 w-4 text-amber-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Total Leads</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
                 <Sparkles className="h-4 w-4 text-blue-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">New (this page)</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{stats.newLeads}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.newLeads}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
                 <TrendingUp className="h-4 w-4 text-emerald-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Avg Sale Price (this page)</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.avgSalePrice, '--')}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{formatCurrency(stats.avgSalePrice, '--')}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
                 <DollarSign className="h-4 w-4 text-amber-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Value (this page)</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalValue, '--')}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{formatCurrency(stats.totalValue, '--')}</p>
             </div>
           </div>
 
@@ -585,7 +700,78 @@ export default function LeadsPage() {
             </div>
           ) : (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
+              {/* Mobile card list: the 10-column table only scrolls sideways on a phone */}
+              <div className="md:hidden divide-y divide-gray-100">
+                {leads.map((lead) => {
+                  const status = lead.status ?? 'new'
+                  const priority = lead.priority ?? 'medium'
+                  const buyer = [lead.buyerName, lead.buyerCompany].filter(Boolean).join(' · ')
+                  const location = [lead.propertyCity, lead.propertyState].filter(Boolean).join(', ')
+
+                  return (
+                    <div key={lead.id} className="p-4">
+                      <div className="flex items-start gap-2">
+                        <button
+                          type="button"
+                          onClick={() => router.push(`/leads/${lead.id}`)}
+                          className="flex-1 min-w-0 text-left"
+                        >
+                          <p className="font-medium text-gray-900 truncate">
+                            {lead.propertyAddress || 'Untitled Lead'}
+                          </p>
+                          {(buyer || lead.memberName) && (
+                            <p className="text-sm text-gray-700 truncate">
+                              {buyer || lead.memberName}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-500 truncate mt-0.5">
+                            {[location, lead.salePrice ? formatCurrency(lead.salePrice) : null]
+                              .filter(Boolean)
+                              .join(' · ') || '--'}
+                          </p>
+                        </button>
+                        {renderLeadActions(lead, 'size-10 -mr-2 -mt-2')}
+                      </div>
+                      <div className="flex items-center gap-2 mt-3">
+                        <Badge
+                          variant="outline"
+                          className={`${
+                            statusColorMap[status] ?? statusColorMap.new
+                          } text-xs capitalize`}
+                        >
+                          {statusLabel[status] ?? status}
+                        </Badge>
+                        <span className="flex items-center gap-1.5 text-xs text-gray-500 capitalize">
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              priorityDotColor[priority] ?? priorityDotColor.medium
+                            }`}
+                          />
+                          {priority}
+                        </span>
+                        <div className="ml-auto flex items-center gap-2">
+                          {lead.buyerPhone && (
+                            <Button asChild variant="outline" size="icon" className="size-10 border-gray-200 text-amber-600">
+                              <a href={`tel:${lead.buyerPhone}`} aria-label={`Call ${lead.buyerName || lead.buyerPhone}`}>
+                                <Phone className="h-4 w-4" />
+                              </a>
+                            </Button>
+                          )}
+                          {lead.buyerEmail && (
+                            <Button asChild variant="outline" size="icon" className="size-10 border-gray-200 text-amber-600">
+                              <a href={`mailto:${lead.buyerEmail}`} aria-label={`Email ${lead.buyerName || lead.buyerEmail}`}>
+                                <Mail className="h-4 w-4" />
+                              </a>
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-b border-gray-200 hover:bg-transparent">
@@ -778,84 +964,7 @@ export default function LeadsPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-gray-500 hover:text-amber-600 h-8 w-8"
-                                  onClick={(e) => e.stopPropagation()}
-                                  aria-label="Lead actions"
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                align="end"
-                                className="bg-white border-gray-200"
-                              >
-                                <DropdownMenuItem
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    router.push(`/leads/${lead.id}`)
-                                  }}
-                                >
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View
-                                </DropdownMenuItem>
-                                {status !== 'converted' && (
-                                  <DropdownMenuSub>
-                                    <DropdownMenuSubTrigger onClick={(e) => e.stopPropagation()}>
-                                      <ArrowRightCircle className="h-4 w-4 mr-2" />
-                                      Change Status
-                                    </DropdownMenuSubTrigger>
-                                    <DropdownMenuSubContent className="bg-white border-gray-200">
-                                      {['new', 'contacted', 'qualified', 'proposal_sent', 'lost'].map((s) => (
-                                        <DropdownMenuItem
-                                          key={s}
-                                          disabled={status === s}
-                                          onClick={(e) => {
-                                            e.stopPropagation()
-                                            handleStatusChange(lead.id, s)
-                                          }}
-                                        >
-                                          <span className={`w-2 h-2 rounded-full mr-2 ${
-                                            s === 'new' ? 'bg-blue-500' :
-                                            s === 'contacted' ? 'bg-amber-500' :
-                                            s === 'qualified' ? 'bg-emerald-500' :
-                                            s === 'proposal_sent' ? 'bg-purple-500' :
-                                            'bg-red-500'
-                                          }`} />
-                                          {statusLabel[s] ?? s}
-                                        </DropdownMenuItem>
-                                      ))}
-                                    </DropdownMenuSubContent>
-                                  </DropdownMenuSub>
-                                )}
-                                {status !== 'converted' && (
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      handleConvert(lead.id)
-                                    }}
-                                  >
-                                    <UserCheck className="h-4 w-4 mr-2" />
-                                    Convert to Client
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuSeparator className="bg-gray-100" />
-                                <DropdownMenuItem
-                                  variant="destructive"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleDelete(lead.id)
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            {renderLeadActions(lead, 'h-8 w-8')}
                           </TableCell>
                         </TableRow>
                       )
@@ -871,7 +980,7 @@ export default function LeadsPage() {
                 const start = (page - 1) * ITEMS_PER_PAGE + 1
                 const end = Math.min(page * ITEMS_PER_PAGE, total)
                 return (
-                  <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+                  <div className="flex flex-wrap md:flex-nowrap items-center justify-between gap-2 px-4 py-3 border-t border-gray-100">
                     <p className="text-sm text-gray-500">
                       Showing <span className="font-medium text-gray-700">{start}</span>–<span className="font-medium text-gray-700">{end}</span> of{' '}
                       <span className="font-medium text-gray-700">{total.toLocaleString()}</span> leads
@@ -880,7 +989,7 @@ export default function LeadsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="size-10 md:size-8"
                         disabled={page === 1}
                         onClick={() => setPage(1)}
                         aria-label="First page"
@@ -890,7 +999,7 @@ export default function LeadsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="size-10 md:size-8"
                         disabled={page === 1}
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         aria-label="Previous page"
@@ -903,7 +1012,7 @@ export default function LeadsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="size-10 md:size-8"
                         disabled={page === totalPages}
                         onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                         aria-label="Next page"
@@ -913,7 +1022,7 @@ export default function LeadsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="size-10 md:size-8"
                         disabled={page === totalPages}
                         onClick={() => setPage(totalPages)}
                         aria-label="Last page"
@@ -937,28 +1046,28 @@ export default function LeadsPage() {
                 <Users className="h-4 w-4 text-amber-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Total Owners</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{portfolioStats.totalMembers}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{portfolioStats.totalMembers}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
                 <Briefcase className="h-4 w-4 text-blue-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Multi-Property</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{portfolioStats.multiPropertyOwners}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{portfolioStats.multiPropertyOwners}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
                 <Building2 className="h-4 w-4 text-emerald-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Avg Properties</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{portfolioStats.avgProperties}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{portfolioStats.avgProperties}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
                 <DollarSign className="h-4 w-4 text-amber-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Total Value</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(portfolioStats.totalValue, '--')}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{formatCurrency(portfolioStats.totalValue, '--')}</p>
             </div>
           </div>
 

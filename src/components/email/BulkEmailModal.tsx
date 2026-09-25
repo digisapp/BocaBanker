@@ -132,7 +132,7 @@ export default function BulkEmailModal({ trigger }: BulkEmailModalProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-lg sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-white border-gray-200 text-gray-900 sm:max-w-2xl max-h-[85dvh] md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-amber-600 text-lg">Send Bulk Email</DialogTitle>
           <DialogDescription className="text-gray-500">

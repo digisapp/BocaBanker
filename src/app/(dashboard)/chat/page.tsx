@@ -13,10 +13,12 @@ function ChatContent() {
 }
 
 export default function ChatPage() {
+  // Fill the dashboard <main> exactly (h-full, not h-screen) so the page
+  // itself never scrolls; the message list is the only scroll area.
   return (
-    <div className="flex flex-col h-screen bg-[#FAFAF8] p-4 sm:p-6">
-      {/* Page Header */}
-      <div className="flex items-center gap-3 mb-4">
+    <div className="flex flex-col h-full min-h-0 bg-[#FAFAF8] md:p-6">
+      {/* Page Header (the Topbar already says "AI Chat" on mobile) */}
+      <div className="hidden md:flex items-center gap-3 mb-4">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
           <Landmark className="h-5 w-5" />
         </div>

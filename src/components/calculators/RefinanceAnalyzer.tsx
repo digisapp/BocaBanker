@@ -135,6 +135,7 @@ export default function RefinanceAnalyzer({ initialValues }: RefinanceAnalyzerPr
               <Label className="text-gray-500">Remaining Balance ($)</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 placeholder="e.g. 2500000"
                 value={currentBalance}
                 onChange={(e) => setCurrentBalance(e.target.value)}
@@ -145,6 +146,7 @@ export default function RefinanceAnalyzer({ initialValues }: RefinanceAnalyzerPr
               <Label className="text-gray-500">Current Interest Rate (%)</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.125"
                 placeholder="e.g. 7.0"
                 value={currentRate}
@@ -182,6 +184,7 @@ export default function RefinanceAnalyzer({ initialValues }: RefinanceAnalyzerPr
               <Label className="text-gray-500">New Interest Rate (%)</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.125"
                 placeholder="e.g. 5.5"
                 value={newRate}
@@ -212,6 +215,7 @@ export default function RefinanceAnalyzer({ initialValues }: RefinanceAnalyzerPr
               <Label className="text-gray-500">Estimated Closing Costs ($)</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 placeholder="e.g. 15000"
                 value={closingCosts}
                 onChange={(e) => setClosingCosts(e.target.value)}
@@ -222,6 +226,7 @@ export default function RefinanceAnalyzer({ initialValues }: RefinanceAnalyzerPr
               <Label className="text-gray-500">Points (%)</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.25"
                 placeholder="e.g. 1.0"
                 value={points}

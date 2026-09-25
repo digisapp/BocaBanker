@@ -4,7 +4,10 @@ import { withSentryConfig } from "@sentry/nextjs";
 // Notes: 'unsafe-inline'/'unsafe-eval' in script-src are required by Next.js
 // hydration and dev tooling without a nonce-based setup; frame-src blob: is
 // needed for the sandboxed inbound-email viewer; connect-src https:/wss:
-// covers Supabase, Sentry, and Vercel analytics endpoints.
+// covers Supabase, Sentry, and Vercel analytics endpoints. frame-ancestors is
+// 'self' rather than 'none' because the email viewer's blob: iframe inherits
+// this policy, and Safari/WebKit then refuses to show it inside our own page
+// (blank email bodies). Other sites still can't frame us.
 const contentSecurityPolicy = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com",
@@ -16,13 +19,13 @@ const contentSecurityPolicy = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-ancestors 'none'",
+  "frame-ancestors 'self'",
 ].join("; ");
 
 const securityHeaders = [
   { key: "Content-Security-Policy", value: contentSecurityPolicy },
   { key: "X-Content-Type-Options", value: "nosniff" },
-  { key: "X-Frame-Options", value: "DENY" },
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "X-XSS-Protection", value: "1; mode=block" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {

@@ -109,6 +109,7 @@ export default function DSCRCalculator({ initialValues }: DSCRCalculatorProps) {
             <Label className="text-gray-500">Annual Gross Income ($)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               placeholder="e.g. 480000"
               value={grossIncome}
               onChange={(e) => setGrossIncome(e.target.value)}
@@ -120,6 +121,7 @@ export default function DSCRCalculator({ initialValues }: DSCRCalculatorProps) {
             <Label className="text-gray-500">Annual Operating Expenses ($)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               placeholder="e.g. 180000"
               value={operatingExpenses}
               onChange={(e) => setOperatingExpenses(e.target.value)}
@@ -131,6 +133,7 @@ export default function DSCRCalculator({ initialValues }: DSCRCalculatorProps) {
             <Label className="text-gray-500">Loan Amount ($)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               placeholder="e.g. 3000000"
               value={loanAmount}
               onChange={(e) => setLoanAmount(e.target.value)}
@@ -142,6 +145,7 @@ export default function DSCRCalculator({ initialValues }: DSCRCalculatorProps) {
             <Label className="text-gray-500">Interest Rate (%)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               step="0.125"
               placeholder="e.g. 6.5"
               value={interestRate}

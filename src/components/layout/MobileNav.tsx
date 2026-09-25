@@ -55,7 +55,7 @@ export default function MobileNav() {
           <Button
             variant="ghost"
             size="icon"
-            className="text-gray-500 hover:text-amber-600 hover:bg-amber-50"
+            className="size-10 text-gray-500 hover:text-amber-600 hover:bg-amber-50"
           >
             <Menu className="h-6 w-6" />
             <span className="sr-only">Toggle navigation menu</span>

@@ -262,6 +262,7 @@ export default function EditPropertyPage() {
             <Label className="text-gray-500">Purchase Price ($) *</Label>
             <Input
               type="number"
+              inputMode="decimal"
               {...form.register('purchasePrice', { required: true })}
               className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
@@ -281,6 +282,7 @@ export default function EditPropertyPage() {
             <Label className="text-gray-500">Building Value ($)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               {...form.register('buildingValue')}
               className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
@@ -289,6 +291,7 @@ export default function EditPropertyPage() {
             <Label className="text-gray-500">Land Value ($)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               {...form.register('landValue')}
               className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
@@ -300,6 +303,7 @@ export default function EditPropertyPage() {
             <Label className="text-gray-500">Square Footage</Label>
             <Input
               type="number"
+              inputMode="numeric"
               {...form.register('squareFootage')}
               className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
@@ -308,6 +312,7 @@ export default function EditPropertyPage() {
             <Label className="text-gray-500">Year Built</Label>
             <Input
               type="number"
+              inputMode="numeric"
               {...form.register('yearBuilt')}
               className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
@@ -323,6 +328,7 @@ export default function EditPropertyPage() {
               <Label className="text-gray-500">Loan Amount ($)</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 {...form.register('loanAmount')}
                 placeholder="e.g. 2400000"
                 className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
@@ -332,6 +338,7 @@ export default function EditPropertyPage() {
               <Label className="text-gray-500">Interest Rate (%)</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.125"
                 {...form.register('interestRate')}
                 placeholder="e.g. 6.5"
@@ -345,6 +352,7 @@ export default function EditPropertyPage() {
               <Label className="text-gray-500">Loan Term (Years)</Label>
               <Input
                 type="number"
+                inputMode="numeric"
                 {...form.register('loanTermYears')}
                 placeholder="e.g. 30"
                 className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
@@ -354,6 +362,7 @@ export default function EditPropertyPage() {
               <Label className="text-gray-500">Monthly Payment ($)</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 {...form.register('monthlyPayment')}
                 placeholder="e.g. 15168"
                 className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"

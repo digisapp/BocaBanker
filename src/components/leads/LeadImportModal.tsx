@@ -343,7 +343,7 @@ export function LeadImportModal({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="bg-white border-gray-200 sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="bg-white border-gray-200 sm:max-w-2xl max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-gray-900">Import Leads from CSV</DialogTitle>
         </DialogHeader>

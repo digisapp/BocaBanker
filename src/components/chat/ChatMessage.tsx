@@ -2,6 +2,7 @@
 
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
+import ChatMarkdown from '@/components/landing/ChatMarkdown';
 import type { UIMessage } from 'ai';
 
 interface ChatMessageProps {
@@ -29,27 +30,26 @@ function ChatMessageImpl({ role, content, parts, createdAt }: ChatMessageProps) 
       })
     : null;
 
+  // Replies come back as markdown (bold, lists, headings); user text is shown as typed
+  const renderText = (text: string) =>
+    isUser ? (
+      <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">{text}</div>
+    ) : (
+      <div className="break-words text-sm leading-relaxed">
+        <ChatMarkdown text={text} />
+      </div>
+    );
+
   const renderContent = () => {
     if (!parts || parts.length === 0) {
-      return (
-        <div className="whitespace-pre-wrap text-sm leading-relaxed">
-          {content}
-        </div>
-      );
+      return renderText(content);
     }
 
     return (
       <div className="space-y-2">
         {parts.map((part, index) => {
           if (part.type === 'text') {
-            return (
-              <div
-                key={index}
-                className="whitespace-pre-wrap text-sm leading-relaxed"
-              >
-                {part.text}
-              </div>
-            );
+            return <div key={index}>{renderText(part.text)}</div>;
           }
 
           if (isToolPart(part)) {
@@ -143,7 +143,7 @@ function ChatMessageImpl({ role, content, parts, createdAt }: ChatMessageProps) 
 
       <div
         className={cn(
-          'max-w-[75%] rounded-xl px-4 py-3',
+          'max-w-[85%] md:max-w-[75%] rounded-xl px-4 py-3',
           isUser
             ? 'bg-sky-500 text-white rounded-br-sm'
             : 'bg-gray-100 text-gray-800 border-l-2 border-l-amber-500 rounded-bl-sm'
@@ -154,7 +154,7 @@ function ChatMessageImpl({ role, content, parts, createdAt }: ChatMessageProps) 
         {formattedTime && (
           <div
             className={cn(
-              'mt-1.5 text-[10px]',
+              'mt-1.5 text-[11px]',
               isUser ? 'text-sky-100 text-right' : 'text-gray-500'
             )}
           >

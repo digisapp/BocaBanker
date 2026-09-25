@@ -66,7 +66,7 @@ export default function ResetPasswordPage() {
 
   if (sent) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4 bg-gradient-to-b from-sky-50 via-white to-[#FAFAF8]">
+      <div className="flex min-h-dvh items-center justify-center p-4 bg-gradient-to-b from-sky-50 via-white to-[#FAFAF8]">
         <Card className="w-full max-w-md bg-white border-gray-200 shadow-xl shadow-black/5">
           <CardHeader className="text-center space-y-4">
             <div className="flex justify-center">
@@ -98,7 +98,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 bg-gradient-to-b from-sky-50 via-white to-[#FAFAF8]">
+    <div className="flex min-h-dvh items-center justify-center p-4 bg-gradient-to-b from-sky-50 via-white to-[#FAFAF8]">
       <Card className="w-full max-w-md bg-white border-gray-200 shadow-xl shadow-black/5">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
@@ -129,6 +129,7 @@ export default function ResetPasswordPage() {
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
                 placeholder="you@example.com"
                 {...register('email')}
                 className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"

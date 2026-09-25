@@ -255,6 +255,7 @@ export default function SettingsPage() {
             <Input
               id="settings-new-password"
               type="password"
+              autoComplete="new-password"
               {...passwordForm.register('newPassword')}
               className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
@@ -265,6 +266,7 @@ export default function SettingsPage() {
             <Input
               id="settings-confirm-new-password"
               type="password"
+              autoComplete="new-password"
               {...passwordForm.register('confirmPassword')}
               className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
             />
@@ -354,6 +356,7 @@ export default function SettingsPage() {
               <Input
                 id="settings-alert-threshold-basis-points"
                 type="number"
+                inputMode="numeric"
                 value={rateAlertThresholdBps}
                 onChange={(e) => setRateAlertThresholdBps(e.target.value)}
                 placeholder="25"

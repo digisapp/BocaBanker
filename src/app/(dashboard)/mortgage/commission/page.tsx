@@ -50,6 +50,15 @@ for (let m = 0; m < 12; m++) {
   monthNames[key] = d.toLocaleDateString('en-US', { month: 'short' })
 }
 
+const formatCloseDate = (value: string) =>
+  value
+    ? new Date(value).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : '--'
+
 export default function CommissionPage() {
   const [data, setData] = useState<CommissionData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -143,12 +152,40 @@ export default function CommissionPage() {
       {/* Commission Detail Table */}
       {data?.recentCommissions && data.recentCommissions.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-6 pb-3">
+          <div className="p-4 pb-3 md:p-6 md:pb-3">
             <h2 className="text-lg font-semibold text-gray-900">
               Commission Detail
             </h2>
           </div>
-          <div className="overflow-x-auto">
+
+          {/* Mobile card list: the 6-column table only scrolls sideways on a phone */}
+          <div className="md:hidden divide-y divide-gray-100 border-t border-gray-100">
+            {data.recentCommissions.map((c, i) => (
+              <div key={i} className="p-4">
+                <div className="flex items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">
+                      {c.borrowerName}
+                    </p>
+                    <p className="text-sm text-gray-700 truncate">
+                      {formatCurrency(c.loanAmount)} loan
+                      {c.commissionBps != null && ` · ${c.commissionBps} bps`}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate mt-0.5">
+                      {[formatCloseDate(c.actualClosingDate), c.lenderName]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+                  </div>
+                  <p className="shrink-0 text-sm font-medium text-amber-600">
+                    {formatCurrency(c.commissionAmount)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden md:block overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50/50">
@@ -164,13 +201,7 @@ export default function CommissionPage() {
                 {data.recentCommissions.map((c, i) => (
                   <TableRow key={i}>
                     <TableCell className="text-sm text-gray-700">
-                      {c.actualClosingDate
-                        ? new Date(c.actualClosingDate).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
-                        : '--'}
+                      {formatCloseDate(c.actualClosingDate)}
                     </TableCell>
                     <TableCell className="text-sm font-medium text-gray-900">
                       {c.borrowerName}

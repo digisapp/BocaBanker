@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
 import BocaBankerAvatar from './BocaBankerAvatar';
@@ -19,8 +19,10 @@ interface InlineLeadCaptureCardProps {
   onSuccess: (name: string) => void;
 }
 
+// text-base below lg: iOS zooms into fields under 16px (the card shows in the
+// mobile overlay below lg, in the desktop hero widget from lg up).
 const inputClass =
-  'w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40';
+  'w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-base lg:text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/40';
 
 export default function InlineLeadCaptureCard({ question, onDismiss, onSuccess }: InlineLeadCaptureCardProps) {
   const [name, setName] = useState('');
@@ -28,6 +30,16 @@ export default function InlineLeadCaptureCard({ question, onDismiss, onSuccess }
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+
+  // Return on the keyboard moves to the next field rather than submitting a
+  // half-filled form (enterKeyHint labels the key "next").
+  const focusOnEnter = (next: React.RefObject<HTMLInputElement | null>) => (e: React.KeyboardEvent) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    next.current?.focus();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,6 +102,9 @@ export default function InlineLeadCaptureCard({ question, onDismiss, onSuccess }
           <input
             type="text"
             autoComplete="name"
+            autoCapitalize="words"
+            enterKeyHint="next"
+            onKeyDown={focusOnEnter(emailRef)}
             aria-label="Your name"
             placeholder="Your name"
             value={name}
@@ -97,8 +112,11 @@ export default function InlineLeadCaptureCard({ question, onDismiss, onSuccess }
             className={inputClass}
           />
           <input
+            ref={emailRef}
             type="email"
             autoComplete="email"
+            enterKeyHint="next"
+            onKeyDown={focusOnEnter(phoneRef)}
             aria-label="Email address"
             placeholder="Email address"
             value={email}
@@ -106,8 +124,10 @@ export default function InlineLeadCaptureCard({ question, onDismiss, onSuccess }
             className={inputClass}
           />
           <input
+            ref={phoneRef}
             type="tel"
             autoComplete="tel"
+            enterKeyHint="send"
             aria-label="Phone (optional)"
             placeholder="Phone (optional)"
             value={phone}
@@ -122,7 +142,7 @@ export default function InlineLeadCaptureCard({ question, onDismiss, onSuccess }
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-navy text-white font-semibold text-sm rounded-lg py-2.5 hover:bg-navy-light disabled:opacity-50 transition-colors"
+            className="w-full bg-navy text-white font-semibold text-sm rounded-lg py-3 lg:py-2.5 hover:bg-navy-light disabled:opacity-50 transition-colors"
           >
             {submitting ? (
               <Loader2 className="h-4 w-4 animate-spin mx-auto" />
@@ -134,7 +154,7 @@ export default function InlineLeadCaptureCard({ question, onDismiss, onSuccess }
           <button
             type="button"
             onClick={onDismiss}
-            className="block mx-auto text-xs text-gray-500 hover:text-gray-700 transition-colors py-2"
+            className="block mx-auto px-3 py-3.5 text-xs text-gray-500 hover:text-gray-700 transition-colors lg:py-2"
           >
             Maybe later
           </button>

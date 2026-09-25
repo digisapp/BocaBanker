@@ -175,52 +175,98 @@ export default function StudiesPage() {
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-gray-100">
-                <TableHead className="text-amber-600">Study Name</TableHead>
-                <TableHead className="text-amber-600">Property</TableHead>
-                <TableHead className="text-amber-600">Client</TableHead>
-                <TableHead className="text-amber-600 text-center">Status</TableHead>
-                <TableHead className="text-amber-600 text-right">First Year Deduction</TableHead>
-                <TableHead className="text-amber-600 text-right">Total Savings</TableHead>
-                <TableHead className="text-amber-600">Created</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {studies.map((study) => (
-                <TableRow
-                  key={study.id}
-                  className="border-gray-100 cursor-pointer hover:bg-amber-50/50"
-                  onClick={() => router.push(`/studies/${study.id}`)}
-                >
-                  <TableCell>
-                    <p className="text-sm font-medium text-gray-900">{study.studyName}</p>
-                  </TableCell>
-                  <TableCell className="text-sm text-gray-500 max-w-[200px] truncate">
-                    {study.propertyName || '-'}
-                  </TableCell>
-                  <TableCell className="text-sm text-gray-500">
-                    {study.clientName || '-'}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge className={STATUS_COLORS[study.status] || STATUS_COLORS.draft}>
-                      {STATUS_LABELS[study.status] || study.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right text-sm font-medium text-gray-900">
-                    {formatCurrency(study.totalFirstYearDeduction, '-')}
-                  </TableCell>
-                  <TableCell className="text-right text-sm font-medium text-[#10B981]">
-                    {formatCurrency(study.totalTaxSavings, '-')}
-                  </TableCell>
-                  <TableCell className="text-sm text-gray-400">
-                    {new Date(study.createdAt).toLocaleDateString()}
-                  </TableCell>
+          {/* Mobile card list: the 7-column table only scrolls sideways on a phone */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {studies.map((study) => (
+              <div key={study.id} className="p-4">
+                <div className="flex items-start gap-2">
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/studies/${study.id}`)}
+                    className="flex-1 min-w-0 text-left"
+                  >
+                    <p className="font-medium text-gray-900 truncate">
+                      {study.studyName}
+                    </p>
+                    <p className="text-sm text-gray-700 truncate">
+                      {study.propertyName || '-'}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate mt-0.5">
+                      {[study.clientName, new Date(study.createdAt).toLocaleDateString()]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+                  </button>
+                  <Badge className={`shrink-0 ${STATUS_COLORS[study.status] || STATUS_COLORS.draft}`}>
+                    {STATUS_LABELS[study.status] || study.status}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div className="min-w-0">
+                    <p className="text-xs text-gray-500">First Year Deduction</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {formatCurrency(study.totalFirstYearDeduction, '-')}
+                    </p>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-gray-500">Total Savings</p>
+                    <p className="text-sm font-medium text-[#10B981] truncate">
+                      {formatCurrency(study.totalTaxSavings, '-')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-gray-100">
+                  <TableHead className="text-amber-600">Study Name</TableHead>
+                  <TableHead className="text-amber-600">Property</TableHead>
+                  <TableHead className="text-amber-600">Client</TableHead>
+                  <TableHead className="text-amber-600 text-center">Status</TableHead>
+                  <TableHead className="text-amber-600 text-right">First Year Deduction</TableHead>
+                  <TableHead className="text-amber-600 text-right">Total Savings</TableHead>
+                  <TableHead className="text-amber-600">Created</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {studies.map((study) => (
+                  <TableRow
+                    key={study.id}
+                    className="border-gray-100 cursor-pointer hover:bg-amber-50/50"
+                    onClick={() => router.push(`/studies/${study.id}`)}
+                  >
+                    <TableCell>
+                      <p className="text-sm font-medium text-gray-900">{study.studyName}</p>
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-500 max-w-[200px] truncate">
+                      {study.propertyName || '-'}
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-500">
+                      {study.clientName || '-'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge className={STATUS_COLORS[study.status] || STATUS_COLORS.draft}>
+                        {STATUS_LABELS[study.status] || study.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right text-sm font-medium text-gray-900">
+                      {formatCurrency(study.totalFirstYearDeduction, '-')}
+                    </TableCell>
+                    <TableCell className="text-right text-sm font-medium text-[#10B981]">
+                      {formatCurrency(study.totalTaxSavings, '-')}
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-400">
+                      {new Date(study.createdAt).toLocaleDateString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
 
@@ -232,7 +278,7 @@ export default function StudiesPage() {
             size="sm"
             disabled={pagination.page <= 1}
             onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
-            className="border-gray-200 text-gray-500 hover:text-amber-600"
+            className="h-10 md:h-8 border-gray-200 text-gray-500 hover:text-amber-600"
           >
             Previous
           </Button>
@@ -244,7 +290,7 @@ export default function StudiesPage() {
             size="sm"
             disabled={pagination.page >= pagination.totalPages}
             onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
-            className="border-gray-200 text-gray-500 hover:text-amber-600"
+            className="h-10 md:h-8 border-gray-200 text-gray-500 hover:text-amber-600"
           >
             Next
           </Button>

@@ -168,7 +168,7 @@ export default function ClientsPage() {
           className="max-w-sm bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
         />
         <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-          <SelectTrigger aria-label="Filter by status" className="w-[160px] bg-gray-50 border-gray-200 text-gray-900">
+          <SelectTrigger aria-label="Filter by status" className="w-full sm:w-[160px] bg-gray-50 border-gray-200 text-gray-900">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent className="bg-white border-gray-200">

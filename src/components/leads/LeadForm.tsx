@@ -202,6 +202,7 @@ export function LeadForm({
                   <FormControl>
                     <Input
                       type="number"
+                      inputMode="numeric"
                       placeholder="10000"
                       className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
                       {...field}
@@ -226,6 +227,7 @@ export function LeadForm({
                   <FormControl>
                     <Input
                       type="number"
+                      inputMode="numeric"
                       placeholder="2005"
                       className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
                       {...field}
@@ -259,6 +261,7 @@ export function LeadForm({
                   <FormControl>
                     <Input
                       type="number"
+                      inputMode="decimal"
                       placeholder="500000"
                       className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
                       {...field}

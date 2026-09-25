@@ -255,7 +255,7 @@ export default function LoanDetailPage() {
               <h1 className="text-2xl font-bold text-gray-900">
                 {loan.borrowerName || 'Untitled Loan'}
               </h1>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 mt-1">
                 <LoanStatusBadge status={status} />
                 {loan.loanType && (
                   <Badge
@@ -275,7 +275,7 @@ export default function LoanDetailPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 ml-14 sm:ml-0">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
           {editing ? (
             <>
               <Button
@@ -385,6 +385,7 @@ export default function LoanDetailPage() {
               </label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.125"
                 value={editForm.interestRate}
                 onChange={(e) =>
@@ -400,6 +401,7 @@ export default function LoanDetailPage() {
               </label>
               <Input
                 type="number"
+                inputMode="numeric"
                 value={editForm.term}
                 onChange={(e) =>
                   setEditForm((f) => ({ ...f, term: e.target.value }))
@@ -414,6 +416,7 @@ export default function LoanDetailPage() {
               </label>
               <Input
                 type="number"
+                inputMode="numeric"
                 value={editForm.commissionBps}
                 onChange={(e) =>
                   setEditForm((f) => ({ ...f, commissionBps: e.target.value }))
@@ -550,7 +553,7 @@ export default function LoanDetailPage() {
               {loan.borrowerEmail ? (
                 <a
                   href={`mailto:${loan.borrowerEmail}`}
-                  className="text-sm text-amber-600 hover:underline mt-0.5 block"
+                  className="-mb-2 -mt-1.5 block break-all py-2 text-sm text-amber-600 hover:underline"
                 >
                   {loan.borrowerEmail}
                 </a>
@@ -570,7 +573,7 @@ export default function LoanDetailPage() {
               {loan.borrowerPhone ? (
                 <a
                   href={`tel:${loan.borrowerPhone}`}
-                  className="text-sm text-amber-600 hover:underline mt-0.5 block"
+                  className="-mb-2 -mt-1.5 block break-all py-2 text-sm text-amber-600 hover:underline"
                 >
                   {loan.borrowerPhone}
                 </a>

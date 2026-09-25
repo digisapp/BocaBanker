@@ -41,7 +41,7 @@ function RichText({ text }: { text: string }) {
       {parts.map((part, i) => {
         const m = part.match(/^\[([^\]]+)\]\((\/[^)]*)\)$/)
         return m ? (
-          <Link key={i} href={m[2]} className="font-medium text-gold-dark underline underline-offset-2 hover:text-navy">
+          <Link key={i} href={m[2]} className="py-1 font-medium text-gold-dark underline underline-offset-2 hover:text-navy">
             {m[1]}
           </Link>
         ) : (
@@ -178,14 +178,15 @@ export default function TopicPage({ topic, children }: { topic: Topic; children?
           />
           <div className="relative mx-auto max-w-3xl text-center">
             <nav aria-label="Breadcrumb" className="mb-6 text-sm text-gray-500">
-              <Link href="/" className="hover:text-navy">Home</Link>
+              {/* Inline link: the vertical padding widens its tap area without shifting layout */}
+              <Link href="/" className="py-2.5 hover:text-navy">Home</Link>
               <span aria-hidden="true" className="mx-2">/</span>
               <span className="text-navy">{topic.cardTitle}</span>
             </nav>
             <Eyebrow>{topic.eyebrow}</Eyebrow>
             <h1 className="font-serif text-4xl leading-[1.08] tracking-tight text-navy sm:text-5xl">{topic.h1}</h1>
             <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-gray-600 sm:text-lg">{topic.intro}</p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <div data-chat-cta className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <OpenChatButton prompt={topic.chatPrompt} className={primaryBtn}>
                 <MessageCircle className="h-5 w-5" />
                 {topic.ctaLabel}
@@ -318,7 +319,7 @@ export default function TopicPage({ topic, children }: { topic: Topic; children?
             </div>
             <p className="mt-10 text-center text-sm text-gray-600">
               See what clients say in{' '}
-              <Link href="/reviews" className="font-semibold text-gold-dark hover:text-navy">
+              <Link href="/reviews" className="py-2.5 font-semibold text-gold-dark hover:text-navy">
                 Boca Banker’s reviews
               </Link>
               .

@@ -504,7 +504,7 @@ export default function PropertyDetailPage() {
                       <p className="text-sm font-medium text-amber-600">
                         {formatCurrency(study.totalFirstYearDeduction)}
                       </p>
-                      <p className="text-[10px] text-gray-500">First Year</p>
+                      <p className="text-[11px] text-gray-500">First Year</p>
                     </div>
                   )}
                   <Badge

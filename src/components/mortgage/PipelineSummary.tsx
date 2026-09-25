@@ -1,5 +1,6 @@
 'use client'
 
+import { useSyncExternalStore } from 'react'
 import {
   BarChart,
   Bar,
@@ -26,7 +27,38 @@ const stageColors: Record<string, string> = {
   'Clear to Close': '#16a34a',
 }
 
+// Phones fit ~45px per bar, so Recharts drops the long labels; abbreviate
+// there and keep the full stage name in the tooltip.
+const shortLabels: Record<string, string> = {
+  'Pre-Qual': 'Pre-Q',
+  Application: 'App',
+  Processing: 'Proc',
+  Underwriting: 'UW',
+  'Clear to Close': 'CTC',
+}
+
+const MOBILE_MEDIA_QUERY = '(max-width: 639px)'
+
+function subscribeToViewport(callback: () => void) {
+  const mql = window.matchMedia(MOBILE_MEDIA_QUERY)
+  mql.addEventListener('change', callback)
+  return () => mql.removeEventListener('change', callback)
+}
+
+function getIsMobile() {
+  return window.matchMedia(MOBILE_MEDIA_QUERY).matches
+}
+
+function getServerIsMobile() {
+  return false
+}
+
 export function PipelineSummary({ data }: { data: PipelineData }) {
+  const isMobile = useSyncExternalStore(
+    subscribeToViewport,
+    getIsMobile,
+    getServerIsMobile
+  )
   const chartData = [
     { name: 'Pre-Qual', count: data.preQual },
     { name: 'Application', count: data.application },
@@ -50,8 +82,12 @@ export function PipelineSummary({ data }: { data: PipelineData }) {
       <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
         <XAxis
           dataKey="name"
-          tick={{ fontSize: 10, fill: '#9ca3af' }}
+          tick={{ fontSize: isMobile ? 11 : 10, fill: '#9ca3af' }}
           axisLine={{ stroke: '#e5e7eb' }}
+          {...(isMobile && {
+            interval: 0,
+            tickFormatter: (name: string) => shortLabels[name] ?? name,
+          })}
         />
         <YAxis
           allowDecimals={false}

@@ -169,6 +169,7 @@ export default function BonusDepreciationCalculator() {
             <Label className="text-gray-500">Total Building Value ($)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               placeholder="e.g. 3000000"
               value={buildingValue}
               onChange={(e) => setBuildingValue(e.target.value)}

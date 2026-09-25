@@ -5,8 +5,9 @@ import { logger } from '@/lib/logger';
 import {
   Mail, Inbox, Send, Loader2, MailOpen, Reply, Trash2, X, Search,
   MessageSquare, Sparkles, ToggleLeft,
-  ToggleRight, Square, CheckSquare, ArrowLeft,
+  ToggleRight, Square, CheckSquare, ArrowLeft, History,
 } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -195,24 +196,33 @@ export default function EmailPage() {
             <p className="text-sm text-gray-500">Send, receive, and manage client emails</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
           {/* Auto-reply toggle */}
           <button
             onClick={toggleAutoReply}
-            className="flex items-center gap-2 text-sm text-gray-600 hover:text-amber-600 transition-colors"
+            role="switch"
+            aria-checked={autoReplyEnabled}
+            className="flex h-10 items-center gap-2 text-sm text-gray-600 hover:text-amber-600 transition-colors"
           >
             {autoReplyEnabled ? (
               <ToggleRight className="h-5 w-5 text-amber-500" />
             ) : (
               <ToggleLeft className="h-5 w-5 text-gray-400" />
             )}
-            <span className="hidden sm:inline">AI Auto-Reply</span>
+            AI Auto-Reply
           </button>
           {/* Compose button */}
           <ComposeDialog open={composeOpen} onOpenChange={setComposeOpen} />
           <RoleGate permission="canSendEmail">
             <BulkEmailModal />
           </RoleGate>
+          {/* Topbar search (the usual way to Email History) is hidden below sm */}
+          <Button asChild variant="outline" className="sm:hidden border-gray-200 text-gray-600 hover:bg-gray-50">
+            <Link href="/email/history">
+              <History className="h-4 w-4 mr-2" />
+              History
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -299,7 +309,7 @@ function ComposeDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v
           Compose
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-white border-gray-200 text-gray-900 sm:max-w-2xl max-h-[85dvh] md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-amber-600">Compose Email</DialogTitle>
           <DialogDescription className="text-gray-500">Send a new email via Resend</DialogDescription>
@@ -358,6 +368,7 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
   // Latest detail request wins: clicking through emails quickly must not let
   // a slow earlier response replace the email the user clicked last.
   const detailRequestRef = useRef(0);
+  const detailPanelRef = useRef<HTMLDivElement>(null);
 
   const fetchInbox = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
@@ -406,6 +417,15 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [selectedEmail]);
+
+  // Below lg the open email replaces the list further down the page, under the
+  // header, tabs and filters; bring it into view so it doesn't open off screen.
+  const detailOpen = !!selectedEmail || loadingDetail;
+  useEffect(() => {
+    if (detailOpen && !window.matchMedia('(min-width: 1024px)').matches) {
+      detailPanelRef.current?.scrollIntoView({ block: 'start' });
+    }
+  }, [detailOpen]);
 
   async function openEmail(id: string) {
     const requestId = ++detailRequestRef.current;
@@ -531,7 +551,7 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
     <div className="space-y-4">
       {/* Selection bar */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2">
+        <div className="flex flex-wrap items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2">
           <span className="text-sm font-medium text-amber-700">{selectedIds.size} selected</span>
           <Button size="sm" variant="outline" onClick={bulkMarkRead}
             className="border-amber-200 text-amber-700 hover:bg-amber-100 h-7 text-xs">
@@ -560,7 +580,7 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
           <Button type="submit" variant="outline" className="border-gray-200 text-amber-600 hover:bg-amber-50">Search</Button>
         </form>
         <Select value={readFilter} onValueChange={(v) => { setReadFilter(v); setPage(1); }}>
-          <SelectTrigger className="w-[140px] bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500">
+          <SelectTrigger className="w-full sm:w-[140px] bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-white border-gray-200">
@@ -597,7 +617,8 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
             <>
               {/* Select all row */}
               <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-100 bg-gray-50/50">
-                <button onClick={toggleSelectAll} className="text-gray-400 hover:text-amber-500">
+                <button onClick={toggleSelectAll} aria-label="Select all emails"
+                  className="-m-3 p-3 md:m-0 md:p-0 text-gray-400 hover:text-amber-500">
                   {selectedIds.size === emailList.length ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
                 </button>
                 <span className="text-xs text-gray-400">{total} emails</span>
@@ -607,10 +628,11 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
                   <div key={email.id} className={`flex items-start gap-2 px-4 py-3 hover:bg-amber-50/50 transition-colors cursor-pointer ${
                     selectedEmail?.id === email.id ? 'bg-amber-50 border-l-2 border-amber-500' : ''
                   } ${!email.isRead ? 'bg-blue-50/30' : ''} ${email.aiCategory === 'spam' ? 'opacity-60' : ''}`}>
-                    {/* Checkbox */}
+                    {/* Checkbox (negative margins: 40px tap target on mobile, icon stays put) */}
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleSelect(email.id); }}
-                      className="mt-1 text-gray-400 hover:text-amber-500 shrink-0"
+                      aria-label={selectedIds.has(email.id) ? 'Deselect email' : 'Select email'}
+                      className="-mx-3 -mt-2 p-3 md:mx-0 md:mt-1 md:p-0 text-gray-400 hover:text-amber-500 shrink-0"
                     >
                       {selectedIds.has(email.id) ? <CheckSquare className="h-4 w-4 text-amber-500" /> : <Square className="h-4 w-4" />}
                     </button>
@@ -652,8 +674,8 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
                           <MessageSquare className="h-3 w-3 text-gray-400" />
                         )}
                         {email.clientFirstName && (
-                          <Badge variant="outline" className="text-xs bg-amber-50 text-amber-600 border-amber-200">
-                            {email.clientFirstName} {email.clientLastName}
+                          <Badge variant="outline" className="max-w-full text-xs bg-amber-50 text-amber-600 border-amber-200">
+                            <span className="truncate">{email.clientFirstName} {email.clientLastName}</span>
                           </Badge>
                         )}
                       </div>
@@ -676,7 +698,7 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
         </div>
 
         {/* Detail panel */}
-        <div className={`w-full lg:w-3/5 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-col ${
+        <div ref={detailPanelRef} className={`scroll-mt-4 w-full lg:w-3/5 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-col ${
           selectedEmail || loadingDetail ? 'flex' : 'hidden lg:flex'
         }`}>
           {loadingDetail ? (
@@ -684,11 +706,18 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
           ) : selectedEmail ? (
             <>
               {/* Header */}
-              <div className="p-6 border-b border-gray-100">
+              <div className="p-4 md:p-6 border-b border-gray-100">
+                {/* Mobile: the only way back to the list (no browser back in the installed app) */}
+                <button onClick={() => setSelectedEmail(null)}
+                  className="md:hidden -ml-2 -mt-1 mb-2 flex h-10 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-gray-600 hover:text-amber-600">
+                  <ArrowLeft className="h-4 w-4" />
+                  Inbox
+                </button>
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setSelectedEmail(null)} className="text-gray-400 hover:text-amber-600">
+                      <button onClick={() => setSelectedEmail(null)} aria-label="Back to inbox"
+                        className="hidden md:block text-gray-400 hover:text-amber-600">
                         <ArrowLeft className="h-4 w-4" />
                       </button>
                       <h2 className="text-lg font-semibold text-gray-900 truncate">{selectedEmail.subject}</h2>
@@ -699,8 +728,8 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
                     <p className="text-xs text-gray-400 mt-0.5">{formatDate(selectedEmail.createdAt)}</p>
                     <div className="flex flex-wrap items-center gap-2 mt-2">
                       {selectedEmail.clientFirstName && (
-                        <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200">
-                          Client: {selectedEmail.clientFirstName} {selectedEmail.clientLastName}
+                        <Badge variant="outline" className="max-w-full bg-amber-50 text-amber-600 border-amber-200">
+                          <span className="truncate">Client: {selectedEmail.clientFirstName} {selectedEmail.clientLastName}</span>
                         </Badge>
                       )}
                       <Badge variant="outline" className={STATUS_COLORS[selectedEmail.status] || ''}>{selectedEmail.status}</Badge>
@@ -718,18 +747,18 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
                     )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <Button variant="ghost" size="icon" onClick={() => { setShowReply(!showReply); setReplyBody(''); }}
-                      className="text-gray-500 hover:text-amber-600 hover:bg-amber-50"><Reply className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteEmails([selectedEmail.id])}
-                      className="text-gray-500 hover:text-red-600 hover:bg-red-50"><Trash2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => { setShowReply(!showReply); setReplyBody(''); }} aria-label="Reply"
+                      className="size-10 md:size-9 text-gray-500 hover:text-amber-600 hover:bg-amber-50"><Reply className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => deleteEmails([selectedEmail.id])} aria-label="Delete email"
+                      className="size-10 md:size-9 text-gray-500 hover:text-red-600 hover:bg-red-50"><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </div>
               </div>
 
               {/* AI Draft Section */}
               {selectedEmail.aiDraftHtml && selectedEmail.status !== 'replied' && (
-                <div className="mx-6 mt-4 p-4 bg-violet-50 border border-violet-200 rounded-xl">
-                  <div className="flex items-center justify-between mb-2">
+                <div className="mx-4 md:mx-6 mt-4 p-4 bg-violet-50 border border-violet-200 rounded-xl">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                     <p className="text-sm font-medium text-violet-700 flex items-center gap-1.5">
                       <Sparkles className="h-4 w-4" />AI Draft Reply
                     </p>
@@ -747,7 +776,7 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
               )}
 
               {/* Thread / Body */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
                 {selectedEmail.thread && selectedEmail.thread.length > 1 ? (
                   [...selectedEmail.thread].reverse().map((msg) => (
                     <div key={msg.id} className={msg.direction === 'outbound' ? 'ml-8' : ''}>
@@ -784,12 +813,12 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
                 <div className="border-t border-gray-100 p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-gray-700">Reply to {selectedEmail.fromName || selectedEmail.fromEmail}</p>
-                    <Button variant="ghost" size="icon" onClick={() => setShowReply(false)} className="text-gray-400 hover:text-gray-600 h-6 w-6">
+                    <Button variant="ghost" size="icon" onClick={() => setShowReply(false)} aria-label="Close reply" className="text-gray-400 hover:text-gray-600 size-9 md:size-6">
                       <X className="h-3 w-3" />
                     </Button>
                   </div>
                   <textarea value={replyBody} onChange={(e) => setReplyBody(e.target.value)} placeholder="Type your reply..."
-                    className="w-full min-h-[120px] px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 resize-y text-gray-900 placeholder:text-gray-400" />
+                    className="w-full min-h-[120px] px-3 py-2 text-base md:text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 resize-y text-gray-900 placeholder:text-gray-400" />
                   <div className="flex justify-end">
                     <Button onClick={sendReply} disabled={sendingReply || !replyBody.trim()} className="bg-amber-500 hover:bg-amber-600 text-white">
                       {sendingReply ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
@@ -873,7 +902,7 @@ function SentTab() {
           <Button type="submit" variant="outline" className="border-gray-200 text-amber-600 hover:bg-amber-50">Search</Button>
         </form>
         <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
-          <SelectTrigger className="w-[160px] bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[160px] bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500"><SelectValue /></SelectTrigger>
           <SelectContent className="bg-white border-gray-200">
             <SelectItem value="all" className="text-gray-900 focus:bg-amber-50">All Status</SelectItem>
             <SelectItem value="sent" className="text-gray-900 focus:bg-amber-50">Sent</SelectItem>
@@ -900,7 +929,7 @@ function SentTab() {
                 <th className="text-left px-4 py-3 text-xs font-medium text-amber-600 uppercase">Date</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-amber-600 uppercase">Recipient</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-amber-600 uppercase">Subject</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-amber-600 uppercase">Template</th>
+                <th className="hidden md:table-cell text-left px-4 py-3 text-xs font-medium text-amber-600 uppercase">Template</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-amber-600 uppercase">Status</th>
               </tr>
             </thead>
@@ -913,7 +942,7 @@ function SentTab() {
                     {email.clientFirstName && <p className="text-xs text-gray-400">{email.clientFirstName} {email.clientLastName}</p>}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 max-w-[200px] truncate">{email.subject}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500 capitalize">
+                  <td className="hidden md:table-cell px-4 py-3 text-sm text-gray-500 capitalize">
                     {email.template === 'ai-auto-reply' ? (
                       <Badge variant="outline" className="text-xs bg-violet-50 text-violet-600 border-violet-200">
                         <Sparkles className="h-3 w-3 mr-0.5" />Auto

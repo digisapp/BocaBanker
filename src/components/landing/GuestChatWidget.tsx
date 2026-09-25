@@ -121,6 +121,32 @@ export default function GuestChatWidget({ request, embedded = false }: GuestChat
     scrollToBottom(status !== 'streaming');
   }, [messages, showLeadCard, status, scrollToBottom]);
 
+  // When the list shrinks (e.g. the iOS keyboard opening under the mobile
+  // overlay), keep the focused lead-form field, or else the newest message, in
+  // view. Leaves the scroll alone if the visitor has scrolled up to read.
+  useEffect(() => {
+    const el = messagesRef.current;
+    if (!el) return;
+    let atBottom = true;
+    const onScroll = () => {
+      atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    };
+    const observer = new ResizeObserver(() => {
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && el.contains(active)) {
+        active.scrollIntoView({ block: 'nearest' });
+      } else if (atBottom) {
+        el.scrollTop = el.scrollHeight;
+      }
+    });
+    el.addEventListener('scroll', onScroll, { passive: true });
+    observer.observe(el);
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      observer.disconnect();
+    };
+  }, []);
+
   // Persist messages to localStorage for handoff. Skip while streaming so we
   // don't serialize the whole history on every token.
   useEffect(() => {
@@ -161,15 +187,17 @@ export default function GuestChatWidget({ request, embedded = false }: GuestChat
 
   // Act on each "open chat" request once: send its starter question, or just
   // focus the input. Waits until the greeting/history has been loaded and any
-  // in-flight reply has finished.
+  // in-flight reply has finished. The mobile overlay skips the focus: iOS won't
+  // raise the keyboard for a focus that isn't part of a tap, and the starter
+  // questions should stay visible until the visitor taps the input.
   useEffect(() => {
     if (!request || handledRequestId.current === request.id) return;
     if (messages.length === 0 || isLoading) return;
     handledRequestId.current = request.id;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot response to an external "Ask" click, guarded by handledRequestId
     if (request.prompt) submitText(request.prompt);
-    else inputRef.current?.focus({ preventScroll: true });
-  }, [request, messages.length, isLoading, submitText]);
+    else if (!embedded) inputRef.current?.focus({ preventScroll: true });
+  }, [request, messages.length, isLoading, submitText, embedded]);
 
   const showStarters =
     !isLoading && messages.length === 1 && messages[0]?.id === GREETING_MESSAGE.id;
@@ -237,7 +265,7 @@ export default function GuestChatWidget({ request, embedded = false }: GuestChat
       {/* Messages */}
       <div
         className={cn(
-          'p-4 sm:p-6 space-y-4 flex-1 min-h-0 overflow-y-auto',
+          'p-4 sm:p-6 space-y-4 flex-1 min-h-0 overflow-y-auto overscroll-y-contain',
           !embedded && 'h-[400px] flex-none'
         )}
         aria-live="polite"
@@ -279,7 +307,7 @@ export default function GuestChatWidget({ request, embedded = false }: GuestChat
                 key={prompt}
                 type="button"
                 onClick={() => submitText(prompt)}
-                className="rounded-full border border-amber-200 bg-amber-50/60 px-3 py-1.5 text-left text-xs font-medium text-navy transition-colors hover:border-amber-300 hover:bg-amber-100"
+                className="rounded-full border border-amber-200 bg-amber-50/60 px-3 py-2.5 lg:py-1.5 text-left text-xs font-medium text-navy transition-colors hover:border-amber-300 hover:bg-amber-100"
               >
                 {prompt}
               </button>
@@ -341,10 +369,11 @@ export default function GuestChatWidget({ request, embedded = false }: GuestChat
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Ask about rates, refinancing, cost seg…"
+            placeholder={embedded ? 'Ask about rates, refinancing…' : 'Ask about rates, refinancing, cost seg…'}
             aria-label="Your question"
+            enterKeyHint="send"
             maxLength={2000}
-            className="flex-1 bg-gray-50 rounded-xl px-3 sm:px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+            className="min-w-0 flex-1 bg-gray-50 rounded-xl px-3 sm:px-4 py-3 text-base lg:text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
           />
           <button
             type="submit"

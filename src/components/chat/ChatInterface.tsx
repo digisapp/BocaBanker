@@ -233,7 +233,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
   };
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="flex flex-1 min-h-0 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       {/* Sidebar backdrop (mobile) */}
       {sidebarOpen && (
         <div
@@ -262,8 +262,9 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
             variant="ghost"
             size="icon-xs"
             onClick={handleStartNew}
-            className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+            className="size-10 md:size-6 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
             title="New conversation"
+            aria-label="New conversation"
           >
             <MessageSquarePlus className="h-4 w-4" />
           </Button>
@@ -300,10 +301,11 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
                     <div className="truncate font-medium text-xs">
                       {conv.title}
                     </div>
-                    <div className="text-[10px] text-gray-400 mt-0.5">
+                    <div className="text-[11px] text-gray-400 mt-0.5">
                       {formatDate(conv.updatedAt)}
                     </div>
                   </button>
+                  {/* Hover-reveal only on hover-capable devices; always visible on touch */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -311,12 +313,13 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
                     }}
                     onBlur={() => setPendingDeleteId(null)}
                     className={cn(
-                      'mr-1.5 flex h-6 w-6 items-center justify-center rounded transition-all flex-shrink-0',
+                      'mr-1.5 flex h-9 w-9 md:h-6 md:w-6 items-center justify-center rounded transition-all flex-shrink-0',
                       pendingDeleteId === conv.id
                         ? 'text-red-500 bg-red-50 opacity-100'
-                        : 'text-gray-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100'
+                        : 'text-gray-400 hover:text-red-500 hover:bg-red-50 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
                     )}
                     title={pendingDeleteId === conv.id ? 'Click again to delete' : 'Delete conversation'}
+                    aria-label={pendingDeleteId === conv.id ? 'Confirm delete conversation' : 'Delete conversation'}
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -335,7 +338,8 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
             variant="ghost"
             size="icon-xs"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-gray-500 hover:text-gray-900"
+            className="size-10 md:size-6 text-gray-500 hover:text-gray-900"
+            aria-label={sidebarOpen ? 'Hide conversations' : 'Show conversations'}
           >
             <ChevronLeft
               className={cn(
@@ -352,7 +356,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
               <h2 className="text-sm font-semibold text-gray-900">
                 Boca Banker
               </h2>
-              <p className="text-[10px] text-gray-500">
+              <p className="text-xs text-gray-500">
                 Banking, Mortgage & Cost Segregation Advisor
               </p>
             </div>
@@ -360,7 +364,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
         </div>
 
         {/* Messages Area */}
-        <ScrollArea className="flex-1 p-4">
+        <ScrollArea className="flex-1 min-h-0 p-3 md:p-4">
           {loadingHistory ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="h-6 w-6 animate-spin text-amber-600" />

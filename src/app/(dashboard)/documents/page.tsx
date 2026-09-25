@@ -12,6 +12,7 @@ import {
   File,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -25,6 +26,7 @@ import { useAuth } from '@/context/AuthContext';
 import EmptyState from '@/components/shared/EmptyState';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface DocumentEntry {
   id: string;
@@ -43,6 +45,14 @@ function formatFileSize(bytes: number | null): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatDocDate(value: string): string {
+  return new Date(value).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 function fileTypeLabel(mime: string | null): string {
@@ -204,6 +214,39 @@ export default function DocumentsPage() {
     }
   }
 
+  // Download/delete buttons, shared by the desktop table and the mobile card list
+  function renderDocumentActions(doc: DocumentEntry, buttonClassName?: string) {
+    return (
+      <>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleDownload(doc)}
+          className={cn('text-amber-600 hover:text-amber-700 hover:bg-amber-50', buttonClassName)}
+          title="Download"
+          aria-label={`Download ${doc.fileName}`}
+        >
+          <Download className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleDelete(doc)}
+          disabled={deletingId === doc.id}
+          className={cn('text-red-400 hover:text-red-600 hover:bg-red-50', buttonClassName)}
+          title="Delete"
+          aria-label={`Delete ${doc.fileName}`}
+        >
+          {deletingId === doc.id ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Trash2 className="h-4 w-4" />
+          )}
+        </Button>
+      </>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -269,77 +312,84 @@ export default function DocumentsPage() {
         />
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-gray-200 hover:bg-transparent">
-                <TableHead className="text-amber-600">Name</TableHead>
-                <TableHead className="text-amber-600">Type</TableHead>
-                <TableHead className="text-amber-600">Size</TableHead>
-                <TableHead className="text-amber-600">Client</TableHead>
-                <TableHead className="text-amber-600">Date</TableHead>
-                <TableHead className="text-amber-600 text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {docs.map((doc) => (
-                <TableRow key={doc.id} className="border-gray-100 hover:bg-amber-50/50">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <File className="h-4 w-4 text-amber-600 flex-shrink-0" />
-                      <span className="text-gray-900 text-sm truncate max-w-[220px]">
-                        {doc.fileName}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-gray-500 text-sm">
+          {/* Mobile card list: the 6-column table only scrolls sideways on a phone */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {docs.map((doc) => (
+              <div key={doc.id} className="p-4">
+                <div className="flex items-start gap-3">
+                  <File className="h-4 w-4 text-amber-600 flex-shrink-0 mt-1" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">
+                      {doc.fileName}
+                    </p>
+                    <p className="text-sm text-gray-700 truncate">
+                      {doc.clientName ?? <span className="text-gray-400">No client</span>}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate mt-0.5">
+                      {formatFileSize(doc.fileSize)} · {formatDocDate(doc.createdAt)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 mt-3">
+                  <Badge
+                    variant="outline"
+                    className="bg-gray-50 text-gray-600 border-gray-200 text-xs"
+                  >
                     {fileTypeLabel(doc.fileType)}
-                  </TableCell>
-                  <TableCell className="text-gray-500 text-sm">
-                    {formatFileSize(doc.fileSize)}
-                  </TableCell>
-                  <TableCell className="text-gray-500 text-sm">
-                    {doc.clientName ?? <span className="text-gray-300">—</span>}
-                  </TableCell>
-                  <TableCell className="text-gray-500 text-sm whitespace-nowrap">
-                    {new Date(doc.createdAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDownload(doc)}
-                        className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                        title="Download"
-                  aria-label={`Download ${doc.fileName}`}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(doc)}
-                        disabled={deletingId === doc.id}
-                        className="text-red-400 hover:text-red-600 hover:bg-red-50"
-                        title="Delete"
-                  aria-label={`Delete ${doc.fileName}`}
-                      >
-                        {deletingId === doc.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </TableCell>
+                  </Badge>
+                  <div className="ml-auto flex items-center gap-2">
+                    {renderDocumentActions(doc, 'size-10 border border-gray-200')}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-gray-200 hover:bg-transparent">
+                  <TableHead className="text-amber-600">Name</TableHead>
+                  <TableHead className="text-amber-600">Type</TableHead>
+                  <TableHead className="text-amber-600">Size</TableHead>
+                  <TableHead className="text-amber-600">Client</TableHead>
+                  <TableHead className="text-amber-600">Date</TableHead>
+                  <TableHead className="text-amber-600 text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {docs.map((doc) => (
+                  <TableRow key={doc.id} className="border-gray-100 hover:bg-amber-50/50">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <File className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                        <span className="text-gray-900 text-sm truncate max-w-[220px]">
+                          {doc.fileName}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-gray-500 text-sm">
+                      {fileTypeLabel(doc.fileType)}
+                    </TableCell>
+                    <TableCell className="text-gray-500 text-sm">
+                      {formatFileSize(doc.fileSize)}
+                    </TableCell>
+                    <TableCell className="text-gray-500 text-sm">
+                      {doc.clientName ?? <span className="text-gray-300">—</span>}
+                    </TableCell>
+                    <TableCell className="text-gray-500 text-sm whitespace-nowrap">
+                      {formatDocDate(doc.createdAt)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {renderDocumentActions(doc)}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
     </div>

@@ -175,6 +175,7 @@ export default function TaxSavingsCalculator() {
             <Label className="text-gray-500">Property Value ($)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               placeholder="e.g. 2000000"
               value={propertyValue}
               onChange={(e) => setPropertyValue(e.target.value)}
@@ -206,6 +207,7 @@ export default function TaxSavingsCalculator() {
             <Label className="text-gray-500">Tax Rate (%)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               placeholder="37"
               value={taxRate}
               onChange={(e) => setTaxRate(e.target.value)}
@@ -217,6 +219,7 @@ export default function TaxSavingsCalculator() {
             <Label className="text-gray-500">Discount Rate (%)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               placeholder="5"
               value={discountRate}
               onChange={(e) => setDiscountRate(e.target.value)}

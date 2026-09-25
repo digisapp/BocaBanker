@@ -104,6 +104,7 @@ export default function DepreciationCalculator() {
             <Label className="text-gray-500">Asset Value ($)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               placeholder="e.g. 500000"
               value={assetValue}
               onChange={(e) => setAssetValue(e.target.value)}

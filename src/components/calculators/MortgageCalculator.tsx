@@ -113,6 +113,7 @@ export default function MortgageCalculator({ initialValues }: MortgageCalculator
             <Label className="text-gray-500">Loan Amount ($)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               placeholder="e.g. 3000000"
               value={loanAmount}
               onChange={(e) => setLoanAmount(e.target.value)}
@@ -124,6 +125,7 @@ export default function MortgageCalculator({ initialValues }: MortgageCalculator
             <Label className="text-gray-500">Interest Rate (%)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               step="0.125"
               placeholder="e.g. 6.5"
               value={interestRate}
@@ -156,6 +158,7 @@ export default function MortgageCalculator({ initialValues }: MortgageCalculator
             <Label className="text-gray-500">Annual Property Tax ($)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               placeholder="Optional"
               value={propertyTax}
               onChange={(e) => setPropertyTax(e.target.value)}
@@ -167,6 +170,7 @@ export default function MortgageCalculator({ initialValues }: MortgageCalculator
             <Label className="text-gray-500">Annual Insurance ($)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               placeholder="Optional"
               value={insurance}
               onChange={(e) => setInsurance(e.target.value)}

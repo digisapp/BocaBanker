@@ -10,7 +10,7 @@ import {
   type SortingState,
   type Updater,
 } from '@tanstack/react-table'
-import { ArrowUpDown, MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react'
+import { ArrowUpDown, MoreHorizontal, Eye, Pencil, Trash2, Phone, Mail } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import {
   Select,
   SelectContent,
@@ -79,6 +80,69 @@ interface ClientsTableProps {
 
 function resolve<T>(updater: Updater<T>, prev: T): T {
   return typeof updater === 'function' ? (updater as (old: T) => T)(prev) : updater
+}
+
+/** Row actions menu, shared by the desktop table and the mobile card list. */
+function ClientRowActions({
+  client,
+  onDelete,
+  className,
+}: {
+  client: ClientRow
+  onDelete?: (id: string) => void
+  className?: string
+}) {
+  const router = useRouter()
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          className={cn('text-gray-500 hover:text-amber-600', className)}
+          onClick={(e) => e.stopPropagation()}
+          aria-label={`Actions for ${client.firstName} ${client.lastName}`}
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="bg-white border-gray-200"
+      >
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation()
+            router.push(`/clients/${client.id}`)
+          }}
+        >
+          <Eye className="h-4 w-4 mr-2" />
+          View
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation()
+            router.push(`/clients/${client.id}/edit`)
+          }}
+        >
+          <Pencil className="h-4 w-4 mr-2" />
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuSeparator className="bg-gray-100" />
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete?.(client.id)
+          }}
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }
 
 export function ClientsTable({
@@ -161,7 +225,7 @@ export function ClientsTable({
               <Badge
                 key={tag}
                 variant="secondary"
-                className="bg-gray-100 text-gray-700 border-gray-200 text-[10px]"
+                className="bg-gray-100 text-gray-700 border-gray-200 text-[11px]"
               >
                 {tag}
               </Badge>
@@ -169,7 +233,7 @@ export function ClientsTable({
             {tags.length > 3 && (
               <Badge
                 variant="secondary"
-                className="bg-gray-100 text-gray-500 text-[10px]"
+                className="bg-gray-100 text-gray-500 text-[11px]"
               >
                 +{tags.length - 3}
               </Badge>
@@ -198,58 +262,9 @@ export function ClientsTable({
     {
       id: 'actions',
       enableSorting: false,
-      cell: ({ row }) => {
-        const client = row.original
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                className="text-gray-500 hover:text-amber-600"
-                onClick={(e) => e.stopPropagation()}
-                aria-label={`Actions for ${client.firstName} ${client.lastName}`}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="bg-white border-gray-200"
-            >
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                  router.push(`/clients/${client.id}`)
-                }}
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                View
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                  router.push(`/clients/${client.id}/edit`)
-                }}
-              >
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-gray-100" />
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onDelete?.(client.id)
-                }}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
-      },
+      cell: ({ row }) => (
+        <ClientRowActions client={row.original} onDelete={onDelete} />
+      ),
     },
   ]
 
@@ -277,8 +292,68 @@ export function ClientsTable({
   return (
     <div className="space-y-4">
 
+      {/* Mobile card list: the 8-column table only scrolls sideways on a phone */}
+      <div className="md:hidden rounded-lg border border-gray-200 bg-white divide-y divide-gray-100">
+        {data.length ? (
+          data.map((client) => {
+            const status = client.status ?? 'active'
+            return (
+              <div key={client.id} className="p-4">
+                <div className="flex items-start gap-2">
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/clients/${client.id}`)}
+                    className="flex-1 min-w-0 text-left"
+                  >
+                    <p className="font-medium text-gray-900 truncate">
+                      {client.firstName} {client.lastName}
+                    </p>
+                    <p className="text-sm text-gray-500 truncate">
+                      {client.company || client.email || client.phone || '--'}
+                    </p>
+                  </button>
+                  <ClientRowActions
+                    client={client}
+                    onDelete={onDelete}
+                    className="size-10 -mr-2 -mt-2 [&_svg:not([class*='size-'])]:size-4"
+                  />
+                </div>
+                <div className="flex items-center gap-2 mt-3">
+                  <Badge
+                    variant="outline"
+                    className={`${
+                      statusColorMap[status] ?? statusColorMap.active
+                    } text-xs capitalize`}
+                  >
+                    {status}
+                  </Badge>
+                  <div className="ml-auto flex items-center gap-2">
+                    {client.phone && (
+                      <Button asChild variant="outline" size="icon" className="size-10 border-gray-200 text-amber-600">
+                        <a href={`tel:${client.phone}`} aria-label={`Call ${client.firstName} ${client.lastName}`}>
+                          <Phone className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    )}
+                    {client.email && (
+                      <Button asChild variant="outline" size="icon" className="size-10 border-gray-200 text-amber-600">
+                        <a href={`mailto:${client.email}`} aria-label={`Email ${client.firstName} ${client.lastName}`}>
+                          <Mail className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })
+        ) : (
+          <p className="py-10 text-center text-gray-500">No results found.</p>
+        )}
+      </div>
+
       {/* Table */}
-      <div className="rounded-lg border border-gray-200 overflow-x-auto">
+      <div className="hidden md:block rounded-lg border border-gray-200 overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

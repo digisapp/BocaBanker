@@ -110,6 +110,7 @@ export default function RateSensitivityTool({ initialValues }: RateSensitivityTo
             <Label className="text-gray-500">Loan Amount ($)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               placeholder="e.g. 3000000"
               value={loanAmount}
               onChange={(e) => setLoanAmount(e.target.value)}
@@ -121,6 +122,7 @@ export default function RateSensitivityTool({ initialValues }: RateSensitivityTo
             <Label className="text-gray-500">Base Interest Rate (%)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               step="0.125"
               placeholder="e.g. 6.5"
               value={baseRate}

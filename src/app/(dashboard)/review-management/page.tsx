@@ -217,7 +217,8 @@ export default function ReviewsManagementPage() {
 
       {/* Filter tabs + Search */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+        {/* 2x2 on phones: the four tabs are ~430px wide in a row */}
+        <div className="grid grid-cols-2 sm:flex gap-1 bg-gray-100 rounded-lg p-1">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -270,7 +271,7 @@ export default function ReviewsManagementPage() {
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-1">
+                  <div className="flex flex-wrap items-center gap-3 mb-1">
                     <Stars rating={review.rating} />
                     <Badge
                       variant="outline"
@@ -293,7 +294,7 @@ export default function ReviewsManagementPage() {
                   <p className="text-sm text-gray-500 mt-1 line-clamp-2">
                     {review.body}
                   </p>
-                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
+                  <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-gray-400">
                     <span className="font-medium text-gray-600">
                       {review.reviewerName}
                     </span>

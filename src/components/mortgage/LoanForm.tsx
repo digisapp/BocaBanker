@@ -261,6 +261,7 @@ export function LoanForm({
                   <FormControl>
                     <Input
                       type="number"
+                      inputMode="decimal"
                       placeholder="500000"
                       className={inputClass}
                       {...field}
@@ -287,6 +288,7 @@ export function LoanForm({
                   <FormControl>
                     <Input
                       type="number"
+                      inputMode="decimal"
                       placeholder="400000"
                       className={inputClass}
                       {...field}
@@ -313,6 +315,7 @@ export function LoanForm({
                   <FormControl>
                     <Input
                       type="number"
+                      inputMode="decimal"
                       step="0.125"
                       placeholder="6.75"
                       className={inputClass}
@@ -340,6 +343,7 @@ export function LoanForm({
                   <FormControl>
                     <Input
                       type="number"
+                      inputMode="numeric"
                       placeholder="30"
                       className={inputClass}
                       {...field}
@@ -422,6 +426,7 @@ export function LoanForm({
                   <FormControl>
                     <Input
                       type="number"
+                      inputMode="numeric"
                       placeholder="200"
                       className={inputClass}
                       {...field}

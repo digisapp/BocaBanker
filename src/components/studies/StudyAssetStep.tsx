@@ -43,7 +43,9 @@ export default function StudyAssetStep({
       </div>
       {errors.assets && <p className="text-xs text-red-400">{errors.assets}</p>}
       <div className="space-y-3">
-        <div className="grid grid-cols-12 gap-3 px-3 text-xs text-gray-500 uppercase tracking-wide">
+        {/* Column headers are desktop-only; on phones each row stacks and
+            carries its own labels. */}
+        <div className="hidden md:grid grid-cols-12 gap-3 px-3 text-xs text-gray-500 uppercase tracking-wide">
           <div className="col-span-4">Category</div>
           <div className="col-span-2">Recovery</div>
           <div className="col-span-3">Amount</div>
@@ -53,13 +55,14 @@ export default function StudyAssetStep({
         {assets.map((asset, index) => {
           const pct = totalAssetValue > 0 ? ((asset.amount / totalAssetValue) * 100).toFixed(1) : '0.0'
           return (
-            <div key={index} className="grid grid-cols-12 gap-3 items-center p-3 rounded-lg bg-gray-50 border border-gray-100">
-              <div className="col-span-4">
+            <div key={index} className="grid grid-cols-2 md:grid-cols-12 gap-3 items-center p-3 rounded-lg bg-gray-50 border border-gray-100">
+              <div className="col-span-2 md:col-span-4">
+                <span className="md:hidden block mb-1 text-xs text-gray-500 uppercase tracking-wide">Category</span>
                 <Select
                   value={asset.category}
                   onValueChange={(val) => onUpdateCategory(index, val)}
                 >
-                  <SelectTrigger className="bg-transparent border-gray-200 text-gray-900 text-sm h-8">
+                  <SelectTrigger className="w-full md:w-fit bg-transparent border-gray-200 text-gray-900 text-sm h-8">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white border-gray-200">
@@ -71,20 +74,24 @@ export default function StudyAssetStep({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="col-span-2">
+              <div className="col-span-1 md:col-span-2">
+                <span className="md:hidden block mb-1 text-xs text-gray-500 uppercase tracking-wide">Recovery</span>
                 <span className="text-sm text-gray-500">{asset.recoveryPeriod === 0 ? 'N/A' : `${asset.recoveryPeriod} yr`}</span>
               </div>
-              <div className="col-span-3">
+              <div className="col-span-1 md:col-span-3">
+                <span className="md:hidden block mb-1 text-xs text-gray-500 uppercase tracking-wide">Amount</span>
                 <div className="relative">
                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-amber-600 text-xs">$</span>
-                  <Input type="number" value={asset.amount || ''} onChange={(e) => onUpdateAmount(index, Number(e.target.value))} className="bg-transparent border-gray-200 text-gray-900 text-sm h-8 pl-5" />
+                  {/* text-base below md: iOS zooms into fields under 16px */}
+                  <Input type="number" inputMode="decimal" value={asset.amount || ''} onChange={(e) => onUpdateAmount(index, Number(e.target.value))} className="bg-transparent border-gray-200 text-gray-900 text-base md:text-sm h-9 md:h-8 pl-5" />
                 </div>
               </div>
-              <div className="col-span-2 text-right">
+              <div className="col-span-1 md:col-span-2 md:text-right">
+                <span className="md:hidden block mb-1 text-xs text-gray-500 uppercase tracking-wide">% of Total</span>
                 <span className="text-sm text-gray-500">{pct}%</span>
               </div>
               <div className="col-span-1 flex justify-end">
-                <Button variant="ghost" size="icon-xs" onClick={() => onRemove(index)} className="text-gray-500 hover:text-red-400">
+                <Button variant="ghost" size="icon-xs" onClick={() => onRemove(index)} aria-label="Remove asset" className="size-10 md:size-6 text-gray-500 hover:text-red-400">
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>

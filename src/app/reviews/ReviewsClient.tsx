@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Star, ChevronDown, Loader2, Send, CheckCircle2, MapPin, Clock, BadgeCheck, MessageCircle, ArrowLeft } from 'lucide-react'
 import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
+import MobileChatButton from '@/components/landing/MobileChatButton'
+import { OpenChatButton } from '@/components/landing/LandingClient'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -41,7 +43,7 @@ function StarInput({ value, onChange }: { value: number; onChange: (v: number) =
           onMouseEnter={() => setHover(i)}
           onMouseLeave={() => setHover(0)}
           onClick={() => onChange(i)}
-          className="transition-transform hover:scale-110"
+          className="p-1 transition-transform hover:scale-110"
         >
           <Star
             className={cn(
@@ -52,6 +54,20 @@ function StarInput({ value, onChange }: { value: number; onChange: (v: number) =
         </button>
       ))}
     </div>
+  )
+}
+
+// appearance-none: Safari's native select ignores padding; text-base below md
+// because iOS zooms into fields under 16px.
+const selectClass =
+  'h-9 w-full appearance-none rounded-md border border-gray-200 bg-white pl-3 pr-9 text-base md:text-sm'
+
+function SelectChevron() {
+  return (
+    <ChevronDown
+      aria-hidden="true"
+      className="pointer-events-none absolute bottom-2.5 right-3 h-4 w-4 text-gray-400"
+    />
   )
 }
 
@@ -89,7 +105,7 @@ function ReviewCard({ review }: { review: Review }) {
       {isLong && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-gold-dark text-sm font-medium mt-1 hover:underline"
+          className="-mb-2 -mt-1 py-2 text-gold-dark text-sm font-medium hover:underline"
         >
           {expanded ? 'Show less' : 'Read more'}
         </button>
@@ -274,13 +290,18 @@ export default function ReviewsClient({ initial }: { initial: InitialReviews | n
             <BocaBankerAvatar size={36} />
             <span className="font-serif text-xl text-navy">Boca Banker</span>
           </Link>
+          {/* No chat widget on this page: desktop goes to the homepage chat, phones open the overlay */}
           <Link
             href="/#chat"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-navy-light"
+            className="hidden lg:inline-flex items-center gap-1.5 rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-navy-light"
           >
             <MessageCircle className="h-4 w-4" />
             Ask a question
           </Link>
+          <OpenChatButton className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-navy px-4 text-sm font-semibold text-white transition-colors hover:bg-navy-light lg:hidden">
+            <MessageCircle className="h-4 w-4" />
+            Ask a question
+          </OpenChatButton>
         </div>
       </nav>
 
@@ -290,7 +311,7 @@ export default function ReviewsClient({ initial }: { initial: InitialReviews | n
           <div className="text-center mb-10">
             <Link
               href="/"
-              className="mb-6 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-navy"
+              className="-mt-2 mb-4 inline-flex items-center gap-1.5 py-2 text-sm text-gray-500 hover:text-navy"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to home
@@ -304,19 +325,19 @@ export default function ReviewsClient({ initial }: { initial: InitialReviews | n
 
             {/* Rating summary */}
             {totalReviews > 0 && (
-              <div className="inline-flex items-center gap-4 bg-white rounded-2xl border border-gray-200 px-6 py-4">
+              <div className="flex flex-col items-center gap-3 bg-white rounded-2xl border border-gray-200 px-5 py-5 sm:inline-flex sm:flex-row sm:gap-4 sm:px-6 sm:py-4">
                 <div className="text-center">
                   <div className="font-serif text-4xl text-navy">
                     {averageRating.toFixed(2)}
                   </div>
                   <Stars rating={Math.round(averageRating)} size={18} />
                 </div>
-                <div className="h-10 w-px bg-gray-200" />
-                <div className="text-left">
+                <div className="hidden h-10 w-px bg-gray-200 sm:block" />
+                <div className="text-center sm:text-left">
                   <div className="text-lg font-semibold text-navy">
                     {totalReviews} reviews
                   </div>
-                  <div className="flex items-center gap-3 mt-1">
+                  <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:mt-1 sm:flex-nowrap sm:gap-3">
                     {[5, 4, 3, 2, 1].map((r) => {
                       const count = ratingBreakdown[r] || 0
                       const pct = totalReviews > 0 ? (count / totalReviews) * 100 : 0
@@ -326,11 +347,15 @@ export default function ReviewsClient({ initial }: { initial: InitialReviews | n
                           onClick={() =>
                             setRatingFilter(ratingFilter === r ? null : r)
                           }
+                          aria-pressed={ratingFilter === r}
+                          aria-label={`Show ${r}-star reviews (${count})`}
                           className={cn(
-                            'flex items-center gap-1 text-xs transition-colors',
+                            'flex items-center gap-1 transition-colors',
+                            // 40px chips on phones; inline with bars from sm up
+                            'h-10 min-w-12 justify-center rounded-full border px-3 text-sm sm:h-auto sm:min-w-0 sm:rounded-none sm:border-0 sm:px-0 sm:text-xs',
                             ratingFilter === r
-                              ? 'text-gold-dark font-semibold'
-                              : 'text-gray-400 hover:text-gray-600'
+                              ? 'border-gold bg-amber-50 text-gold-dark font-semibold sm:bg-transparent'
+                              : 'border-gray-200 text-gray-500 hover:text-gray-600 sm:text-gray-400'
                           )}
                         >
                           <span>{r}</span>
@@ -354,7 +379,7 @@ export default function ReviewsClient({ initial }: { initial: InitialReviews | n
               <div className="mt-3">
                 <button
                   onClick={() => setRatingFilter(null)}
-                  className="text-sm text-gold-dark hover:underline"
+                  className="py-2 text-sm text-gold-dark hover:underline"
                 >
                   Clear filter — showing {ratingFilter}-star reviews
                 </button>
@@ -520,7 +545,7 @@ export default function ReviewsClient({ initial }: { initial: InitialReviews | n
                       Loan Details (optional)
                     </p>
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <div>
+                      <div className="relative">
                         <label htmlFor="review-loan-type" className="text-xs text-gray-500 mb-1 block">
                           Loan Type
                         </label>
@@ -533,7 +558,7 @@ export default function ReviewsClient({ initial }: { initial: InitialReviews | n
                               loan_type: e.target.value,
                             }))
                           }
-                          className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
+                          className={selectClass}
                         >
                           <option value="">Select...</option>
                           <option value="Conventional">Conventional</option>
@@ -543,8 +568,9 @@ export default function ReviewsClient({ initial }: { initial: InitialReviews | n
                           <option value="Jumbo">Jumbo</option>
                           <option value="Other">Other</option>
                         </select>
+                        <SelectChevron />
                       </div>
-                      <div>
+                      <div className="relative">
                         <label htmlFor="review-loan-term" className="text-xs text-gray-500 mb-1 block">
                           Loan Term
                         </label>
@@ -557,7 +583,7 @@ export default function ReviewsClient({ initial }: { initial: InitialReviews | n
                               loan_term: e.target.value,
                             }))
                           }
-                          className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
+                          className={selectClass}
                         >
                           <option value="">Select...</option>
                           <option value="15 year fixed">15 year fixed</option>
@@ -565,10 +591,11 @@ export default function ReviewsClient({ initial }: { initial: InitialReviews | n
                           <option value="5/1 ARM">5/1 ARM</option>
                           <option value="Other">Other</option>
                         </select>
+                        <SelectChevron />
                       </div>
                     </div>
-                    <div className="flex gap-6 mt-3">
-                      <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                    <div className="flex gap-6 mt-1">
+                      <label className="flex items-center gap-2 py-2 text-sm text-gray-600 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={formData.is_first_time_buyer}
@@ -655,7 +682,7 @@ export default function ReviewsClient({ initial }: { initial: InitialReviews | n
         </div>
       </main>
 
-      <footer className="border-t border-gray-200 px-4 sm:px-6 py-8">
+      <footer className="border-t border-gray-200 px-4 sm:px-6 pt-8 pb-24 lg:pb-8">
         <div className="mx-auto max-w-5xl space-y-2 text-xs leading-relaxed text-gray-500">
           <p>
             <span className="font-semibold text-gray-600">Equal Housing Opportunity.</span>
@@ -664,10 +691,13 @@ export default function ReviewsClient({ initial }: { initial: InitialReviews | n
           </p>
           <p>
             &copy; {new Date().getFullYear()} Boca Banker ·{' '}
-            <Link href="/" className="hover:text-navy">Home</Link>
+            <Link href="/" className="py-2.5 hover:text-navy">Home</Link>
           </p>
         </div>
       </footer>
+
+      {/* Mobile floating chat button + fullscreen overlay */}
+      <MobileChatButton />
     </div>
   )
 }

@@ -93,15 +93,16 @@ export default function EmailHistoryPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/email">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-gray-500 hover:text-amber-600 hover:bg-amber-50"
-            >
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="size-10 md:size-9 text-gray-500 hover:text-amber-600 hover:bg-amber-50"
+          >
+            <Link href="/email" aria-label="Back to email">
               <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <div>
             <h1 className="text-2xl font-serif font-bold text-amber-600">
               Email History
@@ -116,7 +117,7 @@ export default function EmailHistoryPage() {
             setPage(1);
           }}
         >
-          <SelectTrigger className="w-[160px] bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500">
+          <SelectTrigger className="w-full sm:w-[160px] bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500">
             <SelectValue placeholder="Filter status" />
           </SelectTrigger>
           <SelectContent className="bg-white border-gray-200">
@@ -151,53 +152,91 @@ export default function EmailHistoryPage() {
             <p className="text-gray-500">No emails found</p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="border-gray-200 hover:bg-transparent">
-                <TableHead className="text-amber-600">Date</TableHead>
-                <TableHead className="text-amber-600">Recipient</TableHead>
-                <TableHead className="text-amber-600">Subject</TableHead>
-                <TableHead className="text-amber-600">Template</TableHead>
-                <TableHead className="text-amber-600">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <>
+            {/* Mobile card list: the 5-column table only scrolls sideways on a phone */}
+            <div className="md:hidden divide-y divide-gray-100">
               {logs.map((log) => (
-                <TableRow
-                  key={log.id}
-                  className="border-gray-100 hover:bg-amber-50/50"
-                >
-                  <TableCell className="text-gray-500 text-sm whitespace-nowrap">
-                    {formatDate(log.sentAt)}
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="text-gray-900 text-sm">{log.toEmail}</p>
-                      {log.clientFirstName && (
-                        <p className="text-xs text-gray-400">
-                          {log.clientFirstName} {log.clientLastName}
-                        </p>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-gray-900 text-sm max-w-[200px] truncate">
+                <div key={log.id} className="p-4">
+                  <p className="font-medium text-gray-900 truncate">
+                    {log.toEmail}
+                  </p>
+                  <p className="text-sm text-gray-700 truncate">
                     {log.subject}
-                  </TableCell>
-                  <TableCell className="text-gray-500 text-sm capitalize">
-                    {log.template ? log.template.replace('-', ' ') : '--'}
-                  </TableCell>
-                  <TableCell>
+                  </p>
+                  {(log.clientFirstName || log.template) && (
+                    <p className="text-xs text-gray-500 truncate mt-0.5">
+                      {log.clientFirstName && `${log.clientFirstName} ${log.clientLastName ?? ''}`}
+                      {log.clientFirstName && log.template && ' · '}
+                      {log.template && (
+                        <span className="capitalize">{log.template.replace('-', ' ')}</span>
+                      )}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2 mt-3">
                     <Badge
                       variant="outline"
                       className={`capitalize ${STATUS_COLORS[log.status] || ''}`}
                     >
                       {log.status}
                     </Badge>
-                  </TableCell>
-                </TableRow>
+                    <span className="ml-auto text-xs text-gray-500 whitespace-nowrap">
+                      {formatDate(log.sentAt)}
+                    </span>
+                  </div>
+                </div>
               ))}
-            </TableBody>
-          </Table>
+            </div>
+
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-gray-200 hover:bg-transparent">
+                    <TableHead className="text-amber-600">Date</TableHead>
+                    <TableHead className="text-amber-600">Recipient</TableHead>
+                    <TableHead className="text-amber-600">Subject</TableHead>
+                    <TableHead className="text-amber-600">Template</TableHead>
+                    <TableHead className="text-amber-600">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {logs.map((log) => (
+                    <TableRow
+                      key={log.id}
+                      className="border-gray-100 hover:bg-amber-50/50"
+                    >
+                      <TableCell className="text-gray-500 text-sm whitespace-nowrap">
+                        {formatDate(log.sentAt)}
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="text-gray-900 text-sm">{log.toEmail}</p>
+                          {log.clientFirstName && (
+                            <p className="text-xs text-gray-400">
+                              {log.clientFirstName} {log.clientLastName}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-gray-900 text-sm max-w-[200px] truncate">
+                        {log.subject}
+                      </TableCell>
+                      <TableCell className="text-gray-500 text-sm capitalize">
+                        {log.template ? log.template.replace('-', ' ') : '--'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={`capitalize ${STATUS_COLORS[log.status] || ''}`}
+                        >
+                          {log.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </div>
 
@@ -209,7 +248,7 @@ export default function EmailHistoryPage() {
             size="sm"
             disabled={page <= 1}
             onClick={() => setPage(page - 1)}
-            className="border-gray-200 text-gray-500 hover:bg-amber-50 disabled:opacity-40"
+            className="h-10 md:h-8 border-gray-200 text-gray-500 hover:bg-amber-50 disabled:opacity-40"
           >
             Previous
           </Button>
@@ -221,7 +260,7 @@ export default function EmailHistoryPage() {
             size="sm"
             disabled={page >= totalPages}
             onClick={() => setPage(page + 1)}
-            className="border-gray-200 text-gray-500 hover:bg-amber-50 disabled:opacity-40"
+            className="h-10 md:h-8 border-gray-200 text-gray-500 hover:bg-amber-50 disabled:opacity-40"
           >
             Next
           </Button>

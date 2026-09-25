@@ -15,7 +15,7 @@ export const secondaryBtn =
 
 export function Eyebrow({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <p className={cn('text-xs font-semibold tracking-[0.18em] uppercase text-gold-dark mb-3', className)}>
+    <p className={cn('text-xs font-semibold tracking-[0.18em] uppercase text-balance text-gold-dark mb-3', className)}>
       {children}
     </p>
   )
@@ -25,7 +25,39 @@ export function bankerName() {
   return siteConfig.ownerName || 'Boca Banker'
 }
 
-/** Header for inner pages: logo, topic links, and the Ask button. */
+/**
+ * Call and Ask buttons at the right of the nav. On phones the call button is
+ * icon-only, and when it's shown "Ask a question" shortens to "Ask" so both fit.
+ */
+export function NavCallAsk() {
+  return (
+    <>
+      {siteConfig.phone && (
+        <a
+          href={telHref(siteConfig.phone)}
+          aria-label={`Call ${siteConfig.phone}`}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-navy hover:bg-white sm:h-9 sm:w-auto sm:gap-1.5 sm:px-3 sm:text-sm sm:font-medium"
+        >
+          <Phone className="h-4 w-4 text-gold" />
+          <span className="hidden sm:inline">{siteConfig.phone}</span>
+        </a>
+      )}
+      <OpenChatButton className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-navy px-4 text-sm font-semibold text-white transition-colors hover:bg-navy-light sm:h-9">
+        <MessageCircle className="h-4 w-4" />
+        {siteConfig.phone ? (
+          <>
+            <span className="sm:hidden">Ask</span>
+            <span className="hidden sm:inline">Ask a question</span>
+          </>
+        ) : (
+          'Ask a question'
+        )}
+      </OpenChatButton>
+    </>
+  )
+}
+
+/** Header for inner pages: logo, topic links, and the Call/Ask buttons. */
 export function SiteHeader({ current }: { current?: string }) {
   return (
     <header>
@@ -51,16 +83,17 @@ export function SiteHeader({ current }: { current?: string }) {
                 </Link>
               ))}
             </div>
-            <OpenChatButton className="inline-flex items-center gap-1.5 rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-navy-light">
-              <MessageCircle className="h-4 w-4" />
-              Ask a question
-            </OpenChatButton>
+            <NavCallAsk />
           </div>
         </div>
       </LandingNav>
     </header>
   )
 }
+
+// Footer links get 36px-tall rows on phones; from md up they keep the compact spacing.
+const footerList = 'flex flex-col text-sm text-gray-600 md:gap-2.5'
+const footerItem = 'py-2 md:py-0'
 
 export function SiteFooter() {
   const name = bankerName()
@@ -81,9 +114,9 @@ export function SiteFooter() {
 
           <div>
             <h3 className="mb-4 text-sm font-semibold text-navy">Loans &amp; tools</h3>
-            <nav aria-label="Loans and tools" className="flex flex-col gap-2.5 text-sm text-gray-600">
+            <nav aria-label="Loans and tools" className={footerList}>
               {topicLinks.map((t) => (
-                <Link key={t.slug} href={t.slug} className="hover:text-navy">
+                <Link key={t.slug} href={t.slug} className={cn(footerItem, 'hover:text-navy')}>
                   {t.footerLabel}
                 </Link>
               ))}
@@ -92,34 +125,34 @@ export function SiteFooter() {
 
           <div>
             <h3 className="mb-4 text-sm font-semibold text-navy">Explore</h3>
-            <nav aria-label="Footer navigation" className="flex flex-col gap-2.5 text-sm text-gray-600">
-              <Link href="/#paths" className="hover:text-navy">How he can help</Link>
-              <Link href="/#how-it-works" className="hover:text-navy">How it works</Link>
-              <Link href="/#faq" className="hover:text-navy">FAQ</Link>
-              <Link href="/reviews" className="hover:text-navy">Reviews</Link>
+            <nav aria-label="Footer navigation" className={footerList}>
+              <Link href="/#paths" className={cn(footerItem, 'hover:text-navy')}>How he can help</Link>
+              <Link href="/#how-it-works" className={cn(footerItem, 'hover:text-navy')}>How it works</Link>
+              <Link href="/#faq" className={cn(footerItem, 'hover:text-navy')}>FAQ</Link>
+              <Link href="/reviews" className={cn(footerItem, 'hover:text-navy')}>Reviews</Link>
             </nav>
           </div>
 
           <div>
             <h3 className="mb-4 text-sm font-semibold text-navy">Contact</h3>
-            <div className="flex flex-col gap-2.5 text-sm text-gray-600">
+            <div className={footerList}>
               {siteConfig.phone && (
-                <a href={telHref(siteConfig.phone)} className="inline-flex items-center gap-2 hover:text-navy">
+                <a href={telHref(siteConfig.phone)} className={cn(footerItem, 'inline-flex items-center gap-2 hover:text-navy')}>
                   <Phone className="h-4 w-4 text-gold" />
                   {siteConfig.phone}
                 </a>
               )}
               {siteConfig.email && (
-                <a href={`mailto:${siteConfig.email}`} className="inline-flex items-center gap-2 hover:text-navy">
+                <a href={`mailto:${siteConfig.email}`} className={cn(footerItem, 'inline-flex items-center gap-2 hover:text-navy')}>
                   <Mail className="h-4 w-4 text-gold" />
                   {siteConfig.email}
                 </a>
               )}
-              <OpenChatButton className="inline-flex items-center gap-2 text-left hover:text-navy">
+              <OpenChatButton className={cn(footerItem, 'inline-flex items-center gap-2 text-left hover:text-navy')}>
                 <MessageCircle className="h-4 w-4 text-gold" />
                 Ask in the chat
               </OpenChatButton>
-              <p className="text-gray-500">Boca Raton, FL</p>
+              <p className={cn(footerItem, 'text-gray-500')}>Boca Raton, FL</p>
             </div>
           </div>
         </div>
@@ -135,7 +168,7 @@ export function SiteFooter() {
           </p>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p>&copy; {new Date().getFullYear()} Boca Banker. All rights reserved.</p>
-            <Link href="/login" className="hover:text-navy">Sign in</Link>
+            <Link href="/login" className="-my-2.5 self-start py-2.5 hover:text-navy">Sign in</Link>
           </div>
         </div>
       </div>

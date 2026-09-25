@@ -19,6 +19,8 @@ import {
   ArrowUp,
   ArrowDown,
   Search,
+  Phone,
+  Mail,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -51,6 +53,7 @@ interface LoanRow {
   id: string
   borrowerName: string | null
   borrowerEmail: string | null
+  borrowerPhone: string | null
   propertyAddress: string | null
   loanAmount: string | null
   loanType: string | null
@@ -151,6 +154,51 @@ export default function LoansPage() {
     )
   }
 
+  const formatCommission = (loan: LoanRow) =>
+    loan.commissionAmount
+      ? formatCurrency(loan.commissionAmount, '--')
+      : loan.commissionBps
+        ? `${loan.commissionBps} bps`
+        : '--'
+
+  // Row actions menu, shared by the desktop table and the mobile card list
+  const renderLoanActions = (loan: LoanRow, triggerClassName: string) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={triggerClassName}
+          aria-label="Loan actions"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="bg-white border-gray-200"
+      >
+        <DropdownMenuItem
+          onClick={() =>
+            router.push(`/mortgage/loans/${loan.id}`)
+          }
+        >
+          <Eye className="h-4 w-4 mr-2" />
+          View Details
+        </DropdownMenuItem>
+        <RoleGate permission="canDelete">
+          <DropdownMenuItem
+            className="text-red-600"
+            onClick={() => handleDelete(loan.id)}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </DropdownMenuItem>
+        </RoleGate>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -178,8 +226,8 @@ export default function LoansPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-row">
+        <div className="relative col-span-2 flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             placeholder="Search borrower, address, lender..."
@@ -198,7 +246,7 @@ export default function LoansPage() {
             setPage(1)
           }}
         >
-          <SelectTrigger className="w-[160px] bg-white border-gray-200 text-gray-900">
+          <SelectTrigger className="w-full sm:w-[160px] bg-white border-gray-200 text-gray-900">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent className="bg-white border-gray-200">
@@ -220,7 +268,7 @@ export default function LoansPage() {
             setPage(1)
           }}
         >
-          <SelectTrigger className="w-[150px] bg-white border-gray-200 text-gray-900">
+          <SelectTrigger className="w-full sm:w-[150px] bg-white border-gray-200 text-gray-900">
             <SelectValue placeholder="Loan Type" />
           </SelectTrigger>
           <SelectContent className="bg-white border-gray-200">
@@ -252,139 +300,165 @@ export default function LoansPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50/50">
-                  <TableHead
-                    className="cursor-pointer select-none"
-                    onClick={() => handleSort('borrowerName')}
-                  >
-                    <div className="flex items-center">
-                      Borrower
-                      <SortIcon column="borrowerName" />
-                    </div>
-                  </TableHead>
-                  <TableHead>Property</TableHead>
-                  <TableHead
-                    className="cursor-pointer select-none"
-                    onClick={() => handleSort('loanAmount')}
-                  >
-                    <div className="flex items-center">
-                      Amount
-                      <SortIcon column="loanAmount" />
-                    </div>
-                  </TableHead>
-                  <TableHead
-                    className="cursor-pointer select-none"
-                    onClick={() => handleSort('loanType')}
-                  >
-                    <div className="flex items-center">
-                      Type
-                      <SortIcon column="loanType" />
-                    </div>
-                  </TableHead>
-                  <TableHead>Rate</TableHead>
-                  <TableHead
-                    className="cursor-pointer select-none"
-                    onClick={() => handleSort('status')}
-                  >
-                    <div className="flex items-center">
-                      Status
-                      <SortIcon column="status" />
-                    </div>
-                  </TableHead>
-                  <TableHead>Commission</TableHead>
-                  <TableHead className="w-10" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loans.map((loan) => (
-                  <TableRow
-                    key={loan.id}
-                    className="cursor-pointer hover:bg-gray-50/50"
-                    onClick={() => router.push(`/mortgage/loans/${loan.id}`)}
-                  >
-                    <TableCell>
-                      <div>
-                        <p className="font-medium text-gray-900 text-sm">
+          <>
+            {/* Mobile card list: the 8-column table only scrolls sideways on a phone.
+                Column sorting stays in the desktop table headers. */}
+            <div className="md:hidden divide-y divide-gray-100">
+              {loans.map((loan) => {
+                const details = [
+                  formatCurrency(loan.loanAmount, ''),
+                  loan.loanType ? loanTypeLabels[loan.loanType] ?? loan.loanType : null,
+                  loan.interestRate ? `${loan.interestRate}%` : null,
+                ].filter(Boolean).join(' · ')
+                const commission = formatCommission(loan)
+
+                return (
+                  <div key={loan.id} className="p-4">
+                    <div className="flex items-start gap-2">
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/mortgage/loans/${loan.id}`)}
+                        className="flex-1 min-w-0 text-left"
+                      >
+                        <p className="font-medium text-gray-900 truncate">
                           {loan.borrowerName || '--'}
                         </p>
+                        <p className="text-sm text-gray-700 truncate">
+                          {loan.propertyAddress || '--'}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate mt-0.5">
+                          {details || '--'}
+                        </p>
+                      </button>
+                      {renderLoanActions(loan, 'size-10 -mr-2 -mt-2')}
+                    </div>
+                    <div className="flex items-center gap-2 mt-3">
+                      <LoanStatusBadge status={loan.status || 'pre_qual'} />
+                      {commission !== '--' && (
+                        <span className="text-xs text-gray-500 truncate">
+                          {commission} comm.
+                        </span>
+                      )}
+                      <div className="ml-auto flex items-center gap-2">
+                        {loan.borrowerPhone && (
+                          <Button asChild variant="outline" size="icon" className="size-10 border-gray-200 text-amber-600">
+                            <a href={`tel:${loan.borrowerPhone}`} aria-label={`Call ${loan.borrowerName || loan.borrowerPhone}`}>
+                              <Phone className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
                         {loan.borrowerEmail && (
-                          <p className="text-xs text-gray-500">
-                            {loan.borrowerEmail}
-                          </p>
+                          <Button asChild variant="outline" size="icon" className="size-10 border-gray-200 text-amber-600">
+                            <a href={`mailto:${loan.borrowerEmail}`} aria-label={`Email ${loan.borrowerName || loan.borrowerEmail}`}>
+                              <Mail className="h-4 w-4" />
+                            </a>
+                          </Button>
                         )}
                       </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-700 max-w-[200px] truncate">
-                      {loan.propertyAddress || '--'}
-                    </TableCell>
-                    <TableCell className="text-sm font-medium text-gray-900">
-                      {formatCurrency(loan.loanAmount, '--')}
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-700">
-                      {loan.loanType ? loanTypeLabels[loan.loanType] ?? loan.loanType : '--'}
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-700">
-                      {loan.interestRate ? `${loan.interestRate}%` : '--'}
-                    </TableCell>
-                    <TableCell>
-                      <LoanStatusBadge status={loan.status || 'pre_qual'} />
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-700">
-                      {loan.commissionAmount
-                        ? formatCurrency(loan.commissionAmount, '--')
-                        : loan.commissionBps
-                          ? `${loan.commissionBps} bps`
-                          : '--'}
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className="bg-white border-gray-200"
-                        >
-                          <DropdownMenuItem
-                            onClick={() =>
-                              router.push(`/mortgage/loans/${loan.id}`)
-                            }
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
-                          <RoleGate permission="canDelete">
-                            <DropdownMenuItem
-                              className="text-red-600"
-                              onClick={() => handleDelete(loan.id)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </RoleGate>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="hidden md:block overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50/50">
+                    <TableHead
+                      className="cursor-pointer select-none"
+                      onClick={() => handleSort('borrowerName')}
+                    >
+                      <div className="flex items-center">
+                        Borrower
+                        <SortIcon column="borrowerName" />
+                      </div>
+                    </TableHead>
+                    <TableHead>Property</TableHead>
+                    <TableHead
+                      className="cursor-pointer select-none"
+                      onClick={() => handleSort('loanAmount')}
+                    >
+                      <div className="flex items-center">
+                        Amount
+                        <SortIcon column="loanAmount" />
+                      </div>
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer select-none"
+                      onClick={() => handleSort('loanType')}
+                    >
+                      <div className="flex items-center">
+                        Type
+                        <SortIcon column="loanType" />
+                      </div>
+                    </TableHead>
+                    <TableHead>Rate</TableHead>
+                    <TableHead
+                      className="cursor-pointer select-none"
+                      onClick={() => handleSort('status')}
+                    >
+                      <div className="flex items-center">
+                        Status
+                        <SortIcon column="status" />
+                      </div>
+                    </TableHead>
+                    <TableHead>Commission</TableHead>
+                    <TableHead className="w-10" />
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {loans.map((loan) => (
+                    <TableRow
+                      key={loan.id}
+                      className="cursor-pointer hover:bg-gray-50/50"
+                      onClick={() => router.push(`/mortgage/loans/${loan.id}`)}
+                    >
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">
+                            {loan.borrowerName || '--'}
+                          </p>
+                          {loan.borrowerEmail && (
+                            <p className="text-xs text-gray-500">
+                              {loan.borrowerEmail}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-700 max-w-[200px] truncate">
+                        {loan.propertyAddress || '--'}
+                      </TableCell>
+                      <TableCell className="text-sm font-medium text-gray-900">
+                        {formatCurrency(loan.loanAmount, '--')}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-700">
+                        {loan.loanType ? loanTypeLabels[loan.loanType] ?? loan.loanType : '--'}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-700">
+                        {loan.interestRate ? `${loan.interestRate}%` : '--'}
+                      </TableCell>
+                      <TableCell>
+                        <LoanStatusBadge status={loan.status || 'pre_qual'} />
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-700">
+                        {formatCommission(loan)}
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        {renderLoanActions(loan, 'h-8 w-8')}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap md:flex-nowrap items-center justify-between gap-2">
           <p className="text-sm text-gray-500">
             Showing {(page - 1) * limit + 1}–
             {Math.min(page * limit, total)} of {total}
@@ -393,7 +467,7 @@ export default function LoansPage() {
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8"
+              className="size-10 md:size-8"
               disabled={page <= 1}
               onClick={() => setPage(1)}
             >
@@ -402,7 +476,7 @@ export default function LoansPage() {
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8"
+              className="size-10 md:size-8"
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
             >
@@ -414,7 +488,7 @@ export default function LoansPage() {
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8"
+              className="size-10 md:size-8"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
             >
@@ -423,7 +497,7 @@ export default function LoansPage() {
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8"
+              className="size-10 md:size-8"
               disabled={page >= totalPages}
               onClick={() => setPage(totalPages)}
             >

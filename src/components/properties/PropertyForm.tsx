@@ -198,6 +198,7 @@ export default function PropertyForm({
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-600">$</span>
                       <Input
                         type="number"
+                        inputMode="decimal"
                         placeholder="1,000,000"
                         className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20 pl-7"
                         {...field}
@@ -242,6 +243,7 @@ export default function PropertyForm({
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-600">$</span>
                       <Input
                         type="number"
+                        inputMode="decimal"
                         placeholder="800,000"
                         className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20 pl-7"
                         {...field}
@@ -266,6 +268,7 @@ export default function PropertyForm({
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-600">$</span>
                       <Input
                         type="number"
+                        inputMode="decimal"
                         placeholder="200,000"
                         className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20 pl-7"
                         {...field}
@@ -353,6 +356,7 @@ export default function PropertyForm({
                   <FormControl>
                     <Input
                       type="number"
+                      inputMode="numeric"
                       placeholder="10,000"
                       className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
                       {...field}
@@ -374,6 +378,7 @@ export default function PropertyForm({
                   <FormControl>
                     <Input
                       type="number"
+                      inputMode="numeric"
                       placeholder="2005"
                       className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
                       {...field}

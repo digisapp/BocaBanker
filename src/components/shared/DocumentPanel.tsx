@@ -264,12 +264,13 @@ export default function DocumentPanel({ clientId, studyId }: DocumentPanelProps)
                   })}
                 </p>
               </div>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+              {/* Hover-reveal only on hover-capable devices; always visible on touch */}
+              <div className="flex items-center gap-1 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleDownload(doc)}
-                  className="h-7 w-7 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                  className="h-9 w-9 md:h-7 md:w-7 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                   title="Download"
                   aria-label={`Download ${doc.fileName}`}
                 >
@@ -280,7 +281,7 @@ export default function DocumentPanel({ clientId, studyId }: DocumentPanelProps)
                   size="sm"
                   onClick={() => handleDelete(doc)}
                   disabled={deletingId === doc.id}
-                  className="h-7 w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
+                  className="h-9 w-9 md:h-7 md:w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
                   title="Delete"
                   aria-label={`Delete ${doc.fileName}`}
                 >

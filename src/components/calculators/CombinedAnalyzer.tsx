@@ -161,6 +161,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
               <Label className="text-gray-500">Property Value ($)</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 placeholder="e.g. 3000000"
                 value={propertyValue}
                 onChange={(e) => setPropertyValue(e.target.value)}
@@ -187,6 +188,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
                 <Label className="text-gray-500">Tax Rate (%)</Label>
                 <Input
                   type="number"
+                  inputMode="decimal"
                   value={taxRate}
                   onChange={(e) => setTaxRate(e.target.value)}
                   className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
@@ -196,6 +198,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
                 <Label className="text-gray-500">Bonus Dep (%)</Label>
                 <Input
                   type="number"
+                  inputMode="decimal"
                   value={bonusRate}
                   onChange={(e) => setBonusRate(e.target.value)}
                   className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20"
@@ -211,6 +214,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
               <Label className="text-gray-500">Remaining Balance ($)</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 placeholder="e.g. 2400000"
                 value={currentBalance}
                 onChange={(e) => setCurrentBalance(e.target.value)}
@@ -221,6 +225,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
               <Label className="text-gray-500">Current Rate (%)</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.125"
                 placeholder="e.g. 6.5"
                 value={currentRate}
@@ -232,6 +237,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
               <Label className="text-gray-500">Remaining Term (Years)</Label>
               <Input
                 type="number"
+                inputMode="numeric"
                 placeholder="e.g. 25"
                 value={remainingYears}
                 onChange={(e) => setRemainingYears(e.target.value)}
@@ -247,6 +253,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
               <Label className="text-gray-500">New Rate (%)</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.125"
                 placeholder="e.g. 5.5"
                 value={newRate}
@@ -273,6 +280,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
               <Label className="text-gray-500">Closing Costs ($)</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 placeholder="e.g. 15000"
                 value={closingCosts}
                 onChange={(e) => setClosingCosts(e.target.value)}

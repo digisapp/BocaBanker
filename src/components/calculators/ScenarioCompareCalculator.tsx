@@ -145,6 +145,7 @@ export default function ScenarioCompareCalculator({
             <Label className="text-gray-500">Purchase Price ($)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               value={purchasePrice}
               onChange={(e) => setPurchasePrice(e.target.value)}
               className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500"
@@ -154,6 +155,7 @@ export default function ScenarioCompareCalculator({
             <Label className="text-gray-500">Down Payment (%)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               value={downPaymentPct}
               onChange={(e) => setDownPaymentPct(e.target.value)}
               className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500"
@@ -177,6 +179,7 @@ export default function ScenarioCompareCalculator({
             <Label className="text-gray-500">Base Rate (%)</Label>
             <Input
               type="number"
+              inputMode="decimal"
               step="0.125"
               value={baseRate}
               onChange={(e) => setBaseRate(e.target.value)}

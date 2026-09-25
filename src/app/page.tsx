@@ -21,7 +21,7 @@ import { SITE_URL, SITE_TITLE, SITE_DESCRIPTION } from '@/lib/seo'
 import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
 import MobileChatButton from '@/components/landing/MobileChatButton'
 import { Reveal, LandingNav, OpenChatButton, HeroChatWidget } from '@/components/landing/LandingClient'
-import { Eyebrow, SiteFooter, primaryBtn, secondaryBtn } from '@/components/marketing/site'
+import { Eyebrow, NavCallAsk, SiteFooter, primaryBtn, secondaryBtn } from '@/components/marketing/site'
 
 // Server component: static marketing markup ships as HTML; interactive bits
 // (scroll reveal, nav shadow, chat) are client islands. Reviews are read at
@@ -233,19 +233,7 @@ export default async function Home() {
                 <a href="#reviews" className="rounded-lg px-3 py-2 hover:text-navy">Reviews</a>
                 <a href="#faq" className="rounded-lg px-3 py-2 hover:text-navy">FAQ</a>
               </div>
-              {siteConfig.phone && (
-                <a
-                  href={telHref(siteConfig.phone)}
-                  className="hidden sm:inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-navy hover:bg-white"
-                >
-                  <Phone className="h-4 w-4 text-gold" />
-                  {siteConfig.phone}
-                </a>
-              )}
-              <OpenChatButton className="inline-flex items-center gap-1.5 rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-navy-light">
-                <MessageCircle className="h-4 w-4" />
-                Ask a question
-              </OpenChatButton>
+              <NavCallAsk />
             </div>
           </div>
         </LandingNav>
@@ -270,7 +258,7 @@ export default async function Home() {
                 he takes it from there personally.
               </p>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
+              <div data-chat-cta className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
                 <OpenChatButton className={primaryBtn}>
                   <MessageCircle className="h-5 w-5" />
                   Ask a question
@@ -302,7 +290,7 @@ export default async function Home() {
                     )}
                   </p>
                   {hasReviews ? (
-                    <a href="#reviews" className="mt-0.5 flex items-center gap-2 text-sm text-gray-600 hover:text-navy">
+                    <a href="#reviews" className="-mb-2 -mt-1.5 flex items-center gap-2 py-2 text-sm text-gray-600 hover:text-navy">
                       <Stars rating={reviewSummary.average} />
                       <span>
                         {reviewSummary.average.toFixed(1)} from {reviewSummary.total} client reviews
@@ -397,7 +385,7 @@ export default async function Home() {
                   </div>
                   <Link
                     href="/reviews"
-                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-gold-dark hover:text-navy"
+                    className="-my-2 inline-flex items-center gap-1.5 py-2 text-sm font-semibold text-gold-dark hover:text-navy"
                   >
                     Read all {reviewSummary.total} reviews
                     <ArrowRight className="h-4 w-4" />
@@ -466,7 +454,7 @@ export default async function Home() {
                     </ul>
                     <Link
                       href={p.href}
-                      className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-gold-dark hover:text-navy"
+                      className="-mb-2 mt-3 inline-flex items-center gap-1.5 py-2 text-sm font-semibold text-gold-dark hover:text-navy"
                     >
                       Read the guide
                       <ArrowRight className="h-4 w-4" />

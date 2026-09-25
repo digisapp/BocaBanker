@@ -258,7 +258,7 @@ export default function PropertiesPage() {
                   <TableCell>
                     <Badge
                       variant="secondary"
-                      className="bg-amber-50 text-amber-600 border-amber-200 text-[10px]"
+                      className="bg-amber-50 text-amber-600 border-amber-200 text-[11px]"
                     >
                       {TYPE_LABELS[property.propertyType] || property.propertyType}
                     </Badge>

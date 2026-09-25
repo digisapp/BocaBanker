@@ -1,7 +1,7 @@
 'use client'
 
 import { useId, useMemo, useState } from 'react'
-import { MessageCircle } from 'lucide-react'
+import { ChevronDown, MessageCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   calculateMonthlyPayment,
@@ -38,24 +38,31 @@ function Field({
   step?: number
 }) {
   const id = useId()
+  // What the visitor is typing, so a field can be cleared and retyped (on a
+  // phone there's no easy select-all); the estimate treats an empty field as 0.
+  const [draft, setDraft] = useState<string | null>(null)
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-navy">
         {label}
       </label>
       <div className="mt-1.5 flex items-center rounded-xl border border-gray-300 bg-white focus-within:border-navy focus-within:ring-2 focus-within:ring-gold/40">
-        {prefix && <span className="pl-3 text-sm text-gray-500">{prefix}</span>}
+        {prefix && <span className="shrink-0 whitespace-nowrap pl-3 text-sm text-gray-500">{prefix}</span>}
         <input
           id={id}
           type="number"
           inputMode="decimal"
           min={0}
           step={step}
-          value={Number.isFinite(value) ? value : ''}
-          onChange={(e) => onChange(e.target.value === '' ? 0 : Number(e.target.value))}
+          value={draft ?? (Number.isFinite(value) ? value : '')}
+          onChange={(e) => {
+            setDraft(e.target.value)
+            onChange(e.target.value === '' ? 0 : Number(e.target.value))
+          }}
+          onBlur={() => setDraft(null)}
           className="w-full min-w-0 bg-transparent px-3 py-2.5 text-navy outline-none"
         />
-        {suffix && <span className="pr-3 text-sm text-gray-500">{suffix}</span>}
+        {suffix && <span className="shrink-0 whitespace-nowrap pr-3 text-sm text-gray-500">{suffix}</span>}
       </div>
       {hint && <p className="mt-1 text-xs text-gray-500">{hint}</p>}
     </div>
@@ -157,16 +164,23 @@ export default function MortgageCalculator({
           <label htmlFor="calc-term" className="block text-sm font-medium text-navy">
             Loan term
           </label>
-          <select
-            id="calc-term"
-            value={term}
-            onChange={(e) => setTerm(Number(e.target.value))}
-            className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-navy outline-none focus:border-navy focus:ring-2 focus:ring-gold/40"
-          >
-            <option value={30}>30 years</option>
-            <option value={20}>20 years</option>
-            <option value={15}>15 years</option>
-          </select>
+          {/* appearance-none: Safari's native select ignores padding and renders shorter than the inputs */}
+          <div className="relative mt-1.5">
+            <select
+              id="calc-term"
+              value={term}
+              onChange={(e) => setTerm(Number(e.target.value))}
+              className="w-full appearance-none rounded-xl border border-gray-300 bg-white py-2.5 pl-3 pr-10 text-navy outline-none focus:border-navy focus:ring-2 focus:ring-gold/40"
+            >
+              <option value={30}>30 years</option>
+              <option value={20}>20 years</option>
+              <option value={15}>15 years</option>
+            </select>
+            <ChevronDown
+              aria-hidden="true"
+              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500"
+            />
+          </div>
         </div>
 
         <Field

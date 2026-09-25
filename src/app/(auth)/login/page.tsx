@@ -56,7 +56,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 bg-gradient-to-b from-sky-50 via-white to-[#FAFAF8]">
+    <div className="flex min-h-dvh items-center justify-center p-4 bg-gradient-to-b from-sky-50 via-white to-[#FAFAF8]">
       <Card className="w-full max-w-md bg-white border-gray-200 shadow-xl shadow-black/5">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
@@ -87,6 +87,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
+                autoComplete="username"
                 placeholder="you@example.com"
                 {...register('email')}
                 className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
@@ -103,7 +104,7 @@ export default function LoginPage() {
                 </Label>
                 <Link
                   href="/reset-password"
-                  className="text-xs text-amber-600 hover:text-amber-700 transition-colors"
+                  className="-my-2.5 py-2.5 text-xs text-amber-600 hover:text-amber-700 transition-colors"
                 >
                   Forgot password?
                 </Link>
@@ -111,6 +112,7 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type="password"
+                autoComplete="current-password"
                 placeholder="Enter your password"
                 {...register('password')}
                 className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
@@ -125,7 +127,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="h-11 w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 md:h-9"
             >
               {isSubmitting ? (
                 <>

@@ -148,7 +148,7 @@ export default function StudyReportPage() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Action bar (no-print) */}
-      <div className="no-print flex items-center justify-between mb-6">
+      <div className="no-print flex flex-wrap md:flex-nowrap items-center justify-between gap-2 mb-6">
         <Button
           variant="ghost"
           onClick={() => router.push(`/studies/${id}`)}
@@ -194,7 +194,7 @@ export default function StudyReportPage() {
             Cost Segregation Study Report
           </h1>
           <p className="text-gray-500 text-lg">{study.studyName}</p>
-          <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-400">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mt-4 text-sm text-gray-400">
             <span>Prepared: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
             <span className="text-gray-300">|</span>
             <span>Study Year: {study.studyYear}</span>
@@ -202,7 +202,7 @@ export default function StudyReportPage() {
         </div>
 
         {/* Property Information */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Property Information
           </h2>
@@ -240,11 +240,11 @@ export default function StudyReportPage() {
         </div>
 
         {/* Tax Parameters */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Tax Parameters
           </h2>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             <div>
               <span className="text-xs text-gray-400 uppercase tracking-wide">Marginal Tax Rate</span>
               <p className="text-xl font-bold text-gray-900 mt-1">{study.taxRate}%</p>
@@ -261,7 +261,7 @@ export default function StudyReportPage() {
         </div>
 
         {/* Executive Summary */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Executive Summary
           </h2>
@@ -302,11 +302,12 @@ export default function StudyReportPage() {
         </div>
 
         {/* First Year Analysis */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             First Year Depreciation Analysis
           </h2>
-          <div className="grid grid-cols-4 gap-6">
+          {/* sm (not md) so the printed page keeps four columns */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
             <div>
               <span className="text-xs text-gray-400">Bonus Depreciation</span>
               <p className="text-lg font-semibold text-gray-900 mt-1">
@@ -335,7 +336,7 @@ export default function StudyReportPage() {
         </div>
 
         {/* Asset Breakdown Table */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Asset Classification Breakdown
           </h2>
@@ -375,21 +376,21 @@ export default function StudyReportPage() {
         </div>
 
         {/* Charts Section */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Asset Allocation
           </h2>
           <AssetBreakdownChart data={results.assetBreakdown} />
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Depreciation Schedule Comparison
           </h2>
           <DepreciationChart data={results.depreciationSchedule} />
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Cumulative Tax Savings
           </h2>
@@ -397,7 +398,7 @@ export default function StudyReportPage() {
         </div>
 
         {/* Depreciation Schedule Table */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Year-by-Year Depreciation Schedule
           </h2>
@@ -433,12 +434,12 @@ export default function StudyReportPage() {
         </div>
 
         {/* Tax Savings Schedule */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
             Tax Savings Schedule
           </h2>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs sm:text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="text-left py-2 text-gray-400 font-medium">Year</th>
@@ -473,7 +474,7 @@ export default function StudyReportPage() {
         </div>
 
         {/* Disclaimer */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
           <h2 className="text-sm font-semibold text-gray-400 mb-2">Disclaimer</h2>
           <p className="text-xs text-gray-400 leading-relaxed">
             This cost segregation study report is generated for informational purposes only and

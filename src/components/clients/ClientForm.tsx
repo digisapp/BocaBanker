@@ -127,6 +127,7 @@ export function ClientForm({
                   <FormLabel className="text-gray-700">Phone</FormLabel>
                   <FormControl>
                     <Input
+                      type="tel"
                       placeholder="(555) 123-4567"
                       className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus-visible:border-amber-500 focus-visible:ring-amber-500/20"
                       {...field}

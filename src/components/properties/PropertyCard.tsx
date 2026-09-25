@@ -91,7 +91,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
         </div>
         <Badge
           variant="secondary"
-          className="bg-amber-50 text-amber-600 border-amber-200 text-[10px] shrink-0"
+          className="bg-amber-50 text-amber-600 border-amber-200 text-[11px] shrink-0"
         >
           {PROPERTY_TYPE_LABELS[property.propertyType] || property.propertyType}
         </Badge>

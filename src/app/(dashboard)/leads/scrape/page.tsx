@@ -251,7 +251,7 @@ export default function LeadScrapePage() {
                   href="https://api.gateway.attomdata.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-amber-600 hover:underline"
+                  className="py-2.5 text-amber-600 hover:underline"
                 >
                   api.gateway.attomdata.com
                 </a>.
@@ -269,7 +269,7 @@ export default function LeadScrapePage() {
                 placeholder="Your ATTOM API key"
                 value={attomKey}
                 onChange={(e) => setAttomKey(e.target.value)}
-                className="font-mono text-sm"
+                className="font-mono text-base md:text-sm"
               />
             </div>
 
@@ -321,6 +321,7 @@ export default function LeadScrapePage() {
                 <Input
                   id="min-price"
                   type="number"
+                  inputMode="decimal"
                   placeholder="e.g. 500000"
                   value={minPrice}
                   onChange={(e) => setMinPrice(e.target.value)}
@@ -331,6 +332,7 @@ export default function LeadScrapePage() {
                 <Input
                   id="max-price"
                   type="number"
+                  inputMode="decimal"
                   placeholder="e.g. 10000000"
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(e.target.value)}

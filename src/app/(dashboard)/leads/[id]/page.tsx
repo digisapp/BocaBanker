@@ -273,7 +273,7 @@ export default function LeadDetailPage() {
               <h1 className="text-2xl font-bold text-gray-900">
                 {lead.propertyAddress || 'Untitled Lead'}
               </h1>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 mt-1">
                 <Badge
                   variant="outline"
                   className={`${
@@ -300,7 +300,7 @@ export default function LeadDetailPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 ml-14 sm:ml-0">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
           {editing ? (
             <>
               <Button
@@ -637,7 +637,7 @@ export default function LeadDetailPage() {
               {lead.buyerEmail ? (
                 <a
                   href={`mailto:${lead.buyerEmail}`}
-                  className="text-sm text-amber-600 hover:underline mt-0.5 block"
+                  className="-mb-2 -mt-1.5 block break-all py-2 text-sm text-amber-600 hover:underline"
                 >
                   {lead.buyerEmail}
                 </a>
@@ -657,7 +657,7 @@ export default function LeadDetailPage() {
               {lead.buyerPhone ? (
                 <a
                   href={`tel:${lead.buyerPhone}`}
-                  className="text-sm text-amber-600 hover:underline mt-0.5 block"
+                  className="-mb-2 -mt-1.5 block break-all py-2 text-sm text-amber-600 hover:underline"
                 >
                   {lead.buyerPhone}
                 </a>

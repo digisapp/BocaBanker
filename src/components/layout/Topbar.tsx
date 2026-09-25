@@ -207,11 +207,12 @@ export default function Topbar({ title }: TopbarProps) {
           )}
         </div>
 
-        {/* Notification Bell */}
+        {/* Notification Bell (not wired up yet; hidden on phones, where a dead
+            control costs scarce top-bar space) */}
         <Button
           variant="ghost"
           size="icon"
-          className="relative text-gray-400 hover:text-amber-600 hover:bg-amber-50"
+          className="relative hidden md:inline-flex text-gray-400 hover:text-amber-600 hover:bg-amber-50"
           aria-label="Notifications"
         >
           <Bell className="h-5 w-5" />
@@ -222,10 +223,10 @@ export default function Topbar({ title }: TopbarProps) {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="relative h-9 w-9 rounded-full ring-2 ring-gray-200 hover:ring-amber-300 transition-all"
+              className="relative h-10 w-10 md:h-9 md:w-9 rounded-full ring-2 ring-gray-200 hover:ring-amber-300 transition-all"
               aria-label="User menu"
             >
-              <Avatar className="h-9 w-9">
+              <Avatar className="h-10 w-10 md:h-9 md:w-9">
                 <AvatarFallback className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold text-sm">
                   {userInitials}
                 </AvatarFallback>
