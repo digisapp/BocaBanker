@@ -98,7 +98,7 @@ const footerItem = 'py-2 md:py-0'
 export function SiteFooter() {
   const name = bankerName()
   return (
-    <footer className="border-t border-gray-200 bg-cream px-4 sm:px-6 pt-14 pb-24 lg:pb-14">
+    <footer className="border-t border-gray-200 bg-cream px-4 sm:px-6 pt-14 pb-32 lg:pb-14">
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>

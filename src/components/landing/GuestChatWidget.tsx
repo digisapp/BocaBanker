@@ -1,15 +1,17 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import type { UIMessage } from 'ai';
-import { Send } from 'lucide-react';
+import { SquarePen } from 'lucide-react';
 import { cn, getTextContent } from '@/lib/utils';
 import BocaBankerAvatar from './BocaBankerAvatar';
 import InlineLeadCaptureCard from './InlineLeadCaptureCard';
 import ChatMarkdown from './ChatMarkdown';
-import type { ChatRequest } from './chat-events';
+import { SendButton, TalkButton } from './AskBar';
+import { STARTER_PROMPTS, VOICE_ENABLED, type ChatRequest } from './chat-events';
 
 const LS_COUNT_KEY = 'bb_guest_msg_count';
 const LS_HISTORY_KEY = 'bb_guest_chat_history';
@@ -28,20 +30,19 @@ const GREETING_MESSAGE: UIMessage = {
   ],
 };
 
-const STARTER_PROMPTS = [
-  'What rate could I get on a 30-year fixed?',
-  'Should I refinance my mortgage?',
-  'How much could cost segregation save on a $1M rental?',
-];
+/** The input grows with the question up to this height, then scrolls. */
+const INPUT_MAX_HEIGHT = 140;
 
 interface GuestChatWidgetProps {
   /** Latest "open chat" request from an Ask button; its prompt is sent once. */
   request?: ChatRequest | null;
   /** Rendered inside the mobile overlay, which supplies its own header. */
   embedded?: boolean;
+  /** Spot in the overlay's header for the "New chat" button. */
+  headerSlot?: HTMLElement | null;
 }
 
-export default function GuestChatWidget({ request, embedded = false }: GuestChatWidgetProps) {
+export default function GuestChatWidget({ request, embedded = false, headerSlot }: GuestChatWidgetProps) {
   const [userMsgCount, setUserMsgCount] = useState(() => {
     if (typeof window === 'undefined') return 0;
     const stored = localStorage.getItem(LS_COUNT_KEY);
@@ -57,7 +58,7 @@ export default function GuestChatWidget({ request, embedded = false }: GuestChat
   });
   const [inputValue, setInputValue] = useState('');
   const messagesRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const handledRequestId = useRef<number | null>(null);
 
   const transport = useMemo(
@@ -65,7 +66,7 @@ export default function GuestChatWidget({ request, embedded = false }: GuestChat
     []
   );
 
-  const { messages, sendMessage, status, setMessages, error, clearError } = useChat({
+  const { messages, sendMessage, status, setMessages, error, clearError, stop } = useChat({
     transport,
     experimental_throttle: 50,
   });
@@ -185,18 +186,37 @@ export default function GuestChatWidget({ request, embedded = false }: GuestChat
     submitText(inputValue);
   };
 
+  // Return sends; Shift+Return adds a line (desktop). Skipped mid-composition
+  // so accepting an IME suggestion doesn't send.
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing) return;
+    e.preventDefault();
+    submitText(inputValue);
+  };
+
+  // Grow the input with the question, up to INPUT_MAX_HEIGHT
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, INPUT_MAX_HEIGHT)}px`;
+  }, [inputValue]);
+
   // Act on each "open chat" request once: send its starter question, or just
   // focus the input. Waits until the greeting/history has been loaded and any
-  // in-flight reply has finished. The mobile overlay skips the focus: iOS won't
-  // raise the keyboard for a focus that isn't part of a tap, and the starter
-  // questions should stay visible until the visitor taps the input.
+  // in-flight reply has finished. The mobile overlay only focuses when the
+  // visitor opened it by tapping a text box: iOS won't raise the keyboard for a
+  // focus that isn't part of a tap, but keeps it up when focus moves over from
+  // another field. Otherwise the starter questions stay visible until they tap.
   useEffect(() => {
     if (!request || handledRequestId.current === request.id) return;
     if (messages.length === 0 || isLoading) return;
     handledRequestId.current = request.id;
+    const draft = request.takeDraft?.();
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot response to an external "Ask" click, guarded by handledRequestId
+    if (draft) setInputValue(draft);
     if (request.prompt) submitText(request.prompt);
-    else if (!embedded) inputRef.current?.focus({ preventScroll: true });
+    else if (!embedded || request.focus) inputRef.current?.focus({ preventScroll: true });
   }, [request, messages.length, isLoading, submitText, embedded]);
 
   const showStarters =
@@ -233,6 +253,7 @@ export default function GuestChatWidget({ request, embedded = false }: GuestChat
   const firstQuestion = messages.find((m) => m.role === 'user');
 
   const startOver = () => {
+    if (isLoading) stop();
     try {
       localStorage.removeItem(LS_HISTORY_KEY);
     } catch {
@@ -241,6 +262,23 @@ export default function GuestChatWidget({ request, embedded = false }: GuestChat
     clearError();
     setMessages([GREETING_MESSAGE]);
   };
+
+  const hasText = inputValue.trim().length > 0;
+
+  const newChatButton = messages.length > 1 && (
+    <button
+      type="button"
+      onClick={startOver}
+      aria-label="Start a new chat"
+      className={cn(
+        'flex h-11 items-center justify-center gap-1.5 rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-navy',
+        embedded ? 'w-11' : 'px-3 text-xs font-medium'
+      )}
+    >
+      <SquarePen className="h-4 w-4" />
+      {!embedded && 'New chat'}
+    </button>
+  );
 
   return (
     <div
@@ -259,130 +297,145 @@ export default function GuestChatWidget({ request, embedded = false }: GuestChat
               <p className="text-xs text-gray-500">AI assistant · replies in seconds</p>
             </div>
           </div>
+          {newChatButton}
         </div>
       )}
+      {embedded && headerSlot && newChatButton && createPortal(newChatButton, headerSlot)}
 
       {/* Messages */}
       <div
         className={cn(
-          'p-4 sm:p-6 space-y-4 flex-1 min-h-0 overflow-y-auto overscroll-y-contain',
+          'p-4 sm:p-6 flex flex-col flex-1 min-h-0 overflow-y-auto overscroll-y-contain',
           !embedded && 'h-[400px] flex-none'
         )}
         aria-live="polite"
         ref={messagesRef}
       >
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={cn(
-              'flex gap-3',
-              msg.role === 'user' ? 'justify-end' : 'justify-start'
-            )}
-          >
-            {msg.role === 'assistant' && (
-              <BocaBankerAvatar size={32} className="flex-shrink-0 mt-1" />
-            )}
+        {/* Fullscreen on a phone, the empty chat would be mostly blank: fill it,
+            and say that talking is an option too */}
+        {embedded && showStarters && (
+          <div className="flex flex-1 flex-col items-center justify-center pb-8 text-center">
+            <BocaBankerAvatar size={80} />
+            <p className="mt-4 font-serif text-2xl text-navy">How can I help?</p>
+            <p className="mt-1.5 max-w-xs text-sm text-gray-500">
+              {VOICE_ENABLED
+                ? 'Type your question below, or tap Talk to ask out loud.'
+                : 'Type your question below and get an answer in seconds.'}
+            </p>
+          </div>
+        )}
+
+        {/* On a phone the conversation sits just above the input, like a messaging app */}
+        <div className={cn('space-y-4', embedded && 'mt-auto')}>
+          {messages.map((msg) => (
             <div
+              key={msg.id}
               className={cn(
-                'max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 text-sm leading-relaxed',
-                msg.role === 'user'
-                  ? 'bg-navy text-white rounded-br-md'
-                  : 'bg-gray-100 text-gray-800 rounded-bl-md'
+                'flex gap-3',
+                msg.role === 'user' ? 'justify-end' : 'justify-start'
               )}
             >
-              {msg.role === 'assistant' ? (
-                <ChatMarkdown text={getTextContent(msg)} />
-              ) : (
-                <span className="whitespace-pre-line">{getTextContent(msg)}</span>
+              {msg.role === 'assistant' && (
+                <BocaBankerAvatar size={32} className="flex-shrink-0 mt-1" />
               )}
-            </div>
-          </div>
-        ))}
-
-        {/* Starter questions */}
-        {showStarters && (
-          <div className="flex flex-wrap gap-2 pl-11">
-            {STARTER_PROMPTS.map((prompt) => (
-              <button
-                key={prompt}
-                type="button"
-                onClick={() => submitText(prompt)}
-                className="rounded-full border border-amber-200 bg-amber-50/60 px-3 py-2.5 lg:py-1.5 text-left text-xs font-medium text-navy transition-colors hover:border-amber-300 hover:bg-amber-100"
+              <div
+                className={cn(
+                  'max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 text-sm leading-relaxed',
+                  msg.role === 'user'
+                    ? 'bg-navy text-white rounded-br-md'
+                    : 'bg-gray-100 text-gray-800 rounded-bl-md'
+                )}
               >
-                {prompt}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Typing indicator */}
-        {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
-          <div className="flex gap-3 justify-start">
-            <BocaBankerAvatar size={32} className="flex-shrink-0 mt-1" />
-            <div className="bg-gray-100 text-gray-800 rounded-2xl rounded-bl-md px-4 py-3">
-              <div className="flex items-center gap-1.5">
-                <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                <div
-                  className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"
-                  style={{ animationDelay: '0.2s' }}
-                />
-                <div
-                  className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"
-                  style={{ animationDelay: '0.4s' }}
-                />
+                {msg.role === 'assistant' ? (
+                  <ChatMarkdown text={getTextContent(msg)} />
+                ) : (
+                  <span className="whitespace-pre-line">{getTextContent(msg)}</span>
+                )}
               </div>
             </div>
-          </div>
-        )}
+          ))}
 
-        {/* Inline lead capture card */}
-        {showLeadCard && !leadCaptured && (
-          <InlineLeadCaptureCard
-            question={firstQuestion ? getTextContent(firstQuestion) : undefined}
-            onDismiss={handleLeadDismiss}
-            onSuccess={handleLeadSuccess}
-          />
-        )}
+          {/* Starter questions */}
+          {showStarters && (
+            <div className="flex flex-wrap gap-2 pl-11">
+              {STARTER_PROMPTS.map(({ prompt }) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => submitText(prompt)}
+                  className="rounded-full border border-amber-200 bg-amber-50/60 px-3 py-2.5 lg:py-1.5 text-left text-xs font-medium text-navy transition-colors hover:border-amber-300 hover:bg-amber-100"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          )}
 
-        {errorText && !isLoading && (
-          <div role="alert" className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
-            <p>{errorText}</p>
-            {messages.length > 1 && (
-              <button
-                type="button"
-                onClick={startOver}
-                className="mt-1 font-semibold text-red-700 underline underline-offset-2"
-              >
-                Start a new conversation
-              </button>
-            )}
-          </div>
-        )}
+          {/* Typing indicator */}
+          {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
+            <div className="flex gap-3 justify-start">
+              <BocaBankerAvatar size={32} className="flex-shrink-0 mt-1" />
+              <div className="bg-gray-100 text-gray-800 rounded-2xl rounded-bl-md px-4 py-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  <div
+                    className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"
+                    style={{ animationDelay: '0.2s' }}
+                  />
+                  <div
+                    className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"
+                    style={{ animationDelay: '0.4s' }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
+          {/* Inline lead capture card */}
+          {showLeadCard && !leadCaptured && (
+            <InlineLeadCaptureCard
+              question={firstQuestion ? getTextContent(firstQuestion) : undefined}
+              onDismiss={handleLeadDismiss}
+              onSuccess={handleLeadSuccess}
+            />
+          )}
+
+          {errorText && !isLoading && (
+            <div role="alert" className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+              <p>{errorText}</p>
+              {messages.length > 1 && (
+                <button
+                  type="button"
+                  onClick={startOver}
+                  className="mt-1 font-semibold text-red-700 underline underline-offset-2"
+                >
+                  Start a new conversation
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Input */}
-      <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-100">
-        <form onSubmit={handleSubmit} className="flex items-center gap-2 sm:gap-3">
-          <input
+      {/* Input: Talk while it's empty, Send once there's a question */}
+      <div className="px-3 sm:px-5 py-3 border-t border-gray-100">
+        <form
+          onSubmit={handleSubmit}
+          className="flex items-end gap-2 rounded-3xl border border-gray-200 bg-gray-50 p-1.5 pl-4 transition-colors focus-within:border-navy/30 focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/30"
+        >
+          <textarea
             ref={inputRef}
-            type="text"
+            rows={1}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder={embedded ? 'Ask about rates, refinancing…' : 'Ask about rates, refinancing, cost seg…'}
             aria-label="Your question"
             enterKeyHint="send"
             maxLength={2000}
-            className="min-w-0 flex-1 bg-gray-50 rounded-xl px-3 sm:px-4 py-3 text-base lg:text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+            className="min-w-0 flex-1 resize-none bg-transparent py-2.5 text-base leading-6 lg:text-sm text-gray-900 placeholder-gray-400 focus:outline-none"
           />
-          <button
-            type="submit"
-            disabled={!inputValue.trim() || isLoading}
-            aria-label="Send"
-            className="flex h-11 w-11 items-center justify-center rounded-xl bg-navy text-white disabled:opacity-40 transition-opacity hover:opacity-90 flex-shrink-0"
-          >
-            <Send className="h-4 w-4" />
-          </button>
+          {hasText || !VOICE_ENABLED ? <SendButton disabled={!hasText || isLoading} /> : <TalkButton />}
         </form>
       </div>
     </div>
