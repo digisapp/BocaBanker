@@ -2,9 +2,9 @@ import { siteConfig } from '@/lib/site-config'
 
 export const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://bocabanker.com').replace(/\/$/, '')
 export const SITE_NAME = 'Boca Banker'
-export const SITE_TITLE = 'Boca Banker | Boca Raton Mortgages & Refinancing'
+export const SITE_TITLE = 'Boca Banker | Mortgages, Refinancing & Real Estate Finance'
 export const SITE_DESCRIPTION =
-  'Boca Raton mortgage banker with 40+ years of South Florida lending. Home loans, refinancing, and cost segregation for investors. Ask anything, any hour.'
+  'Boca Raton banker with 40+ years of experience, serving clients nationwide. Home loans, refinancing, and cost segregation for investors. Ask anything, any hour.'
 
 /**
  * Site-wide structured data: the business and the website. Contact details
@@ -26,12 +26,7 @@ export function siteJsonLd() {
       addressCountry: 'US',
     },
     geo: { '@type': 'GeoCoordinates', latitude: 26.3683, longitude: -80.1289 },
-    areaServed: [
-      { '@type': 'City', name: 'Boca Raton' },
-      { '@type': 'AdministrativeArea', name: 'Palm Beach County' },
-      { '@type': 'AdministrativeArea', name: 'Broward County' },
-      { '@type': 'State', name: 'Florida' },
-    ],
+    areaServed: { '@type': 'Country', name: 'United States' },
     knowsAbout: [
       'Mortgages',
       'Home purchase loans',

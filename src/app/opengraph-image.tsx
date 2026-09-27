@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 
-export const alt = 'Boca Banker — straight answers on South Florida mortgages'
+export const alt = 'Boca Banker — straight answers on mortgages and real estate finance'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -41,7 +41,7 @@ export default async function OGImage() {
             Boca Banker · Boca Raton, FL
           </div>
           <div style={{ fontSize: '66px', fontWeight: 700, lineHeight: 1.08, color: 'white', letterSpacing: '-2px' }}>
-            Straight answers on South Florida mortgages.
+            Straight answers on mortgages and real estate finance.
           </div>
           <div
             style={{
@@ -51,7 +51,7 @@ export default async function OGImage() {
               marginTop: '28px',
             }}
           >
-            Home loans, refinancing, and cost segregation. 40+ years of Boca Raton lending.
+            {'Home loans, refinancing, and cost segregation. 40+ years in banking, serving clients nationwide.'}
           </div>
         </div>
 

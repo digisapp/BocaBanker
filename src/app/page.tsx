@@ -43,7 +43,7 @@ const paths = [
     desc: 'First home or fifth, find the loan program that fits and know your payment before you make an offer.',
     points: ['Conventional, FHA, VA & jumbo', 'Pre-approval guidance', 'Payment estimates at today’s rates'],
     cta: 'Ask about buying',
-    prompt: "I'm looking to buy a home in South Florida. Which loan programs should I be considering?",
+    prompt: "I'm looking to buy a home. Which loan programs should I be considering?",
   },
   {
     icon: RefreshCw,
@@ -83,10 +83,10 @@ const steps = [
 const faqs = [
   {
     q: 'Am I chatting with a real person?',
-    a: 'The chat is Boca Banker’s AI assistant, built on his 40+ years of South Florida lending experience. It answers questions and runs estimates instantly, day or night. When you’re ready to move forward, share your contact details in the chat and Boca Banker follows up with you personally.',
+    a: 'The chat is Boca Banker’s AI assistant, built on his 40+ years of banking experience. It answers questions and runs estimates instantly, day or night. When you’re ready to move forward, share your contact details in the chat and Boca Banker follows up with you personally.',
   },
   {
-    q: 'What mortgage options are available in South Florida?',
+    q: 'What mortgage options are available?',
     a: 'Conventional, FHA, VA, and jumbo loans for high-value homes, DSCR loans for investors, and commercial financing. The right fit depends on your credit, down payment, property type, and plans. Ask in the chat and you’ll get a recommendation for your situation.',
   },
   {
@@ -177,7 +177,7 @@ export default async function Home() {
 
   const stats = [
     { value: '$2B+', label: 'in loans closed' },
-    { value: '40+', label: 'years in Boca Raton lending' },
+    { value: '40+', label: 'years in banking' },
     { value: '500+', label: 'cost segregation studies' },
     ...(hasReviews
       ? [{ value: `${reviewSummary.average.toFixed(1)}★`, label: `from ${reviewSummary.total} client reviews` }]
@@ -249,18 +249,22 @@ export default async function Home() {
           />
           <div className="relative mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
             <div className="text-center lg:text-left">
-              <Eyebrow>Boca Raton · Mortgage &amp; real estate finance</Eyebrow>
+              <Eyebrow>
+                Based in Boca Raton<span className="hidden sm:inline"> · </span>
+                <br className="sm:hidden" />
+                Serving clients nationwide
+              </Eyebrow>
               <h1 className="font-serif text-4xl leading-[1.08] tracking-tight text-navy sm:text-5xl lg:text-6xl">
-                Straight answers on South Florida mortgages.
+                Straight answers on mortgages and real estate finance.
               </h1>
 
               {/* Phones and tablets: the chat box itself, right under the headline */}
               <HeroAskBar className="mt-7" />
 
               <p className="mx-auto mt-8 max-w-xl text-base leading-relaxed text-gray-600 sm:text-lg lg:mx-0 lg:mt-5">
-                Home loans, refinancing, and cost segregation for investors, from a banker with
-                40+ years in Boca Raton. Ask his AI assistant anything, any hour. When you’re ready,
-                he takes it from there personally.
+                Home loans, refinancing, and cost segregation for investors, backed by 40+ years of
+                banking experience. Ask his AI assistant anything, any hour. When you’re ready, he
+                takes it from there personally.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
@@ -302,7 +306,7 @@ export default async function Home() {
                       </span>
                     </a>
                   ) : (
-                    <p className="mt-0.5 text-sm text-gray-600">40+ years in Boca Raton lending</p>
+                    <p className="mt-0.5 text-sm text-gray-600">40+ years in banking</p>
                   )}
                 </div>
               </div>
@@ -355,7 +359,7 @@ export default async function Home() {
                     <p className="mt-2 text-sm text-gray-500">NMLS #{siteConfig.nmlsId}</p>
                   )}
                   <p className="mx-auto mt-5 max-w-xl leading-relaxed text-gray-600 md:mx-0">
-                    Boca Banker’s AI assistant is built on more than 40 years of Boca Raton lending,
+                    Boca Banker’s AI assistant is built on more than 40 years in banking,
                     over $2B in closed loans and 500+ cost segregation studies. The assistant handles
                     the questions and the math, any hour. When you’re ready to move forward, you work
                     with {siteConfig.ownerName ? siteConfig.ownerName.split(' ')[0] : 'him'} directly.
