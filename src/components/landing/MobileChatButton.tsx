@@ -65,20 +65,20 @@ export default function MobileChatButton() {
       return
     }
     // The top inset keeps the bar hidden while the CTA sits under the fixed nav
-    const obs = new IntersectionObserver(([e]) => setCtaVisible(e.isIntersecting), {
-      rootMargin: '-64px 0px 0px 0px',
-    })
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        setCtaVisible(e.isIntersecting)
+        // Scrolled past the CTA: fetch the chat now so tapping the bar opens
+        // it without a loading flash
+        if (!e.isIntersecting && !isDesktop()) preloadChat()
+      },
+      { rootMargin: '-64px 0px 0px 0px' }
+    )
     obs.observe(cta)
     return () => obs.disconnect()
   }, [])
 
   const barHidden = open || ctaVisible
-
-  // Once the bar shows, the visitor is reading the page: fetch the chat now so
-  // tapping the bar opens it without a loading flash.
-  useEffect(() => {
-    if (!barHidden && !isDesktop()) preloadChat()
-  }, [barHidden])
 
   const close = () => {
     setOpen(false)
@@ -143,6 +143,8 @@ export default function MobileChatButton() {
             <input
               ref={barInputRef}
               type="text"
+              // Pages without a CTA show the bar from the start; fetch on touch
+              onPointerDown={preloadChat}
               onFocus={openFromBar}
               placeholder="Ask Boca Banker anything…"
               aria-label="Ask Boca Banker a question"
