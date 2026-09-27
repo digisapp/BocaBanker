@@ -1,8 +1,8 @@
-"""Lead capture and mortgage math for the phone agent.
+"""Lead capture and mortgage math for the voice agent.
 
 Leads are written through Supabase REST with the service-role key and assigned
 to the earliest admin user, matching the web chat's guest lead capture so
-phone leads show up on the dashboard Leads page.
+phone and website voice leads show up on the dashboard Leads page.
 """
 
 from __future__ import annotations
@@ -14,6 +14,12 @@ from dataclasses import dataclass, field
 import httpx
 
 logger = logging.getLogger("boca-banker-voice")
+
+# (source, tag) per channel: the phone line, or the website's voice chat
+LEAD_SOURCES = {
+    "phone": ("phone-call", "phone-agent"),
+    "web": ("web-voice", "web-voice-agent"),
+}
 
 
 def monthly_payment(loan_amount: float, annual_rate: float, term_years: int) -> float:
@@ -35,7 +41,9 @@ def build_lead_row(
     email: str | None,
     summary: str | None,
     interest: str | None,
+    channel: str = "phone",
 ) -> dict:
+    source, tag = LEAD_SOURCES[channel]
     return {
         "user_id": owner_id,
         "property_address": "Not provided",
@@ -44,9 +52,9 @@ def build_lead_row(
         "buyer_name": name.strip()[:100],
         "buyer_phone": (phone or "").strip()[:40] or None,
         "buyer_email": (email or "").strip()[:200] or None,
-        "source": "phone-call",
+        "source": source,
         "notes": " — ".join(p for p in (interest, summary) if p) or None,
-        "tags": ["phone-agent"],
+        "tags": [tag],
         "status": "new",
         "priority": "high",
     }
@@ -58,6 +66,7 @@ class LeadStore:
 
     url: str = field(default_factory=lambda: os.environ["SUPABASE_URL"].rstrip("/"))
     key: str = field(default_factory=lambda: os.environ["SUPABASE_SERVICE_ROLE_KEY"])
+    channel: str = "phone"
     lead_id: str | None = None
     _owner_id: str | None = None
 
@@ -84,12 +93,12 @@ class LeadStore:
 
     async def save(self, **fields) -> None:
         async with httpx.AsyncClient(timeout=10) as client:
-            row = build_lead_row(owner_id=await self._owner(client), **fields)
+            row = build_lead_row(owner_id=await self._owner(client), channel=self.channel, **fields)
             if self.lead_id is None:
                 res = await client.post(f"{self.url}/rest/v1/leads", json=row, headers=self._headers)
                 res.raise_for_status()
                 self.lead_id = res.json()[0]["id"]
-                logger.info("created phone lead %s", self.lead_id)
+                logger.info("created %s lead %s", self.channel, self.lead_id)
             else:
                 # Only overwrite fields the caller actually provided
                 patch = {k: v for k, v in row.items() if v is not None and k not in ("user_id", "status")}
@@ -100,4 +109,4 @@ class LeadStore:
                     headers=self._headers,
                 )
                 res.raise_for_status()
-                logger.info("updated phone lead %s", self.lead_id)
+                logger.info("updated %s lead %s", self.channel, self.lead_id)

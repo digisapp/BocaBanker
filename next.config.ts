@@ -29,8 +29,9 @@ const securityHeaders = [
   { key: "X-XSS-Protection", value: "1; mode=block" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
+    // Microphone for our own pages only: the website voice chat
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=()",
+    value: "camera=(), microphone=(self), geolocation=()",
   },
   {
     key: "Strict-Transport-Security",
@@ -39,6 +40,14 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  env: {
+    // Talk (voice chat) buttons only show when the server can start calls,
+    // i.e. the LiveKit credentials are set. Read at build time.
+    NEXT_PUBLIC_VOICE_ENABLED:
+      process.env.LIVEKIT_URL && process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET
+        ? "true"
+        : "",
+  },
   // One canonical host: www serves the same pages, so send it to the apex.
   async redirects() {
     return [

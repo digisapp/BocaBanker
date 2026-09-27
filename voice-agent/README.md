@@ -10,6 +10,21 @@ Answers inbound calls to the Boca Banker LiveKit phone number with xAI's
 
 Calls are not recorded (`record=False`). Florida requires every party's consent to record a call.
 
+## Website voice chat
+
+The same agent takes voice calls from the website's **Talk** buttons. The web app's
+`/api/voice/session` route creates a room per visitor and dispatches this agent into it by
+`AGENT_NAME`. Website calls:
+
+- open with "Hi, I'm Boca Banker's AI assistant…" and ask for a phone number (no caller ID),
+- save leads with `source = web-voice`,
+- end after 10 minutes (`WEB_CALL_LIMIT_S`), with a one-minute warning.
+
+To turn it on, add this project's `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET`
+to the web app's environment (Vercel) and redeploy it. The Talk buttons only appear when all
+three are set at build time. `lk project list` shows the URL; create an API key pair in the
+LiveKit Cloud dashboard under Settings → Keys.
+
 ## One-time setup
 
 1. Create a LiveKit Cloud project named `bocabanker` at https://cloud.livekit.io.

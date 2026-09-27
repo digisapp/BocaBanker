@@ -682,7 +682,7 @@ export default function ReviewsClient({ initial }: { initial: InitialReviews | n
         </div>
       </main>
 
-      <footer className="border-t border-gray-200 px-4 sm:px-6 pt-8 pb-24 lg:pb-8">
+      <footer className="border-t border-gray-200 px-4 sm:px-6 pt-8 pb-32 lg:pb-8">
         <div className="mx-auto max-w-5xl space-y-2 text-xs leading-relaxed text-gray-500">
           <p>
             <span className="font-semibold text-gray-600">Equal Housing Opportunity.</span>
@@ -696,7 +696,7 @@ export default function ReviewsClient({ initial }: { initial: InitialReviews | n
         </div>
       </footer>
 
-      {/* Mobile floating chat button + fullscreen overlay */}
+      {/* Mobile bottom ask bar + fullscreen chat, and the voice call screen */}
       <MobileChatButton />
     </div>
   )

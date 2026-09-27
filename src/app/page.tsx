@@ -20,6 +20,7 @@ import { siteConfig, telHref } from '@/lib/site-config'
 import { SITE_URL, SITE_TITLE, SITE_DESCRIPTION } from '@/lib/seo'
 import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
 import MobileChatButton from '@/components/landing/MobileChatButton'
+import { HeroAskBar } from '@/components/landing/AskBar'
 import { Reveal, LandingNav, OpenChatButton, HeroChatWidget } from '@/components/landing/LandingClient'
 import { Eyebrow, NavCallAsk, SiteFooter, primaryBtn, secondaryBtn } from '@/components/marketing/site'
 
@@ -241,7 +242,7 @@ export default async function Home() {
 
       <main>
         {/* ══════════ HERO ══════════ */}
-        <section aria-label="Introduction" className="relative overflow-hidden px-4 sm:px-6 pt-28 pb-16 sm:pt-36 sm:pb-24">
+        <section aria-label="Introduction" className="relative overflow-hidden px-4 sm:px-6 pt-24 pb-16 sm:pt-36 sm:pb-24">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -top-32 right-[-10%] h-[520px] w-[520px] rounded-full bg-amber-100/60 blur-[100px]"
@@ -252,14 +253,18 @@ export default async function Home() {
               <h1 className="font-serif text-4xl leading-[1.08] tracking-tight text-navy sm:text-5xl lg:text-6xl">
                 Straight answers on South Florida mortgages.
               </h1>
-              <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-gray-600 sm:text-lg lg:mx-0">
+
+              {/* Phones and tablets: the chat box itself, right under the headline */}
+              <HeroAskBar className="mt-7" />
+
+              <p className="mx-auto mt-8 max-w-xl text-base leading-relaxed text-gray-600 sm:text-lg lg:mx-0 lg:mt-5">
                 Home loans, refinancing, and cost segregation for investors, from a banker with
                 40+ years in Boca Raton. Ask his AI assistant anything, any hour. When you’re ready,
                 he takes it from there personally.
               </p>
 
-              <div data-chat-cta className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
-                <OpenChatButton className={primaryBtn}>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
+                <OpenChatButton className={cn(primaryBtn, 'hidden lg:inline-flex')}>
                   <MessageCircle className="h-5 w-5" />
                   Ask a question
                 </OpenChatButton>
@@ -554,7 +559,7 @@ export default async function Home() {
 
       <SiteFooter />
 
-      {/* Mobile floating chat button + fullscreen overlay */}
+      {/* Mobile bottom ask bar + fullscreen chat, and the voice call screen */}
       <MobileChatButton />
     </div>
   )
