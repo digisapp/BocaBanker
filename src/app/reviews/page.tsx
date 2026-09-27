@@ -27,8 +27,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const n = initial?.totalReviews ?? 0
   const description =
     n > 0
-      ? `Read ${n} client reviews of Boca Banker, rated ${initial!.averageRating.toFixed(1)} out of 5. Real stories from South Florida homebuyers and homeowners on their mortgage and refinance experience.`
-      : 'Read what clients say about working with Boca Banker on home loans and refinancing in South Florida.'
+      ? `Read ${n} client reviews of Boca Banker, rated ${initial!.averageRating.toFixed(1)} out of 5. Real stories from homebuyers and homeowners on their mortgage and refinance experience.`
+      : 'Read what clients say about working with Boca Banker on home loans and refinancing.'
 
   return {
     title: 'Client Reviews',
