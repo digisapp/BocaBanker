@@ -93,12 +93,6 @@ export function HeroAskBar({ className }: { className?: string }) {
           </button>
         ))}
       </div>
-
-      <p className="mt-3 text-center text-xs text-gray-500">
-        {VOICE_ENABLED
-          ? 'Type a question, or tap Talk to ask out loud. Free, no signup.'
-          : 'Free, no signup. Answers in seconds.'}
-      </p>
     </div>
   )
 }

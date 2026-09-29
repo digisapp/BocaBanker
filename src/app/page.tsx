@@ -249,11 +249,7 @@ export default async function Home() {
           />
           <div className="relative mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
             <div className="text-center lg:text-left">
-              <Eyebrow>
-                Based in Boca Raton<span className="hidden sm:inline"> · </span>
-                <br className="sm:hidden" />
-                Serving clients nationwide
-              </Eyebrow>
+              <Eyebrow>Serving clients nationwide</Eyebrow>
               <h1 className="font-serif text-4xl leading-[1.08] tracking-tight text-navy sm:text-5xl lg:text-6xl">
                 Straight answers on mortgages and real estate finance.
               </h1>
@@ -263,8 +259,7 @@ export default async function Home() {
 
               <p className="mx-auto mt-8 max-w-xl text-base leading-relaxed text-gray-600 sm:text-lg lg:mx-0 lg:mt-5">
                 Home loans, refinancing, and cost segregation for investors, backed by 40+ years of
-                banking experience. Ask his AI assistant anything, any hour. When you’re ready, he
-                takes it from there personally.
+                banking experience.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
