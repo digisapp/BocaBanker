@@ -52,7 +52,7 @@ export default class ErrorBoundary extends Component<
           </p>
           <Button
             onClick={this.handleRetry}
-            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
+            className="bg-navy text-white hover:bg-navy-light font-semibold"
           >
             <RotateCw className="h-4 w-4 mr-2" />
             Try Again

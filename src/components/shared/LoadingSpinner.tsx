@@ -14,7 +14,7 @@ const SIZE_MAP = {
 export default function LoadingSpinner({ size = 'md', text }: LoadingSpinnerProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-8">
-      <Loader2 className={`${SIZE_MAP[size]} animate-spin text-amber-500`} />
+      <Loader2 className={`${SIZE_MAP[size]} animate-spin text-navy`} />
       {text && <p className="text-sm text-gray-500">{text}</p>}
     </div>
   );

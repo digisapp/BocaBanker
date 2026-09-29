@@ -31,7 +31,7 @@ export default function DashboardError({
         </p>
         <button
           onClick={reset}
-          className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 px-5 py-2 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+          className="bg-navy inline-flex items-center justify-center rounded-xl px-5 py-2 text-sm font-semibold text-white hover:bg-navy-light transition-colors"
         >
           Try again
         </button>

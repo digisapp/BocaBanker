@@ -147,7 +147,7 @@ export default function EmailComposer() {
         <Button
           onClick={handleSend}
           disabled={!to || !subject || !body || status === 'sending'}
-          className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold w-full sm:w-auto"
+          className="bg-navy text-white hover:bg-navy-light font-semibold w-full sm:w-auto"
         >
           {status === 'sending' ? (
             <>

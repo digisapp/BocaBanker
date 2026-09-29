@@ -72,7 +72,7 @@ export function LoanForm({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         {/* Borrower Information */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-amber-600">
+          <h3 className="text-lg font-semibold text-navy">
             Borrower Information
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -136,7 +136,7 @@ export function LoanForm({
 
         {/* Property Information */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-amber-600">
+          <h3 className="text-lg font-semibold text-navy">
             Property Information
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -216,7 +216,7 @@ export function LoanForm({
 
         {/* Loan Details */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-amber-600">
+          <h3 className="text-lg font-semibold text-navy">
             Loan Details
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -381,7 +381,7 @@ export function LoanForm({
 
         {/* Pipeline & Commission */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-amber-600">
+          <h3 className="text-lg font-semibold text-navy">
             Pipeline & Commission
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -466,7 +466,7 @@ export function LoanForm({
 
         {/* Arive Integration */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-amber-600">
+          <h3 className="text-lg font-semibold text-navy">
             Arive Integration
           </h3>
           <div className="grid grid-cols-1 gap-4">
@@ -495,7 +495,7 @@ export function LoanForm({
 
         {/* Notes */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-amber-600">Notes</h3>
+          <h3 className="text-lg font-semibold text-navy">Notes</h3>
           <FormField
             control={form.control}
             name="notes"
@@ -520,7 +520,7 @@ export function LoanForm({
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90 px-8"
+            className="bg-navy text-white font-semibold hover:bg-navy-light px-8"
           >
             {isSubmitting && (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

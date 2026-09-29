@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { logger } from '@/lib/logger'
 import { toast } from 'sonner'
-import { ArrowLeft, Pencil, Loader2 } from 'lucide-react'
+import { Pencil, Loader2 } from 'lucide-react'
 import { ClientForm } from '@/components/clients/ClientForm'
-import { Button } from '@/components/ui/button'
+import PageHeader from '@/components/shared/PageHeader'
 import type { ClientInput } from '@/lib/validation/schemas'
 
 interface ClientData {
@@ -77,7 +77,7 @@ export default function EditClientPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-navy" />
       </div>
     )
   }
@@ -104,30 +104,12 @@ export default function EditClientPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-3xl">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Go back"
-          onClick={() => router.back()}
-          className="text-gray-500 hover:text-amber-600"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-            <Pencil className="h-5 w-5 text-amber-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Edit Client
-            </h1>
-            <p className="text-sm text-gray-500">
-              {client.firstName} {client.lastName}
-            </p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        icon={Pencil}
+        title="Edit Client"
+        description={`${client.firstName} ${client.lastName}`}
+        onBack={() => router.back()}
+      />
 
       {/* Form */}
       <ClientForm

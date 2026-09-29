@@ -13,8 +13,10 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  MoreHorizontal,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import PageHeader from '@/components/shared/PageHeader'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -185,19 +187,18 @@ export default function ReviewsManagementPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reviews</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Manage client reviews and responses
-          </p>
-        </div>
-        <Button asChild variant="outline" size="sm" className="gap-2">
-          <Link href="/reviews" target="_blank">
-            <ExternalLink className="w-4 h-4" /> View Public Page
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        icon={Star}
+        title="Reviews"
+        description="Manage client reviews and responses"
+        actions={
+          <Button asChild variant="outline" size="sm" className="gap-2">
+            <Link href="/reviews" target="_blank">
+              <ExternalLink className="w-4 h-4" /> View Public Page
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Stats cards */}
       <div className="grid grid-cols-3 gap-4">
@@ -256,7 +257,7 @@ export default function ReviewsManagementPage() {
       {/* Reviews list */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-navy" />
         </div>
       ) : reviews.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
@@ -319,8 +320,13 @@ export default function ReviewsManagementPage() {
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="shrink-0" aria-label="Review actions">
-                      Actions
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0 text-gray-500 hover:text-navy"
+                      aria-label="Review actions"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
@@ -435,7 +441,7 @@ export default function ReviewsManagementPage() {
                 <Button
                   onClick={handleRespond}
                   disabled={responding || !responseText.trim()}
-                  className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
+                  className="bg-navy hover:bg-navy-light text-white gap-2"
                 >
                   {responding && <Loader2 className="w-4 h-4 animate-spin" />}
                   Save & Approve

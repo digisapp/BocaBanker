@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/context/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import PageHeader from '@/components/shared/PageHeader';
 
 interface ProfileFormData {
   fullName: string;
@@ -171,19 +172,11 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl">
       {/* Page Header */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
-          <Settings className="h-5 w-5" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-serif font-bold text-amber-600">
-            Settings
-          </h1>
-          <p className="text-sm text-gray-500">
-            Manage your account and preferences
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Settings}
+        title="Settings"
+        description="Manage your account and preferences"
+      />
 
       {/* Profile Section */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
@@ -222,7 +215,7 @@ export default function SettingsPage() {
             <Button
               type="submit"
               disabled={profileSaving}
-              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
+              className="bg-navy text-white hover:bg-navy-light font-semibold"
             >
               {profileSaving ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -280,7 +273,7 @@ export default function SettingsPage() {
             <Button
               type="submit"
               disabled={passwordSaving}
-              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
+              className="bg-navy text-white hover:bg-navy-light font-semibold"
             >
               {passwordSaving ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -375,7 +368,7 @@ export default function SettingsPage() {
               type="button"
               disabled={mortgageSaving}
               onClick={handleMortgageSettingsSave}
-              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
+              className="bg-navy text-white hover:bg-navy-light font-semibold"
             >
               {mortgageSaving ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

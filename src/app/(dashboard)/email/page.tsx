@@ -20,6 +20,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription,
 } from '@/components/ui/dialog';
 import { RoleGate } from '@/components/shared/RoleGate';
+import PageHeader from '@/components/shared/PageHeader';
 import BulkEmailModal from '@/components/email/BulkEmailModal';
 import TemplateSelector from '@/components/email/TemplateSelector';
 import SandboxedHtml from '@/components/email/SandboxedHtml';
@@ -95,7 +96,7 @@ const STATUS_COLORS: Record<string, string> = {
   delivered: 'bg-emerald-50 text-emerald-600 border-emerald-200',
   bounced: 'bg-red-50 text-red-600 border-red-200',
   failed: 'bg-red-50 text-red-600 border-red-200',
-  received: 'bg-amber-50 text-amber-600 border-amber-200',
+  received: 'bg-amber-50 text-amber-700 border-amber-200',
   read: 'bg-gray-50 text-gray-600 border-gray-200',
   replied: 'bg-purple-50 text-purple-600 border-purple-200',
 };
@@ -186,58 +187,54 @@ export default function EmailPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
-            <Mail className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-serif font-bold text-amber-600">Email</h1>
-            <p className="text-sm text-gray-500">Send, receive, and manage client emails</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
-          {/* Auto-reply toggle */}
-          <button
-            onClick={toggleAutoReply}
-            role="switch"
-            aria-checked={autoReplyEnabled}
-            className="flex h-10 items-center gap-2 text-sm text-gray-600 hover:text-amber-600 transition-colors"
-          >
-            {autoReplyEnabled ? (
-              <ToggleRight className="h-5 w-5 text-amber-500" />
-            ) : (
-              <ToggleLeft className="h-5 w-5 text-gray-400" />
-            )}
-            AI Auto-Reply
-          </button>
-          {/* Compose button */}
-          <ComposeDialog open={composeOpen} onOpenChange={setComposeOpen} />
-          <RoleGate permission="canSendEmail">
-            <BulkEmailModal />
-          </RoleGate>
-          {/* Topbar search (the usual way to Email History) is hidden below sm */}
-          <Button asChild variant="outline" className="sm:hidden border-gray-200 text-gray-600 hover:bg-gray-50">
-            <Link href="/email/history">
-              <History className="h-4 w-4 mr-2" />
-              History
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={Mail}
+        title="Email"
+        description="Send, receive, and manage client emails"
+        actions={
+          <>
+            {/* Auto-reply toggle */}
+            <button
+              onClick={toggleAutoReply}
+              role="switch"
+              aria-checked={autoReplyEnabled}
+              className="flex h-10 items-center gap-2 text-sm text-gray-600 hover:text-navy transition-colors"
+            >
+              {autoReplyEnabled ? (
+                <ToggleRight className="h-5 w-5 text-amber-500" />
+              ) : (
+                <ToggleLeft className="h-5 w-5 text-gray-400" />
+              )}
+              AI Auto-Reply
+            </button>
+            {/* Compose button */}
+            <ComposeDialog open={composeOpen} onOpenChange={setComposeOpen} />
+            <RoleGate permission="canSendEmail">
+              <BulkEmailModal />
+            </RoleGate>
+            {/* Topbar search (the usual way to Email History) is hidden below sm */}
+            <Button asChild variant="outline" className="sm:hidden border-gray-200 text-gray-600 hover:bg-gray-50">
+              <Link href="/email/history">
+                <History className="h-4 w-4 mr-2" />
+                History
+              </Link>
+            </Button>
+          </>
+        }
+      />
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
         <button
           onClick={() => setActiveTab('inbox')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${
-            activeTab === 'inbox' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            activeTab === 'inbox' ? 'bg-white text-navy shadow-sm' : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           <Inbox className="h-4 w-4" />
           Inbox
           {unreadCount > 0 && (
-            <span className="bg-amber-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+            <span className="bg-navy text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
               {unreadCount}
             </span>
           )}
@@ -245,7 +242,7 @@ export default function EmailPage() {
         <button
           onClick={() => setActiveTab('sent')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${
-            activeTab === 'sent' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            activeTab === 'sent' ? 'bg-white text-navy shadow-sm' : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           <Send className="h-4 w-4" />
@@ -304,14 +301,14 @@ function ComposeDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold">
+        <Button className="bg-navy text-white hover:bg-navy-light font-semibold">
           <Mail className="h-4 w-4 mr-2" />
           Compose
         </Button>
       </DialogTrigger>
       <DialogContent className="bg-white border-gray-200 text-gray-900 sm:max-w-2xl max-h-[85dvh] md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-amber-600">Compose Email</DialogTitle>
+          <DialogTitle className="text-navy">Compose Email</DialogTitle>
           <DialogDescription className="text-gray-500">Send a new email via Resend</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 mt-2">
@@ -334,7 +331,7 @@ function ComposeDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => onOpenChange(false)} className="border-gray-200 text-gray-500">Cancel</Button>
             <Button onClick={handleSend} disabled={!to || !subject || !body || sending}
-              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90">
+              className="bg-navy text-white hover:bg-navy-light">
               {sending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
               Send
             </Button>
@@ -577,16 +574,16 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
               onChange={(e) => setSearchInput(e.target.value)}
               className="pl-9 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500" />
           </div>
-          <Button type="submit" variant="outline" className="border-gray-200 text-amber-600 hover:bg-amber-50">Search</Button>
+          <Button type="submit" variant="outline" className="border-gray-200 text-navy hover:bg-gray-100">Search</Button>
         </form>
         <Select value={readFilter} onValueChange={(v) => { setReadFilter(v); setPage(1); }}>
           <SelectTrigger className="w-full sm:w-[140px] bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-white border-gray-200">
-            <SelectItem value="all" className="text-gray-900 focus:bg-amber-50">All</SelectItem>
-            <SelectItem value="unread" className="text-gray-900 focus:bg-amber-50">Unread</SelectItem>
-            <SelectItem value="read" className="text-gray-900 focus:bg-amber-50">Read</SelectItem>
+            <SelectItem value="all" className="text-gray-900 focus:bg-gray-100">All</SelectItem>
+            <SelectItem value="unread" className="text-gray-900 focus:bg-gray-100">Unread</SelectItem>
+            <SelectItem value="read" className="text-gray-900 focus:bg-gray-100">Read</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -600,13 +597,13 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
         }`}>
           {loading ? (
             <div className="flex items-center justify-center py-16 flex-1">
-              <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+              <Loader2 className="h-6 w-6 animate-spin text-navy" />
             </div>
           ) : listError ? (
             <div className="text-center py-16 flex-1">
               <p className="text-sm text-red-600 mb-3">{listError}</p>
               <Button variant="outline" size="sm" onClick={() => fetchInbox()}
-                className="border-gray-200 text-amber-600 hover:bg-amber-50">Retry</Button>
+                className="border-gray-200 text-navy hover:bg-gray-100">Retry</Button>
             </div>
           ) : emailList.length === 0 ? (
             <div className="text-center py-16 flex-1">
@@ -618,7 +615,7 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
               {/* Select all row */}
               <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-100 bg-gray-50/50">
                 <button onClick={toggleSelectAll} aria-label="Select all emails"
-                  className="-m-3 p-3 md:m-0 md:p-0 text-gray-400 hover:text-amber-500">
+                  className="-m-3 p-3 md:m-0 md:p-0 text-gray-400 hover:text-navy">
                   {selectedIds.size === emailList.length ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
                 </button>
                 <span className="text-xs text-gray-400">{total} emails</span>
@@ -632,7 +629,7 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleSelect(email.id); }}
                       aria-label={selectedIds.has(email.id) ? 'Deselect email' : 'Select email'}
-                      className="-mx-3 -mt-2 p-3 md:mx-0 md:mt-1 md:p-0 text-gray-400 hover:text-amber-500 shrink-0"
+                      className="-mx-3 -mt-2 p-3 md:mx-0 md:mt-1 md:p-0 text-gray-400 hover:text-navy shrink-0"
                     >
                       {selectedIds.has(email.id) ? <CheckSquare className="h-4 w-4 text-amber-500" /> : <Square className="h-4 w-4" />}
                     </button>
@@ -674,7 +671,7 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
                           <MessageSquare className="h-3 w-3 text-gray-400" />
                         )}
                         {email.clientFirstName && (
-                          <Badge variant="outline" className="max-w-full text-xs bg-amber-50 text-amber-600 border-amber-200">
+                          <Badge variant="outline" className="max-w-full text-xs bg-amber-50 text-amber-700 border-amber-200">
                             <span className="truncate">{email.clientFirstName} {email.clientLastName}</span>
                           </Badge>
                         )}
@@ -689,10 +686,10 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 py-3 border-t border-gray-100">
               <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}
-                className="border-gray-200 text-gray-500 hover:bg-amber-50 disabled:opacity-40">Prev</Button>
+                className="border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-40">Prev</Button>
               <span className="text-xs text-gray-500">{page}/{totalPages}</span>
               <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}
-                className="border-gray-200 text-gray-500 hover:bg-amber-50 disabled:opacity-40">Next</Button>
+                className="border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-40">Next</Button>
             </div>
           )}
         </div>
@@ -702,14 +699,14 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
           selectedEmail || loadingDetail ? 'flex' : 'hidden lg:flex'
         }`}>
           {loadingDetail ? (
-            <div className="flex items-center justify-center flex-1"><Loader2 className="h-6 w-6 animate-spin text-amber-500" /></div>
+            <div className="flex items-center justify-center flex-1"><Loader2 className="h-6 w-6 animate-spin text-navy" /></div>
           ) : selectedEmail ? (
             <>
               {/* Header */}
               <div className="p-4 md:p-6 border-b border-gray-100">
                 {/* Mobile: the only way back to the list (no browser back in the installed app) */}
                 <button onClick={() => setSelectedEmail(null)}
-                  className="md:hidden -ml-2 -mt-1 mb-2 flex h-10 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-gray-600 hover:text-amber-600">
+                  className="md:hidden -ml-2 -mt-1 mb-2 flex h-10 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-gray-600 hover:text-navy">
                   <ArrowLeft className="h-4 w-4" />
                   Inbox
                 </button>
@@ -717,7 +714,7 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <button onClick={() => setSelectedEmail(null)} aria-label="Back to inbox"
-                        className="hidden md:block text-gray-400 hover:text-amber-600">
+                        className="hidden md:block text-gray-400 hover:text-navy">
                         <ArrowLeft className="h-4 w-4" />
                       </button>
                       <h2 className="text-lg font-semibold text-gray-900 truncate">{selectedEmail.subject}</h2>
@@ -728,7 +725,7 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
                     <p className="text-xs text-gray-400 mt-0.5">{formatDate(selectedEmail.createdAt)}</p>
                     <div className="flex flex-wrap items-center gap-2 mt-2">
                       {selectedEmail.clientFirstName && (
-                        <Badge variant="outline" className="max-w-full bg-amber-50 text-amber-600 border-amber-200">
+                        <Badge variant="outline" className="max-w-full bg-amber-50 text-amber-700 border-amber-200">
                           <span className="truncate">Client: {selectedEmail.clientFirstName} {selectedEmail.clientLastName}</span>
                         </Badge>
                       )}
@@ -748,7 +745,7 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Button variant="ghost" size="icon" onClick={() => { setShowReply(!showReply); setReplyBody(''); }} aria-label="Reply"
-                      className="size-10 md:size-9 text-gray-500 hover:text-amber-600 hover:bg-amber-50"><Reply className="h-4 w-4" /></Button>
+                      className="size-10 md:size-9 text-gray-500 hover:text-navy hover:bg-gray-100"><Reply className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => deleteEmails([selectedEmail.id])} aria-label="Delete email"
                       className="size-10 md:size-9 text-gray-500 hover:text-red-600 hover:bg-red-50"><Trash2 className="h-4 w-4" /></Button>
                   </div>
@@ -820,7 +817,7 @@ function InboxTab({ unreadCount, onUnreadChange }: { unreadCount: number; onUnre
                   <textarea value={replyBody} onChange={(e) => setReplyBody(e.target.value)} placeholder="Type your reply..."
                     className="w-full min-h-[120px] px-3 py-2 text-base md:text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 resize-y text-gray-900 placeholder:text-gray-400" />
                   <div className="flex justify-end">
-                    <Button onClick={sendReply} disabled={sendingReply || !replyBody.trim()} className="bg-amber-500 hover:bg-amber-600 text-white">
+                    <Button onClick={sendReply} disabled={sendingReply || !replyBody.trim()} className="bg-navy hover:bg-navy-light text-white">
                       {sendingReply ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
                       Send Reply
                     </Button>
@@ -899,24 +896,24 @@ function SentTab() {
             <Input placeholder="Search sent emails..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)}
               className="pl-9 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500" />
           </div>
-          <Button type="submit" variant="outline" className="border-gray-200 text-amber-600 hover:bg-amber-50">Search</Button>
+          <Button type="submit" variant="outline" className="border-gray-200 text-navy hover:bg-gray-100">Search</Button>
         </form>
         <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
           <SelectTrigger className="w-full sm:w-[160px] bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500"><SelectValue /></SelectTrigger>
           <SelectContent className="bg-white border-gray-200">
-            <SelectItem value="all" className="text-gray-900 focus:bg-amber-50">All Status</SelectItem>
-            <SelectItem value="sent" className="text-gray-900 focus:bg-amber-50">Sent</SelectItem>
-            <SelectItem value="delivered" className="text-gray-900 focus:bg-amber-50">Delivered</SelectItem>
-            <SelectItem value="bounced" className="text-gray-900 focus:bg-amber-50">Bounced</SelectItem>
-            <SelectItem value="failed" className="text-gray-900 focus:bg-amber-50">Failed</SelectItem>
-            <SelectItem value="replied" className="text-gray-900 focus:bg-amber-50">Replied</SelectItem>
+            <SelectItem value="all" className="text-gray-900 focus:bg-gray-100">All Status</SelectItem>
+            <SelectItem value="sent" className="text-gray-900 focus:bg-gray-100">Sent</SelectItem>
+            <SelectItem value="delivered" className="text-gray-900 focus:bg-gray-100">Delivered</SelectItem>
+            <SelectItem value="bounced" className="text-gray-900 focus:bg-gray-100">Bounced</SelectItem>
+            <SelectItem value="failed" className="text-gray-900 focus:bg-gray-100">Failed</SelectItem>
+            <SelectItem value="replied" className="text-gray-900 focus:bg-gray-100">Replied</SelectItem>
           </SelectContent>
         </Select>
       </div>
       <p className="text-sm text-gray-500">{total} sent emails</p>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
         {loading ? (
-          <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-amber-500" /></div>
+          <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-navy" /></div>
         ) : sentEmails.length === 0 ? (
           <div className="text-center py-16">
             <Send className="h-12 w-12 text-gray-300 mx-auto mb-3" />
@@ -926,11 +923,11 @@ function SentTab() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-left px-4 py-3 text-xs font-medium text-amber-600 uppercase">Date</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-amber-600 uppercase">Recipient</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-amber-600 uppercase">Subject</th>
-                <th className="hidden md:table-cell text-left px-4 py-3 text-xs font-medium text-amber-600 uppercase">Template</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-amber-600 uppercase">Status</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Date</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Recipient</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Subject</th>
+                <th className="hidden md:table-cell text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Template</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -961,10 +958,10 @@ function SentTab() {
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3">
           <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}
-            className="border-gray-200 text-gray-500 hover:bg-amber-50 disabled:opacity-40">Previous</Button>
+            className="border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-40">Previous</Button>
           <span className="text-sm text-gray-500">Page {page} of {totalPages}</span>
           <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}
-            className="border-gray-200 text-gray-500 hover:bg-amber-50 disabled:opacity-40">Next</Button>
+            className="border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-40">Next</Button>
         </div>
       )}
     </div>

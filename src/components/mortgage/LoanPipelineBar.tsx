@@ -51,9 +51,9 @@ export function LoanPipelineBar({ status }: { status: string }) {
                 <span
                   className={`text-[10px] leading-tight truncate ${
                     isCurrent
-                      ? 'text-amber-600 font-semibold'
+                      ? 'text-amber-700 font-semibold'
                       : isCompleted
-                        ? 'text-amber-500'
+                        ? 'text-gray-600'
                         : isFuture
                           ? 'text-gray-400'
                           : 'text-gray-500'

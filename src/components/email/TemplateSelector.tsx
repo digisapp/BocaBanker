@@ -52,8 +52,8 @@ export default function TemplateSelector({ onSelect, selected }: TemplateSelecto
               <div
                 className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${
                   isSelected
-                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white'
-                    : 'bg-gray-50 text-amber-600'
+                    ? 'bg-navy text-white'
+                    : 'bg-gray-50 text-amber-700'
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -61,7 +61,7 @@ export default function TemplateSelector({ onSelect, selected }: TemplateSelecto
               <div className="min-w-0">
                 <p
                   className={`text-sm font-medium ${
-                    isSelected ? 'text-amber-600' : 'text-gray-900'
+                    isSelected ? 'text-amber-700' : 'text-gray-900'
                   }`}
                 >
                   {template.label}

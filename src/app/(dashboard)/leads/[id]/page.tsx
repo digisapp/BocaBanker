@@ -43,6 +43,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { RoleGate } from '@/components/shared/RoleGate'
+import { formatPhone, leadTitle, realValue } from '@/lib/leads'
 
 interface LeadDetail {
   id: string
@@ -82,7 +83,7 @@ interface LeadDetail {
 
 const statusColorMap: Record<string, string> = {
   new: 'bg-blue-50 text-blue-600 border-blue-200',
-  contacted: 'bg-amber-50 text-amber-600 border-amber-200',
+  contacted: 'bg-amber-50 text-amber-700 border-amber-200',
   qualified: 'bg-emerald-50 text-emerald-600 border-emerald-200',
   proposal_sent: 'bg-purple-50 text-purple-600 border-purple-200',
   converted: 'bg-green-50 text-green-600 border-green-200',
@@ -100,7 +101,7 @@ const statusLabel: Record<string, string> = {
 
 const priorityColorMap: Record<string, string> = {
   high: 'bg-red-50 text-red-600 border-red-200',
-  medium: 'bg-amber-50 text-amber-600 border-amber-200',
+  medium: 'bg-amber-50 text-amber-700 border-amber-200',
   low: 'bg-gray-100 text-gray-500 border-gray-200',
 }
 
@@ -241,7 +242,7 @@ export default function LeadDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-navy" />
       </div>
     )
   }
@@ -254,26 +255,26 @@ export default function LeadDetailPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-6 sm:gap-y-3">
+        <div className="flex min-w-0 items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
             aria-label="Go back"
             onClick={() => router.push('/leads')}
-            className="text-gray-500 hover:text-amber-600"
+            className="text-gray-500 hover:text-navy"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center">
-              <MapPin className="h-6 w-6 text-amber-600" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-navy">
+              <MapPin className="h-5 w-5 text-amber-400" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {lead.propertyAddress || 'Untitled Lead'}
+                {leadTitle(lead)}
               </h1>
-              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 mt-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
                 <Badge
                   variant="outline"
                   className={`${
@@ -300,13 +301,13 @@ export default function LeadDetailPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {editing ? (
             <>
               <Button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
+                className="bg-navy text-white font-semibold hover:bg-navy-light"
               >
                 {saving ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -333,7 +334,7 @@ export default function LeadDetailPage() {
                     <Button
                       onClick={handleConvert}
                       disabled={converting}
-                      className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
+                      className="bg-navy text-white font-semibold hover:bg-navy-light"
                     >
                       {converting ? (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -357,7 +358,7 @@ export default function LeadDetailPage() {
                       if (lead.salePrice) params.set('purchasePrice', lead.salePrice)
                       router.push(`/mortgage/loans/new?${params}`)
                     }}
-                    className="border-amber-200 text-amber-700 hover:bg-amber-50"
+                    className="border-gray-200 text-navy hover:bg-gray-100"
                   >
                     <Landmark className="h-4 w-4 mr-2" />
                     Start Loan
@@ -416,8 +417,8 @@ export default function LeadDetailPage() {
       {/* Edit Mode Form */}
       {editing && (
         <div className="bg-amber-50/50 rounded-2xl border border-amber-200 shadow-sm p-6 space-y-5">
-          <h2 className="text-lg font-semibold text-amber-600 flex items-center gap-2">
-            <Pencil className="h-4 w-4" />
+          <h2 className="text-lg font-semibold text-navy flex items-center gap-2">
+            <Pencil className="h-4 w-4 text-amber-600" />
             Edit Lead
           </h2>
 
@@ -521,17 +522,30 @@ export default function LeadDetailPage() {
         </div>
       )}
 
+      {/* Notes */}
+      {lead.notes && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+            <StickyNote className="h-4 w-4 text-amber-600" />
+            Notes
+          </h2>
+          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+            {lead.notes}
+          </p>
+        </div>
+      )}
+
       {/* Property Information */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-          <Building2 className="h-4 w-4" />
+        <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-amber-600" />
           Property Information
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <InfoRow
             icon={<MapPin className="h-4 w-4" />}
             label="Address"
-            value={lead.propertyAddress}
+            value={realValue(lead.propertyAddress)}
           />
           <InfoRow
             icon={<MapPin className="h-4 w-4" />}
@@ -577,8 +591,8 @@ export default function LeadDetailPage() {
 
       {/* Transaction Details */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-          <DollarSign className="h-4 w-4" />
+        <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+          <DollarSign className="h-4 w-4 text-amber-600" />
           Transaction Details
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -611,15 +625,15 @@ export default function LeadDetailPage() {
 
       {/* Buyer Information */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-          <User className="h-4 w-4" />
+        <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+          <User className="h-4 w-4 text-amber-600" />
           Buyer Information
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <InfoRow
             icon={<User className="h-4 w-4" />}
             label="Name"
-            value={lead.buyerName}
+            value={realValue(lead.buyerName)}
           />
           <InfoRow
             icon={<Building2 className="h-4 w-4" />}
@@ -637,7 +651,7 @@ export default function LeadDetailPage() {
               {lead.buyerEmail ? (
                 <a
                   href={`mailto:${lead.buyerEmail}`}
-                  className="-mb-2 -mt-1.5 block break-all py-2 text-sm text-amber-600 hover:underline"
+                  className="-mb-2 -mt-1.5 block break-all py-2 text-sm text-amber-700 hover:underline"
                 >
                   {lead.buyerEmail}
                 </a>
@@ -657,9 +671,9 @@ export default function LeadDetailPage() {
               {lead.buyerPhone ? (
                 <a
                   href={`tel:${lead.buyerPhone}`}
-                  className="-mb-2 -mt-1.5 block break-all py-2 text-sm text-amber-600 hover:underline"
+                  className="-mb-2 -mt-1.5 block break-all py-2 text-sm text-amber-700 hover:underline"
                 >
-                  {lead.buyerPhone}
+                  {formatPhone(lead.buyerPhone)}
                 </a>
               ) : (
                 <p className="text-sm text-gray-700 mt-0.5">--</p>
@@ -672,8 +686,8 @@ export default function LeadDetailPage() {
       {/* LLC Member / Registered Agent */}
       {lead.memberName && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-            <User className="h-4 w-4" />
+          <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+            <User className="h-4 w-4 text-amber-600" />
             LLC Member / Registered Agent
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -710,8 +724,8 @@ export default function LeadDetailPage() {
       {/* Seller Information */}
       {lead.sellerName && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-            <User className="h-4 w-4" />
+          <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+            <User className="h-4 w-4 text-amber-600" />
             Seller Information
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -727,8 +741,8 @@ export default function LeadDetailPage() {
       {/* Tags */}
       {lead.tags && lead.tags.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-            <Tag className="h-4 w-4" />
+          <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+            <Tag className="h-4 w-4 text-amber-600" />
             Tags
           </h2>
           <div className="flex flex-wrap gap-2">
@@ -742,19 +756,6 @@ export default function LeadDetailPage() {
               </Badge>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Notes */}
-      {lead.notes && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-            <StickyNote className="h-4 w-4" />
-            Notes
-          </h2>
-          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-            {lead.notes}
-          </p>
         </div>
       )}
 

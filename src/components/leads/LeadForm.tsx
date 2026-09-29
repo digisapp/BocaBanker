@@ -70,7 +70,7 @@ export function LeadForm({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         {/* Property Information */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-amber-600">
+          <h3 className="text-lg font-semibold text-navy">
             Property Information
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -248,7 +248,7 @@ export function LeadForm({
 
         {/* Transaction Details */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-amber-600">
+          <h3 className="text-lg font-semibold text-navy">
             Transaction Details
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -333,7 +333,7 @@ export function LeadForm({
 
         {/* Buyer / Contact Information */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-amber-600">
+          <h3 className="text-lg font-semibold text-navy">
             Buyer / Contact Information
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -414,7 +414,7 @@ export function LeadForm({
 
         {/* Lead Management */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-amber-600">
+          <h3 className="text-lg font-semibold text-navy">
             Lead Management
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -535,7 +535,7 @@ export function LeadForm({
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90 px-8"
+            className="bg-navy text-white font-semibold hover:bg-navy-light px-8"
           >
             {isSubmitting && (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

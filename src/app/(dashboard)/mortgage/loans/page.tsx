@@ -25,6 +25,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { RoleGate } from '@/components/shared/RoleGate'
+import PageHeader from '@/components/shared/PageHeader'
 import {
   Select,
   SelectContent,
@@ -202,28 +203,22 @@ export default function LoansPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-            <Landmark className="h-5 w-5 text-amber-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Loan Pipeline</h1>
-            <p className="text-sm text-gray-500">
-              {total} loan{total !== 1 ? 's' : ''} in pipeline
-            </p>
-          </div>
-        </div>
-        <RoleGate permission="canCreate">
-          <Button
-            onClick={() => router.push('/mortgage/loans/new')}
-            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Loan
-          </Button>
-        </RoleGate>
-      </div>
+      <PageHeader
+        icon={Landmark}
+        title="Loan Pipeline"
+        description={`${total} loan${total !== 1 ? 's' : ''} in pipeline`}
+        actions={
+          <RoleGate permission="canCreate">
+            <Button
+              onClick={() => router.push('/mortgage/loans/new')}
+              className="bg-navy text-white font-semibold hover:bg-navy-light"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              New Loan
+            </Button>
+          </RoleGate>
+        }
+      />
 
       {/* Filters */}
       <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-row">
@@ -289,7 +284,7 @@ export default function LoansPage() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+            <Loader2 className="h-8 w-8 animate-spin text-navy" />
           </div>
         ) : loans.length === 0 ? (
           <div className="text-center py-20">

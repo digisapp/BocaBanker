@@ -51,7 +51,7 @@ export interface ClientRow {
 
 const statusColorMap: Record<string, string> = {
   active: 'bg-emerald-50 text-emerald-600 border-emerald-200',
-  prospect: 'bg-amber-50 text-amber-600 border-amber-200',
+  prospect: 'bg-amber-50 text-amber-700 border-amber-200',
   inactive: 'bg-gray-100 text-gray-500 border-gray-200',
 }
 
@@ -100,7 +100,7 @@ function ClientRowActions({
         <Button
           variant="ghost"
           size="icon-xs"
-          className={cn('text-gray-500 hover:text-amber-600', className)}
+          className={cn('text-gray-500 hover:text-navy', className)}
           onClick={(e) => e.stopPropagation()}
           aria-label={`Actions for ${client.firstName} ${client.lastName}`}
         >
@@ -348,7 +348,7 @@ export function ClientsTable({
             )
           })
         ) : (
-          <p className="py-10 text-center text-gray-500">No results found.</p>
+          <p className="py-10 text-center text-gray-500">No clients match your filters.</p>
         )}
       </div>
 
@@ -364,7 +364,7 @@ export function ClientsTable({
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="bg-gray-50 text-amber-600 font-semibold text-xs uppercase tracking-wider"
+                    className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider"
                   >
                     {header.isPlaceholder ? null : (
                       <div
@@ -414,7 +414,7 @@ export function ClientsTable({
                   colSpan={columns.length}
                   className="h-24 text-center text-gray-500"
                 >
-                  No results found.
+                  No clients match your filters.
                 </TableCell>
               </TableRow>
             )}
@@ -423,48 +423,50 @@ export function ClientsTable({
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <span>Rows per page</span>
-          <Select
-            value={String(pagination.pageSize)}
-            onValueChange={handlePageSizeChange}
-          >
-            <SelectTrigger className="h-8 w-[70px] bg-gray-50 border-gray-200 text-gray-900">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-white border-gray-200">
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="25">25</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-            </SelectContent>
-          </Select>
-          <span className="ml-2">
-            Page {table.getState().pagination.pageIndex + 1} of{' '}
-            {Math.max(1, table.getPageCount())}
-          </span>
+      {rowCount > 0 && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <span>Rows per page</span>
+            <Select
+              value={String(pagination.pageSize)}
+              onValueChange={handlePageSizeChange}
+            >
+              <SelectTrigger className="h-8 w-[70px] bg-gray-50 border-gray-200 text-gray-900">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-white border-gray-200">
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="ml-2">
+              Page {table.getState().pagination.pageIndex + 1} of{' '}
+              {Math.max(1, table.getPageCount())}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-30"
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-30"
+            >
+              Next
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-30"
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-30"
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+      )}
     </div>
   )
 }

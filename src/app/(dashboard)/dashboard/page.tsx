@@ -14,10 +14,14 @@ import {
   Percent,
   Briefcase,
   Landmark,
+  LayoutDashboard,
+  Filter,
+  Wallet,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import MetricCard from '@/components/dashboard/MetricCard';
+import PageHeader from '@/components/shared/PageHeader';
 import QuickActions from '@/components/dashboard/QuickActions';
 import RecentActivity from '@/components/dashboard/RecentActivity';
 import type { DashboardStats } from '@/types';
@@ -34,6 +38,7 @@ interface MortgageQuickStats {
   rateChangeBps: number | null;
   pipelineCount: number;
   pipelineVolume: number;
+  commissionMTD: number;
   commissionYTD: number;
 }
 
@@ -63,6 +68,7 @@ export default function DashboardPage() {
                 : null,
             pipelineCount: mtg.pipelineSummary?.total ?? 0,
             pipelineVolume: mtg.pipelineSummary?.totalVolume ?? 0,
+            commissionMTD: mtg.commissionMTD ?? 0,
             commissionYTD: mtg.commissionYTD ?? 0,
           });
         }
@@ -79,7 +85,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-navy" />
       </div>
     );
   }
@@ -107,14 +113,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-serif font-bold bg-gradient-to-r from-amber-500 to-yellow-500 bg-clip-text text-transparent">
-          Dashboard
-        </h1>
-        <p className="text-gray-500 mt-1">
-          Your business at a glance
-        </p>
-      </div>
+      <PageHeader icon={LayoutDashboard} title="Dashboard" description="Your business at a glance" />
 
       {loadError && (
         <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -123,7 +122,7 @@ export default function DashboardPage() {
       )}
 
       {/* Row 1: Core Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard
           icon={Users}
           label="Total Clients"
@@ -148,7 +147,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Row 2: Lead & Portfolio Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard
           icon={Target}
           label="Total Leads"
@@ -156,10 +155,11 @@ export default function DashboardPage() {
           change={leadChangeText}
         />
         <MetricCard
-          icon={TrendingUp}
-          label="Pipeline"
+          icon={Filter}
+          label="Leads in Progress"
           value={String(pipelineCount)}
           change={pipelineCount > 0 ? `${stats?.contactedLeads || 0} contacted, ${stats?.qualifiedLeads || 0} qualified` : undefined}
+          tone="neutral"
         />
         <MetricCard
           icon={Percent}
@@ -176,9 +176,9 @@ export default function DashboardPage() {
 
       {/* Row 3: Mortgage Quick Stats */}
       {mortgageStats && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <MetricCard
-            icon={Landmark}
+            icon={TrendingUp}
             label="30yr Rate"
             value={mortgageStats.currentRate30yr != null ? `${mortgageStats.currentRate30yr.toFixed(2)}%` : '--'}
             change={
@@ -186,12 +186,19 @@ export default function DashboardPage() {
                 ? `${mortgageStats.rateChangeBps > 0 ? '+' : ''}${mortgageStats.rateChangeBps} bps`
                 : undefined
             }
+            tone="neutral"
           />
           <MetricCard
-            icon={TrendingUp}
-            label="Loan Pipeline"
+            icon={Landmark}
+            label="Loans in Pipeline"
             value={String(mortgageStats.pipelineCount)}
             change={mortgageStats.pipelineVolume > 0 ? formatCurrency(mortgageStats.pipelineVolume) + ' volume' : undefined}
+            tone="neutral"
+          />
+          <MetricCard
+            icon={Wallet}
+            label="MTD Commission"
+            value={formatCurrency(mortgageStats.commissionMTD)}
           />
           <MetricCard
             icon={DollarSign}

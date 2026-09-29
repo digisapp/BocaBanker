@@ -93,7 +93,7 @@ export default function DSCRCalculator({ initialValues }: DSCRCalculatorProps) {
       {/* Input Section */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-navy text-amber-400">
             <Landmark className="h-5 w-5" />
           </div>
           <div>
@@ -165,7 +165,7 @@ export default function DSCRCalculator({ initialValues }: DSCRCalculatorProps) {
                   <SelectItem
                     key={t.value}
                     value={t.value}
-                    className="text-gray-900 focus:bg-amber-50 focus:text-amber-700"
+                    className="text-gray-900 focus:bg-gray-100 focus:text-navy"
                   >
                     {t.label}
                   </SelectItem>
@@ -178,7 +178,7 @@ export default function DSCRCalculator({ initialValues }: DSCRCalculatorProps) {
         <div className="flex gap-3 mt-6">
           <Button
             onClick={handleCalculate}
-            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
+            className="bg-navy text-white hover:bg-navy-light font-semibold"
           >
             Calculate DSCR
           </Button>
@@ -186,7 +186,7 @@ export default function DSCRCalculator({ initialValues }: DSCRCalculatorProps) {
             <Button
               onClick={handleReset}
               variant="outline"
-              className="border-gray-200 text-amber-600 hover:bg-amber-50"
+              className="border-gray-200 text-navy hover:bg-gray-100"
             >
               Reset
             </Button>
@@ -295,7 +295,7 @@ export default function DSCRCalculator({ initialValues }: DSCRCalculatorProps) {
               </div>
               <div className="rounded-xl bg-amber-50 border border-amber-200 p-3">
                 <p className="text-sm font-bold text-amber-700">1.00x — 1.24x</p>
-                <p className="text-xs text-amber-600 mt-1">Weak — May need guarantor or higher rate</p>
+                <p className="text-xs text-amber-700 mt-1">Weak — May need guarantor or higher rate</p>
               </div>
               <div className="rounded-xl bg-red-50 border border-red-200 p-3">
                 <p className="text-sm font-bold text-red-700">Below 1.00x</p>

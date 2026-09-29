@@ -132,14 +132,14 @@ export default function StudyResults({ results }: StudyResultsProps) {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 className="text-sm font-semibold text-amber-600 mb-4 uppercase tracking-wide">
+          <h3 className="text-sm font-semibold text-navy mb-4 uppercase tracking-wide">
             Asset Allocation
           </h3>
           <AssetBreakdownChart data={assetBreakdown} />
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 className="text-sm font-semibold text-amber-600 mb-4 uppercase tracking-wide">
+          <h3 className="text-sm font-semibold text-navy mb-4 uppercase tracking-wide">
             Depreciation Comparison
           </h3>
           <DepreciationChart data={depreciationSchedule} />
@@ -148,7 +148,7 @@ export default function StudyResults({ results }: StudyResultsProps) {
 
       {/* Tax Savings */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h3 className="text-sm font-semibold text-amber-600 mb-4 uppercase tracking-wide">
+        <h3 className="text-sm font-semibold text-navy mb-4 uppercase tracking-wide">
           Cumulative Tax Savings
         </h3>
         <TaxSavingsChart data={taxSavingsSchedule} />
@@ -156,7 +156,7 @@ export default function StudyResults({ results }: StudyResultsProps) {
 
       {/* First Year Analysis */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h3 className="text-sm font-semibold text-amber-600 mb-4 uppercase tracking-wide">
+        <h3 className="text-sm font-semibold text-navy mb-4 uppercase tracking-wide">
           First Year Analysis
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -174,7 +174,7 @@ export default function StudyResults({ results }: StudyResultsProps) {
           </div>
           <div>
             <span className="text-xs text-gray-500">Total First Year</span>
-            <p className="text-lg font-semibold text-amber-600 mt-1">
+            <p className="text-lg font-semibold text-amber-700 mt-1">
               {formatCurrency(firstYearAnalysis.totalFirstYear)}
             </p>
           </div>
@@ -189,7 +189,7 @@ export default function StudyResults({ results }: StudyResultsProps) {
 
       {/* Asset Detail Table */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h3 className="text-sm font-semibold text-amber-600 mb-4 uppercase tracking-wide">
+        <h3 className="text-sm font-semibold text-navy mb-4 uppercase tracking-wide">
           Asset Breakdown Detail
         </h3>
         <div className="overflow-x-auto">

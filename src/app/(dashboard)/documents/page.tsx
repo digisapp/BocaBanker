@@ -10,6 +10,7 @@ import {
   Loader2,
   CloudUpload,
   File,
+  FolderOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import EmptyState from '@/components/shared/EmptyState';
+import PageHeader from '@/components/shared/PageHeader';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -222,7 +224,7 @@ export default function DocumentsPage() {
           variant="ghost"
           size="sm"
           onClick={() => handleDownload(doc)}
-          className={cn('text-amber-600 hover:text-amber-700 hover:bg-amber-50', buttonClassName)}
+          className={cn('text-navy hover:bg-gray-100', buttonClassName)}
           title="Download"
           aria-label={`Download ${doc.fileName}`}
         >
@@ -249,12 +251,11 @@ export default function DocumentsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-serif font-bold text-amber-600">Documents</h1>
-        <p className="text-gray-500 mt-1">
-          Upload and manage documents for your clients and studies
-        </p>
-      </div>
+      <PageHeader
+        icon={FolderOpen}
+        title="Documents"
+        description="Upload and manage documents for your clients and studies"
+      />
 
       {/* Upload Zone */}
       <div
@@ -268,7 +269,7 @@ export default function DocumentsPage() {
         <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
           {uploading ? (
             <>
-              <Loader2 className="h-10 w-10 animate-spin text-amber-500 mb-3" />
+              <Loader2 className="h-10 w-10 animate-spin text-navy mb-3" />
               <p className="text-gray-900 font-medium">Uploading...</p>
             </>
           ) : (
@@ -281,7 +282,7 @@ export default function DocumentsPage() {
               <label>
                 <Button
                   asChild
-                  className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold cursor-pointer"
+                  className="bg-navy text-white hover:bg-navy-light font-semibold cursor-pointer"
                 >
                   <span>
                     <Upload className="h-4 w-4 mr-2" />
@@ -349,12 +350,12 @@ export default function DocumentsPage() {
             <Table>
               <TableHeader>
                 <TableRow className="border-gray-200 hover:bg-transparent">
-                  <TableHead className="text-amber-600">Name</TableHead>
-                  <TableHead className="text-amber-600">Type</TableHead>
-                  <TableHead className="text-amber-600">Size</TableHead>
-                  <TableHead className="text-amber-600">Client</TableHead>
-                  <TableHead className="text-amber-600">Date</TableHead>
-                  <TableHead className="text-amber-600 text-right">Actions</TableHead>
+                  <TableHead className="text-gray-500">Name</TableHead>
+                  <TableHead className="text-gray-500">Type</TableHead>
+                  <TableHead className="text-gray-500">Size</TableHead>
+                  <TableHead className="text-gray-500">Client</TableHead>
+                  <TableHead className="text-gray-500">Date</TableHead>
+                  <TableHead className="text-gray-500 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

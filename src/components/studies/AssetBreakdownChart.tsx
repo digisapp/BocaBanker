@@ -54,7 +54,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
       <p className="text-sm font-medium text-gray-900">
         {CATEGORY_LABELS[item.category] || item.category}
       </p>
-      <p className="text-sm text-amber-600 font-semibold">{formatCurrency(item.amount)}</p>
+      <p className="text-sm text-amber-700 font-semibold">{formatCurrency(item.amount)}</p>
       <p className="text-xs text-gray-500">{item.percentage.toFixed(1)}% of total</p>
     </div>
   )

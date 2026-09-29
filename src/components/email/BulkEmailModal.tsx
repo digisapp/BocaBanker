@@ -125,7 +125,7 @@ export default function BulkEmailModal({ trigger }: BulkEmailModalProps) {
         {trigger || (
           <Button
             variant="outline"
-            className="border-gray-200 text-amber-600 hover:bg-amber-50"
+            className="border-gray-200 text-navy hover:bg-gray-100"
           >
             <Users className="h-4 w-4 mr-2" />
             Bulk Email
@@ -134,7 +134,7 @@ export default function BulkEmailModal({ trigger }: BulkEmailModalProps) {
       </DialogTrigger>
       <DialogContent className="bg-white border-gray-200 text-gray-900 sm:max-w-2xl max-h-[85dvh] md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-amber-600 text-lg">Send Bulk Email</DialogTitle>
+          <DialogTitle className="text-navy text-lg">Send Bulk Email</DialogTitle>
           <DialogDescription className="text-gray-500">
             Send emails to multiple clients at once using a template.
           </DialogDescription>
@@ -153,7 +153,7 @@ export default function BulkEmailModal({ trigger }: BulkEmailModalProps) {
                   <SelectItem
                     key={opt.value}
                     value={opt.value}
-                    className="text-gray-900 focus:bg-amber-50 focus:text-amber-700"
+                    className="text-gray-900 focus:bg-gray-100 focus:text-navy"
                   >
                     {opt.label}
                   </SelectItem>
@@ -161,7 +161,7 @@ export default function BulkEmailModal({ trigger }: BulkEmailModalProps) {
               </SelectContent>
             </Select>
             {recipientCount !== null && (
-              <p className="text-sm text-amber-600">
+              <p className="text-sm text-amber-700">
                 Sending to {recipientCount} recipient{recipientCount !== 1 ? 's' : ''}
               </p>
             )}
@@ -211,7 +211,7 @@ export default function BulkEmailModal({ trigger }: BulkEmailModalProps) {
             <Button
               onClick={handleSend}
               disabled={!template || status === 'sending'}
-              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
+              className="bg-navy text-white hover:bg-navy-light font-semibold"
             >
               {status === 'sending' ? (
                 <>

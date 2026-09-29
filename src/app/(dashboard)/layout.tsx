@@ -79,8 +79,11 @@ export default function DashboardLayout({
             </div>
           </div>
 
-          {/* Page Content */}
-          <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+          {/* Page Content. `relative` makes <main> the containing block for
+              Radix Select's visually hidden native <select>; without it that
+              absolutely positioned element stretches the document past the
+              shell and the whole page scrolls into blank space. */}
+          <main className="relative flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
             <Breadcrumbs />
             {children}
           </main>

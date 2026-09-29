@@ -27,6 +27,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import PropertyCard from '@/components/properties/PropertyCard'
 import { RoleGate } from '@/components/shared/RoleGate'
+import PageHeader from '@/components/shared/PageHeader'
 import {
   PROPERTY_PROPERTY_TYPES,
   PROPERTY_TYPE_LABELS,
@@ -118,23 +119,22 @@ export default function PropertiesPage() {
   return (
     <div className="animate-fade-in space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Properties</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {pagination.total} {pagination.total === 1 ? 'property' : 'properties'} total
-          </p>
-        </div>
-        <RoleGate permission="canCreate">
-          <Button
-            onClick={() => router.push('/properties/new')}
-            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Property
-          </Button>
-        </RoleGate>
-      </div>
+      <PageHeader
+        icon={Building2}
+        title="Properties"
+        description={`${pagination.total} ${pagination.total === 1 ? 'property' : 'properties'} total`}
+        actions={
+          <RoleGate permission="canCreate">
+            <Button
+              onClick={() => router.push('/properties/new')}
+              className="bg-navy text-white font-semibold hover:bg-navy-light"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Property
+            </Button>
+          </RoleGate>
+        }
+      />
 
       {/* Filters */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -162,7 +162,7 @@ export default function PropertiesPage() {
             </SelectTrigger>
             <SelectContent className="bg-white border-gray-200">
               {PROPERTY_TYPES.map((type) => (
-                <SelectItem key={type.value} value={type.value || '_all'} className="text-gray-900 focus:bg-amber-50 focus:text-amber-600">
+                <SelectItem key={type.value} value={type.value || '_all'} className="text-gray-900 focus:bg-gray-100 focus:text-navy">
                   {type.label}
                 </SelectItem>
               ))}
@@ -176,7 +176,7 @@ export default function PropertiesPage() {
               onClick={() => setViewMode('grid')}
               aria-label="Grid view"
               aria-pressed={viewMode === 'grid'}
-              className={viewMode === 'grid' ? 'bg-amber-50 text-amber-600' : 'text-gray-500'}
+              className={viewMode === 'grid' ? 'bg-amber-50 text-amber-700' : 'text-gray-500'}
             >
               <LayoutGrid className="h-4 w-4" />
             </Button>
@@ -186,7 +186,7 @@ export default function PropertiesPage() {
               onClick={() => setViewMode('table')}
               aria-label="Table view"
               aria-pressed={viewMode === 'table'}
-              className={viewMode === 'table' ? 'bg-amber-50 text-amber-600' : 'text-gray-500'}
+              className={viewMode === 'table' ? 'bg-amber-50 text-amber-700' : 'text-gray-500'}
             >
               <List className="h-4 w-4" />
             </Button>
@@ -214,7 +214,7 @@ export default function PropertiesPage() {
             <RoleGate permission="canCreate">
               <Button
                 onClick={() => router.push('/properties/new')}
-                className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold"
+                className="bg-navy text-white font-semibold hover:bg-navy-light"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Property
@@ -233,11 +233,11 @@ export default function PropertiesPage() {
           <Table>
             <TableHeader>
               <TableRow className="border-gray-100">
-                <TableHead className="text-amber-600">Address</TableHead>
-                <TableHead className="text-amber-600">Type</TableHead>
-                <TableHead className="text-amber-600 text-right">Purchase Price</TableHead>
-                <TableHead className="text-amber-600">Client</TableHead>
-                <TableHead className="text-amber-600 text-right">Sqft</TableHead>
+                <TableHead className="text-gray-500">Address</TableHead>
+                <TableHead className="text-gray-500">Type</TableHead>
+                <TableHead className="text-gray-500 text-right">Purchase Price</TableHead>
+                <TableHead className="text-gray-500">Client</TableHead>
+                <TableHead className="text-gray-500 text-right">Sqft</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -258,7 +258,7 @@ export default function PropertiesPage() {
                   <TableCell>
                     <Badge
                       variant="secondary"
-                      className="bg-amber-50 text-amber-600 border-amber-200 text-[11px]"
+                      className="bg-amber-50 text-amber-700 border-amber-200 text-[11px]"
                     >
                       {TYPE_LABELS[property.propertyType] || property.propertyType}
                     </Badge>

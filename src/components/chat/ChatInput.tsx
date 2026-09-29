@@ -81,7 +81,7 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
         disabled={isLoading}
         aria-label="Send message"
         size="icon"
-        className="h-[44px] w-[44px] flex-shrink-0 bg-gradient-to-r from-amber-500 to-yellow-500 hover:opacity-90 text-white transition-opacity disabled:opacity-40"
+        className="bg-navy h-[44px] w-[44px] flex-shrink-0 hover:bg-navy-light text-white transition-colors disabled:opacity-40"
       >
         <SendHorizontal className="h-5 w-5" />
       </Button>

@@ -9,11 +9,11 @@ import {
   CheckCircle2,
   AlertCircle,
   ExternalLink,
-  ChevronLeft,
   Download,
   Zap,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import PageHeader from '@/components/shared/PageHeader'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
@@ -192,24 +192,12 @@ export default function LeadScrapePage() {
     <div className="space-y-6 animate-fade-in max-w-3xl">
 
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push('/leads')}
-          className="text-gray-500 hover:text-gray-700 -ml-2"
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Leads
-        </Button>
-      </div>
-
-      <div>
-        <h1 className="text-2xl font-serif font-bold text-amber-600">Import Leads</h1>
-        <p className="text-gray-500 mt-1">
-          Pull commercial real estate transaction data from ATTOM or county property appraiser sites.
-        </p>
-      </div>
+      <PageHeader
+        icon={Database}
+        title="Import Leads"
+        description="Pull commercial real estate transaction data from ATTOM or county property appraiser sites."
+        backHref="/leads"
+      />
 
       {/* Mode toggle */}
       <div className="flex gap-2 bg-gray-100 p-1 rounded-xl w-fit">
@@ -217,7 +205,7 @@ export default function LeadScrapePage() {
           onClick={() => { setMode('attom'); setError(null); setAttomResult(null) }}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             mode === 'attom'
-              ? 'bg-white shadow-sm text-amber-600'
+              ? 'bg-white shadow-sm text-navy'
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
@@ -228,7 +216,7 @@ export default function LeadScrapePage() {
           onClick={() => { setMode('county'); setError(null); setCountyResult(null) }}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             mode === 'county'
-              ? 'bg-white shadow-sm text-amber-600'
+              ? 'bg-white shadow-sm text-navy'
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
@@ -251,7 +239,7 @@ export default function LeadScrapePage() {
                   href="https://api.gateway.attomdata.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="py-2.5 text-amber-600 hover:underline"
+                  className="py-2.5 text-amber-700 hover:underline"
                 >
                   api.gateway.attomdata.com
                 </a>.
@@ -303,7 +291,7 @@ export default function LeadScrapePage() {
                     onClick={() => toggleType(pt.value)}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
                       selectedTypes.includes(pt.value)
-                        ? 'bg-amber-500 text-white border-amber-500'
+                        ? 'bg-navy text-white border-navy'
                         : 'bg-white text-gray-600 border-gray-200 hover:border-amber-300'
                     }`}
                   >
@@ -395,7 +383,7 @@ export default function LeadScrapePage() {
           <Button
             onClick={runAttomImport}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
+            className="bg-navy w-full text-white hover:bg-navy-light font-semibold"
           >
             {loading ? (
               <>
@@ -436,7 +424,7 @@ export default function LeadScrapePage() {
                     onClick={() => toggleCounty(county)}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
                       selectedCounties.includes(county)
-                        ? 'bg-amber-500 text-white border-amber-500'
+                        ? 'bg-navy text-white border-navy'
                         : 'bg-white text-gray-600 border-gray-200 hover:border-amber-300'
                     }`}
                   >
@@ -449,7 +437,7 @@ export default function LeadScrapePage() {
             <Button
               onClick={fetchCountyInstructions}
               disabled={loading}
-              className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
+              className="bg-navy w-full text-white hover:bg-navy-light font-semibold"
             >
               {loading ? (
                 <>
@@ -478,7 +466,7 @@ export default function LeadScrapePage() {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        <Badge variant="outline" className="text-amber-600 border-amber-200 hover:bg-amber-50 cursor-pointer gap-1">
+                        <Badge variant="outline" className="text-navy border-gray-200 hover:bg-gray-100 cursor-pointer gap-1">
                           <ExternalLink className="h-3 w-3" />
                           Search
                         </Badge>
@@ -513,7 +501,7 @@ export default function LeadScrapePage() {
                   When importing county CSV data, map your columns to these headers before uploading on the{' '}
                   <button
                     onClick={() => router.push('/leads')}
-                    className="text-amber-600 hover:underline"
+                    className="text-amber-700 hover:underline"
                   >
                     leads import page
                   </button>.

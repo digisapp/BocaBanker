@@ -55,7 +55,7 @@ interface Property {
 
 const statusColorMap: Record<string, string> = {
   active: 'bg-emerald-50 text-emerald-600 border-emerald-200',
-  prospect: 'bg-amber-50 text-amber-600 border-amber-200',
+  prospect: 'bg-amber-50 text-amber-700 border-amber-200',
   inactive: 'bg-gray-100 text-gray-500 border-gray-200',
 }
 
@@ -120,7 +120,7 @@ export default function ClientDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-navy" />
       </div>
     )
   }
@@ -134,20 +134,20 @@ export default function ClientDetailPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-6 sm:gap-y-3">
+        <div className="flex min-w-0 items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
             aria-label="Go back"
             onClick={() => router.push('/clients')}
-            className="text-gray-500 hover:text-amber-600"
+            className="text-gray-500 hover:text-navy"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center">
-              <User className="h-6 w-6 text-amber-600" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-navy">
+              <User className="h-5 w-5 text-amber-400" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
@@ -173,7 +173,7 @@ export default function ClientDetailPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 ml-14 sm:ml-0">
+        <div className="flex flex-wrap items-center gap-2 ml-14 sm:ml-0">
           <RoleGate permission="canEdit">
             <Button
               variant="outline"
@@ -199,7 +199,7 @@ export default function ClientDetailPage() {
 
       {/* Contact Information */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-amber-600 mb-4">
+        <h2 className="text-lg font-semibold text-navy mb-4">
           Contact Information
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -229,8 +229,8 @@ export default function ClientDetailPage() {
       {/* Tags */}
       {client.tags && client.tags.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-            <Tag className="h-4 w-4" />
+          <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+            <Tag className="h-4 w-4 text-amber-600" />
             Tags
           </h2>
           <div className="flex flex-wrap gap-2">
@@ -250,8 +250,8 @@ export default function ClientDetailPage() {
       {/* Notes */}
       {client.notes && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-            <StickyNote className="h-4 w-4" />
+          <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+            <StickyNote className="h-4 w-4 text-amber-600" />
             Notes
           </h2>
           <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
@@ -263,8 +263,8 @@ export default function ClientDetailPage() {
       {/* Related Properties */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-amber-600 flex items-center gap-2">
-            <Home className="h-4 w-4" />
+          <h2 className="text-lg font-semibold text-navy flex items-center gap-2">
+            <Home className="h-4 w-4 text-amber-600" />
             Properties
           </h2>
           <RoleGate permission="canCreate">
@@ -299,7 +299,7 @@ export default function ClientDetailPage() {
                     {property.propertyType}
                   </p>
                 </div>
-                <span className="text-sm text-amber-600 font-medium">
+                <span className="text-sm text-amber-700 font-medium">
                   ${Number(property.purchasePrice).toLocaleString()}
                 </span>
               </div>
@@ -310,8 +310,8 @@ export default function ClientDetailPage() {
 
       {/* Documents */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-          <Paperclip className="h-4 w-4" />
+        <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+          <Paperclip className="h-4 w-4 text-amber-600" />
           Documents
         </h2>
         <DocumentPanel clientId={params.id} />

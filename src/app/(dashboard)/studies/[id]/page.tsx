@@ -161,16 +161,20 @@ export default function StudyDetailPage() {
   return (
     <div className="animate-fade-in max-w-5xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-6 sm:gap-y-3">
+        <div className="flex min-w-0 items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Go back"
             onClick={() => router.push('/studies')}
-            className="text-gray-500 hover:text-amber-600 hover:bg-amber-50"
+            className="text-gray-500 hover:text-navy hover:bg-gray-100"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-navy">
+            <FileBarChart className="h-5 w-5 text-amber-400" />
+          </div>
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-gray-900">{study.studyName}</h1>
@@ -196,7 +200,7 @@ export default function StudyDetailPage() {
             <Button
               onClick={handleCalculate}
               disabled={calculating}
-              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
+              className="bg-navy text-white font-semibold hover:bg-navy-light"
             >
               {calculating ? (
                 <>
@@ -218,7 +222,7 @@ export default function StudyDetailPage() {
               variant="outline"
               size="sm"
               onClick={() => router.push(`/studies/${id}/report`)}
-              className="border-gray-200 text-gray-500 hover:text-amber-600 hover:bg-amber-50"
+              className="border-gray-200 text-gray-500 hover:text-navy hover:bg-gray-100"
             >
               <Printer className="h-4 w-4 mr-1.5" />
               Print Report
@@ -309,7 +313,7 @@ export default function StudyDetailPage() {
           {/* Assets */}
           {assets.length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-amber-600 mb-3">Study Assets</h4>
+              <h4 className="text-sm font-medium text-navy mb-3">Study Assets</h4>
               <div className="space-y-2">
                 {assets.map((asset) => (
                   <div
@@ -349,8 +353,8 @@ export default function StudyDetailPage() {
 
       {/* Documents */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-          <Paperclip className="h-4 w-4" />
+        <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+          <Paperclip className="h-4 w-4 text-amber-600" />
           Documents
         </h2>
         <DocumentPanel studyId={id} />

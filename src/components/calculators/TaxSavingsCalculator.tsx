@@ -159,7 +159,7 @@ export default function TaxSavingsCalculator() {
       {/* Input Section */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-navy text-amber-400">
             <DollarSign className="h-5 w-5" />
           </div>
           <div>
@@ -194,7 +194,7 @@ export default function TaxSavingsCalculator() {
                   <SelectItem
                     key={t}
                     value={t}
-                    className="text-gray-900 focus:bg-amber-50 focus:text-amber-700 capitalize"
+                    className="text-gray-900 focus:bg-gray-100 focus:text-navy capitalize"
                   >
                     {t.replace('-', ' ')}
                   </SelectItem>
@@ -251,7 +251,7 @@ export default function TaxSavingsCalculator() {
         <div className="flex gap-3 mt-6">
           <Button
             onClick={handleCalculate}
-            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
+            className="bg-navy text-white hover:bg-navy-light font-semibold"
           >
             Estimate Tax Savings
           </Button>
@@ -259,7 +259,7 @@ export default function TaxSavingsCalculator() {
             <Button
               onClick={handleReset}
               variant="outline"
-              className="border-gray-200 text-amber-600 hover:bg-amber-50"
+              className="border-gray-200 text-navy hover:bg-gray-100"
             >
               Reset
             </Button>

@@ -55,7 +55,7 @@ export default function MobileNav() {
           <Button
             variant="ghost"
             size="icon"
-            className="size-10 text-gray-500 hover:text-amber-600 hover:bg-amber-50"
+            className="size-10 text-gray-500 hover:text-navy hover:bg-gray-100"
           >
             <Menu className="h-6 w-6" />
             <span className="sr-only">Toggle navigation menu</span>
@@ -87,11 +87,11 @@ export default function MobileNav() {
                   className={cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                     isActive
-                      ? 'bg-amber-50 text-amber-700 border-l-2 border-amber-500'
-                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 border-l-2 border-transparent'
+                      ? 'bg-navy text-white'
+                      : 'text-gray-500 hover:text-navy hover:bg-gray-100'
                   )}
                 >
-                  <item.icon className={cn('h-5 w-5 shrink-0', isActive && 'text-amber-600')} />
+                  <item.icon className={cn('h-5 w-5 shrink-0', isActive && 'text-amber-400')} />
                   <span>{item.label}</span>
                 </Link>
               )

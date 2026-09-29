@@ -183,7 +183,7 @@ export default function Topbar({ title }: TopbarProps) {
                     aria-selected={index === selectedIndex}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left transition-colors ${
                       index === selectedIndex
-                        ? 'bg-amber-50 text-amber-700'
+                        ? 'bg-gray-100 text-navy'
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}
                     onClick={() => navigateTo(result.href)}
@@ -212,7 +212,7 @@ export default function Topbar({ title }: TopbarProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="relative hidden md:inline-flex text-gray-400 hover:text-amber-600 hover:bg-amber-50"
+          className="relative hidden md:inline-flex text-gray-400 hover:text-navy hover:bg-gray-100"
           aria-label="Notifications"
         >
           <Bell className="h-5 w-5" />
@@ -223,11 +223,11 @@ export default function Topbar({ title }: TopbarProps) {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="relative h-10 w-10 md:h-9 md:w-9 rounded-full ring-2 ring-gray-200 hover:ring-amber-300 transition-all"
+              className="relative h-10 w-10 md:h-9 md:w-9 rounded-full ring-2 ring-gray-200 hover:ring-amber-400 transition-all"
               aria-label="User menu"
             >
               <Avatar className="h-10 w-10 md:h-9 md:w-9">
-                <AvatarFallback className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold text-sm">
+                <AvatarFallback className="bg-navy text-amber-400 font-semibold text-sm">
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
@@ -246,7 +246,7 @@ export default function Topbar({ title }: TopbarProps) {
             <DropdownMenuSeparator className="bg-gray-100" />
             <DropdownMenuItem
               onClick={() => router.push('/settings')}
-              className="text-gray-600 hover:text-amber-700 focus:text-amber-700 focus:bg-amber-50 cursor-pointer"
+              className="text-gray-600 hover:text-navy focus:text-navy focus:bg-gray-100 cursor-pointer"
             >
               <Settings className="mr-2 h-4 w-4" />
               Settings

@@ -38,7 +38,7 @@ export default function StudyAssetStep({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900">Asset Breakdown</h3>
         <div className="text-sm text-gray-500">
-          Total: <span className="text-amber-600 font-medium">{formatCurrency(totalAssetValue)}</span>
+          Total: <span className="text-amber-700 font-medium">{formatCurrency(totalAssetValue)}</span>
         </div>
       </div>
       {errors.assets && <p className="text-xs text-red-400">{errors.assets}</p>}
@@ -67,7 +67,7 @@ export default function StudyAssetStep({
                   </SelectTrigger>
                   <SelectContent className="bg-white border-gray-200">
                     {ASSET_CLASSES.map((ac) => (
-                      <SelectItem key={ac.category} value={ac.category} className="text-gray-900 focus:bg-amber-50 focus:text-amber-600 text-sm">
+                      <SelectItem key={ac.category} value={ac.category} className="text-gray-900 focus:bg-gray-100 focus:text-navy text-sm">
                         {ac.description}
                       </SelectItem>
                     ))}
@@ -81,7 +81,7 @@ export default function StudyAssetStep({
               <div className="col-span-1 md:col-span-3">
                 <span className="md:hidden block mb-1 text-xs text-gray-500 uppercase tracking-wide">Amount</span>
                 <div className="relative">
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-amber-600 text-xs">$</span>
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-amber-700 text-xs">$</span>
                   {/* text-base below md: iOS zooms into fields under 16px */}
                   <Input type="number" inputMode="decimal" value={asset.amount || ''} onChange={(e) => onUpdateAmount(index, Number(e.target.value))} className="bg-transparent border-gray-200 text-gray-900 text-base md:text-sm h-9 md:h-8 pl-5" />
                 </div>
