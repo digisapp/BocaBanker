@@ -125,7 +125,7 @@ export function ColumnMapper({
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-amber-600 mb-4">
+        <h3 className="text-lg font-semibold text-navy mb-4">
           Map CSV Columns
         </h3>
         <p className="text-sm text-gray-500 mb-6">
@@ -185,7 +185,7 @@ export function ColumnMapper({
         <Button
           onClick={handleConfirm}
           disabled={!hasRequiredFields}
-          className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90 px-8"
+          className="bg-navy text-white font-semibold hover:bg-navy-light px-8"
         >
           Confirm Mapping
         </Button>

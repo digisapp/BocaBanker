@@ -59,7 +59,7 @@ export default function StudyReviewStep({
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h4 className="text-sm font-semibold text-amber-600 mb-3">Tax Parameters</h4>
+        <h4 className="text-sm font-semibold text-navy mb-3">Tax Parameters</h4>
         <div className="grid grid-cols-3 gap-4">
           <div>
             <span className="text-xs text-gray-500">Tax Rate</span>
@@ -77,7 +77,7 @@ export default function StudyReviewStep({
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h4 className="text-sm font-semibold text-amber-600 mb-3">Asset Allocation</h4>
+        <h4 className="text-sm font-semibold text-navy mb-3">Asset Allocation</h4>
         <div className="space-y-2">
           {assets.map((asset, i) => (
             <div key={i} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
@@ -86,8 +86,8 @@ export default function StudyReviewStep({
             </div>
           ))}
           <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-            <span className="text-sm font-semibold text-amber-600">Total</span>
-            <span className="text-sm font-bold text-amber-600">{formatCurrency(totalAssetValue)}</span>
+            <span className="text-sm font-semibold text-amber-700">Total</span>
+            <span className="text-sm font-bold text-amber-700">{formatCurrency(totalAssetValue)}</span>
           </div>
         </div>
       </div>

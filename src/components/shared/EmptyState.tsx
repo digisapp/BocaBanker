@@ -25,11 +25,9 @@ export default function EmptyState({
       <h3 className="text-lg font-semibold text-gray-900 mb-1">{title}</h3>
       <p className="text-sm text-gray-500 max-w-sm">{description}</p>
       {actionLabel && actionHref && (
-        <Link href={actionHref} className="mt-6">
-          <Button className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold">
-            {actionLabel}
-          </Button>
-        </Link>
+        <Button asChild className="mt-6 bg-navy text-white hover:bg-navy-light font-semibold">
+          <Link href={actionHref}>{actionLabel}</Link>
+        </Button>
       )}
     </div>
   );

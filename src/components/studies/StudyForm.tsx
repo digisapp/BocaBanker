@@ -56,9 +56,9 @@ export default function StudyForm({
                   <div
                     className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all ${
                       isActive
-                        ? 'border-amber-500 bg-amber-50 text-amber-600'
+                        ? 'border-amber-500 bg-amber-50 text-amber-700'
                         : isComplete
-                        ? 'border-amber-500 bg-amber-500 text-white'
+                        ? 'border-navy bg-navy text-white'
                         : 'border-gray-200 text-gray-500'
                     }`}
                   >
@@ -71,9 +71,9 @@ export default function StudyForm({
                   <span
                     className={`text-xs mt-1.5 ${
                       isActive
-                        ? 'text-amber-600 font-medium'
+                        ? 'text-navy font-medium'
                         : isComplete
-                        ? 'text-amber-600'
+                        ? 'text-gray-700'
                         : 'text-gray-500'
                     }`}
                   >
@@ -83,7 +83,7 @@ export default function StudyForm({
                 {index < STEPS.length - 1 && (
                   <div
                     className={`hidden sm:block w-16 md:w-24 h-[2px] mx-2 mt-[-16px] ${
-                      isComplete ? 'bg-amber-500' : 'bg-gray-200'
+                      isComplete ? 'bg-navy' : 'bg-gray-200'
                     }`}
                   />
                 )}
@@ -158,12 +158,12 @@ export default function StudyForm({
         </Button>
 
         {form.currentStep < STEPS.length - 1 ? (
-          <Button onClick={form.goNext} className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90">
+          <Button onClick={form.goNext} className="bg-navy text-white font-semibold hover:bg-navy-light">
             Next
             <ChevronRight className="h-4 w-4 ml-1.5" />
           </Button>
         ) : (
-          <Button onClick={form.handleSubmit} disabled={form.submitting} className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90 px-8">
+          <Button onClick={form.handleSubmit} disabled={form.submitting} className="bg-navy text-white font-semibold hover:bg-navy-light px-8">
             {form.submitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />

@@ -38,6 +38,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { RoleGate } from '@/components/shared/RoleGate'
+import PageHeader from '@/components/shared/PageHeader'
 import {
   Select,
   SelectContent,
@@ -64,6 +65,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { LeadImportModal } from '@/components/leads/LeadImportModal'
+import { formatPhone, leadTitle, realValue } from '@/lib/leads'
 
 interface LeadRow {
   id: string
@@ -117,7 +119,7 @@ interface PortfolioStats {
 
 const statusColorMap: Record<string, string> = {
   new: 'bg-blue-50 text-blue-600 border-blue-200',
-  contacted: 'bg-amber-50 text-amber-600 border-amber-200',
+  contacted: 'bg-amber-50 text-amber-700 border-amber-200',
   qualified: 'bg-emerald-50 text-emerald-600 border-emerald-200',
   proposal_sent: 'bg-purple-50 text-purple-600 border-purple-200',
   converted: 'bg-green-50 text-green-600 border-green-200',
@@ -365,7 +367,7 @@ export default function LeadsPage() {
           <Button
             variant="ghost"
             size="icon"
-            className={`text-gray-500 hover:text-amber-600 ${triggerClassName}`}
+            className={`text-gray-500 hover:text-navy ${triggerClassName}`}
             onClick={(e) => e.stopPropagation()}
             aria-label="Lead actions"
           >
@@ -454,131 +456,122 @@ export default function LeadsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-            <Target className="h-5 w-5 text-amber-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
-            <p className="text-sm text-gray-500">
-              Property purchase leads
-            </p>
-          </div>
-          <Badge
-            variant="outline"
-            className="border-amber-200 text-amber-600 ml-2 hidden sm:inline-flex"
-          >
+      {/* Header. Below md the secondary actions collapse into the "More" menu
+          so the row fits a phone; the view toggle takes its own full-width row. */}
+      <PageHeader
+        icon={Target}
+        title="Leads"
+        description="Property purchase leads"
+        badge={
+          <Badge variant="outline" className="border-amber-200 text-amber-700">
             {total}
           </Badge>
-        </div>
+        }
+        actions={
+          <>
+            {/* View Toggle */}
+            <div className="flex w-full md:w-auto items-center bg-gray-100 rounded-lg p-0.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewMode('leads')}
+                className={`flex-1 md:flex-none h-8 px-3 rounded-md text-xs font-medium transition-all ${
+                  viewMode === 'leads'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <LayoutList className="h-3.5 w-3.5 mr-1.5" />
+                All Leads
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewMode('portfolio')}
+                className={`flex-1 md:flex-none h-8 px-3 rounded-md text-xs font-medium transition-all ${
+                  viewMode === 'portfolio'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <Briefcase className="h-3.5 w-3.5 mr-1.5" />
+                Portfolio
+              </Button>
+            </div>
 
-        {/* Below md the secondary actions collapse into the "More" menu so the
-            row fits a phone; the view toggle takes its own full-width row. */}
-        <div className="flex flex-wrap md:flex-nowrap items-center gap-2">
-          {/* View Toggle */}
-          <div className="flex w-full md:w-auto items-center bg-gray-100 rounded-lg p-0.5">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setViewMode('leads')}
-              className={`flex-1 md:flex-none h-8 px-3 rounded-md text-xs font-medium transition-all ${
-                viewMode === 'leads'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <LayoutList className="h-3.5 w-3.5 mr-1.5" />
-              All Leads
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setViewMode('portfolio')}
-              className={`flex-1 md:flex-none h-8 px-3 rounded-md text-xs font-medium transition-all ${
-                viewMode === 'portfolio'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Briefcase className="h-3.5 w-3.5 mr-1.5" />
-              Portfolio
-            </Button>
-          </div>
-
-          <Button
-            variant="outline"
-            className="hidden md:inline-flex border-gray-200 text-gray-700 hover:bg-gray-50"
-            onClick={handleExportCsv}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
-          <RoleGate permission="canCreate">
             <Button
               variant="outline"
-              onClick={() => router.push('/leads/scrape')}
               className="hidden md:inline-flex border-gray-200 text-gray-700 hover:bg-gray-50"
+              onClick={handleExportCsv}
             >
-              <Sparkles className="h-4 w-4 mr-2" />
-              Import Data
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
             </Button>
-          </RoleGate>
-          <RoleGate permission="canCreate">
-            <LeadImportModal
-              open={importOpen}
-              onOpenChange={setImportOpen}
-              onImportComplete={fetchLeads}
-            >
+            <RoleGate permission="canCreate">
               <Button
                 variant="outline"
+                onClick={() => router.push('/leads/scrape')}
                 className="hidden md:inline-flex border-gray-200 text-gray-700 hover:bg-gray-50"
               >
-                <Upload className="h-4 w-4 mr-2" />
-                Import CSV
+                <Sparkles className="h-4 w-4 mr-2" />
+                Import Data
               </Button>
-            </LeadImportModal>
-          </RoleGate>
-          <RoleGate permission="canCreate">
-            <Button
-              onClick={() => router.push('/leads/new')}
-              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Lead
-            </Button>
-          </RoleGate>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="md:hidden border-gray-200 text-gray-700 hover:bg-gray-50"
-                aria-label="More actions"
+            </RoleGate>
+            <RoleGate permission="canCreate">
+              <LeadImportModal
+                open={importOpen}
+                onOpenChange={setImportOpen}
+                onImportComplete={fetchLeads}
               >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-white border-gray-200">
-              <DropdownMenuItem onClick={handleExportCsv}>
-                <Download className="h-4 w-4 mr-2" />
-                Export CSV
-              </DropdownMenuItem>
-              <RoleGate permission="canCreate">
-                <DropdownMenuItem onClick={() => router.push('/leads/scrape')}>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Import Data
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setImportOpen(true)}>
+                <Button
+                  variant="outline"
+                  className="hidden md:inline-flex border-gray-200 text-gray-700 hover:bg-gray-50"
+                >
                   <Upload className="h-4 w-4 mr-2" />
                   Import CSV
+                </Button>
+              </LeadImportModal>
+            </RoleGate>
+            <RoleGate permission="canCreate">
+              <Button
+                onClick={() => router.push('/leads/new')}
+                className="bg-navy text-white font-semibold hover:bg-navy-light"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Lead
+              </Button>
+            </RoleGate>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="md:hidden border-gray-200 text-gray-700 hover:bg-gray-50"
+                  aria-label="More actions"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-white border-gray-200">
+                <DropdownMenuItem onClick={handleExportCsv}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
                 </DropdownMenuItem>
-              </RoleGate>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+                <RoleGate permission="canCreate">
+                  <DropdownMenuItem onClick={() => router.push('/leads/scrape')}>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Import Data
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setImportOpen(true)}>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Import CSV
+                  </DropdownMenuItem>
+                </RoleGate>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        }
+      />
 
       {/* Member filter chip */}
       {memberFilter && viewMode === 'leads' && (
@@ -688,7 +681,7 @@ export default function LeadsPage() {
           {/* Leads Table */}
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+              <Loader2 className="h-8 w-8 animate-spin text-navy" />
             </div>
           ) : leads.length === 0 ? (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
@@ -705,7 +698,10 @@ export default function LeadsPage() {
                 {leads.map((lead) => {
                   const status = lead.status ?? 'new'
                   const priority = lead.priority ?? 'medium'
-                  const buyer = [lead.buyerName, lead.buyerCompany].filter(Boolean).join(' · ')
+                  const title = leadTitle(lead)
+                  const buyer = [realValue(lead.buyerName), lead.buyerCompany]
+                    .filter((part) => part && part !== title)
+                    .join(' · ')
                   const location = [lead.propertyCity, lead.propertyState].filter(Boolean).join(', ')
 
                   return (
@@ -717,7 +713,7 @@ export default function LeadsPage() {
                           className="flex-1 min-w-0 text-left"
                         >
                           <p className="font-medium text-gray-900 truncate">
-                            {lead.propertyAddress || 'Untitled Lead'}
+                            {title}
                           </p>
                           {(buyer || lead.memberName) && (
                             <p className="text-sm text-gray-700 truncate">
@@ -752,14 +748,14 @@ export default function LeadsPage() {
                         <div className="ml-auto flex items-center gap-2">
                           {lead.buyerPhone && (
                             <Button asChild variant="outline" size="icon" className="size-10 border-gray-200 text-amber-600">
-                              <a href={`tel:${lead.buyerPhone}`} aria-label={`Call ${lead.buyerName || lead.buyerPhone}`}>
+                              <a href={`tel:${lead.buyerPhone}`} aria-label={`Call ${realValue(lead.buyerName) || formatPhone(lead.buyerPhone)}`}>
                                 <Phone className="h-4 w-4" />
                               </a>
                             </Button>
                           )}
                           {lead.buyerEmail && (
                             <Button asChild variant="outline" size="icon" className="size-10 border-gray-200 text-amber-600">
-                              <a href={`mailto:${lead.buyerEmail}`} aria-label={`Email ${lead.buyerName || lead.buyerEmail}`}>
+                              <a href={`mailto:${lead.buyerEmail}`} aria-label={`Email ${realValue(lead.buyerName) || lead.buyerEmail}`}>
                                 <Mail className="h-4 w-4" />
                               </a>
                             </Button>
@@ -843,7 +839,7 @@ export default function LeadsPage() {
                           <TableCell>
                             <div>
                               <p className="font-medium text-gray-900">
-                                {lead.propertyAddress || '--'}
+                                {realValue(lead.propertyAddress) || '--'}
                               </p>
                               {(lead.propertyCity || lead.propertyState) && (
                                 <p className="text-xs text-gray-500">
@@ -882,7 +878,7 @@ export default function LeadsPage() {
                           <TableCell>
                             <div>
                               <p className="text-sm text-gray-900">
-                                {lead.buyerName || '--'}
+                                {realValue(lead.buyerName) || '--'}
                               </p>
                               {lead.buyerCompany && (
                                 <p className="text-xs text-gray-500">
@@ -913,7 +909,7 @@ export default function LeadsPage() {
                                 <a
                                   href={`mailto:${lead.buyerEmail}`}
                                   onClick={(e) => e.stopPropagation()}
-                                  className="flex items-center gap-1.5 text-xs text-amber-600 hover:underline"
+                                  className="flex items-center gap-1.5 text-xs text-amber-700 hover:underline"
                                 >
                                   <Mail className="h-3 w-3" />
                                   {lead.buyerEmail}
@@ -928,10 +924,10 @@ export default function LeadsPage() {
                                 <a
                                   href={`tel:${lead.buyerPhone}`}
                                   onClick={(e) => e.stopPropagation()}
-                                  className="flex items-center gap-1.5 text-xs text-amber-600 hover:underline"
+                                  className="flex items-center gap-1.5 text-xs text-amber-700 hover:underline"
                                 >
                                   <Phone className="h-3 w-3" />
-                                  {lead.buyerPhone}
+                                  {formatPhone(lead.buyerPhone)}
                                 </a>
                               ) : (
                                 <span className="flex items-center gap-1.5 text-xs text-gray-400">
@@ -1074,7 +1070,7 @@ export default function LeadsPage() {
           {/* Portfolio Table */}
           {portfolioLoading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+              <Loader2 className="h-8 w-8 animate-spin text-navy" />
             </div>
           ) : portfolios.length === 0 ? (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
@@ -1154,7 +1150,7 @@ export default function LeadsPage() {
                                   portfolio.propertyCount > 5
                                     ? 'border-red-200 bg-red-50 text-red-600'
                                     : portfolio.propertyCount > 1
-                                    ? 'border-amber-200 bg-amber-50 text-amber-600'
+                                    ? 'border-amber-200 bg-amber-50 text-amber-700'
                                     : 'border-gray-200 bg-gray-50 text-gray-600'
                                 }`}
                               >
@@ -1207,7 +1203,7 @@ export default function LeadsPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 h-7 text-xs"
+                                className="text-navy hover:bg-gray-100 h-7 text-xs"
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   handleViewMemberLeads(portfolio.memberName)

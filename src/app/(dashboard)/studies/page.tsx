@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger'
 import { formatCurrency } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import { FileBarChart, Plus } from 'lucide-react'
+import PageHeader from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -101,21 +102,20 @@ export default function StudiesPage() {
   return (
     <div className="animate-fade-in space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Studies</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {pagination.total} cost segregation {pagination.total === 1 ? 'study' : 'studies'}
-          </p>
-        </div>
-        <Button
-          onClick={() => router.push('/studies/new')}
-          className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          New Study
-        </Button>
-      </div>
+      <PageHeader
+        icon={FileBarChart}
+        title="Studies"
+        description={`${pagination.total} cost segregation ${pagination.total === 1 ? 'study' : 'studies'}`}
+        actions={
+          <Button
+            onClick={() => router.push('/studies/new')}
+            className="bg-navy text-white font-semibold hover:bg-navy-light"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Study
+          </Button>
+        }
+      />
 
       {/* Filters */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -135,7 +135,7 @@ export default function StudiesPage() {
                 <SelectItem
                   key={opt.value}
                   value={opt.value || '_all'}
-                  className="text-gray-900 focus:bg-amber-50 focus:text-amber-700"
+                  className="text-gray-900 focus:bg-gray-100 focus:text-navy"
                 >
                   {opt.label}
                 </SelectItem>
@@ -166,7 +166,7 @@ export default function StudiesPage() {
           {!statusFilter && (
             <Button
               onClick={() => router.push('/studies/new')}
-              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold"
+              className="bg-navy text-white font-semibold hover:bg-navy-light"
             >
               <Plus className="h-4 w-4 mr-2" />
               New Study
@@ -223,13 +223,13 @@ export default function StudiesPage() {
             <Table>
               <TableHeader>
                 <TableRow className="border-gray-100">
-                  <TableHead className="text-amber-600">Study Name</TableHead>
-                  <TableHead className="text-amber-600">Property</TableHead>
-                  <TableHead className="text-amber-600">Client</TableHead>
-                  <TableHead className="text-amber-600 text-center">Status</TableHead>
-                  <TableHead className="text-amber-600 text-right">First Year Deduction</TableHead>
-                  <TableHead className="text-amber-600 text-right">Total Savings</TableHead>
-                  <TableHead className="text-amber-600">Created</TableHead>
+                  <TableHead className="text-gray-500">Study Name</TableHead>
+                  <TableHead className="text-gray-500">Property</TableHead>
+                  <TableHead className="text-gray-500">Client</TableHead>
+                  <TableHead className="text-gray-500 text-center">Status</TableHead>
+                  <TableHead className="text-gray-500 text-right">First Year Deduction</TableHead>
+                  <TableHead className="text-gray-500 text-right">Total Savings</TableHead>
+                  <TableHead className="text-gray-500">Created</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -278,7 +278,7 @@ export default function StudiesPage() {
             size="sm"
             disabled={pagination.page <= 1}
             onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
-            className="h-10 md:h-8 border-gray-200 text-gray-500 hover:text-amber-600"
+            className="h-10 md:h-8 border-gray-200 text-gray-500 hover:text-navy"
           >
             Previous
           </Button>
@@ -290,7 +290,7 @@ export default function StudiesPage() {
             size="sm"
             disabled={pagination.page >= pagination.totalPages}
             onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
-            className="h-10 md:h-8 border-gray-200 text-gray-500 hover:text-amber-600"
+            className="h-10 md:h-8 border-gray-200 text-gray-500 hover:text-navy"
           >
             Next
           </Button>

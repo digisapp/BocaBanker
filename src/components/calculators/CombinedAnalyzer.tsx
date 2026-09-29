@@ -141,7 +141,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
       {/* Input Section */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-navy text-amber-400">
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
@@ -156,7 +156,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Property */}
           <div className="space-y-4">
-            <h4 className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Property</h4>
+            <h4 className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Property</h4>
             <div className="space-y-2">
               <Label className="text-gray-500">Property Value ($)</Label>
               <Input
@@ -176,7 +176,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200">
                   {PROPERTY_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value} className="text-gray-900 focus:bg-amber-50 focus:text-amber-700">
+                    <SelectItem key={t.value} value={t.value} className="text-gray-900 focus:bg-gray-100 focus:text-navy">
                       {t.label}
                     </SelectItem>
                   ))}
@@ -269,7 +269,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200">
                   {LOAN_TERMS.map((t) => (
-                    <SelectItem key={t.value} value={t.value} className="text-gray-900 focus:bg-amber-50 focus:text-amber-700">
+                    <SelectItem key={t.value} value={t.value} className="text-gray-900 focus:bg-gray-100 focus:text-navy">
                       {t.label}
                     </SelectItem>
                   ))}
@@ -293,7 +293,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
         <div className="flex gap-3 mt-6">
           <Button
             onClick={handleCalculate}
-            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
+            className="bg-navy text-white hover:bg-navy-light font-semibold"
           >
             Run Combined Analysis
           </Button>
@@ -301,7 +301,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
             <Button
               onClick={handleReset}
               variant="outline"
-              className="border-gray-200 text-amber-600 hover:bg-amber-50"
+              className="border-gray-200 text-navy hover:bg-gray-100"
             >
               Reset
             </Button>
@@ -313,7 +313,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
       {calculated && result && (
         <>
           {/* Hero Banner */}
-          <div className="bg-gradient-to-r from-amber-500 to-yellow-500 rounded-2xl p-6 text-white shadow-lg">
+          <div className="bg-navy rounded-2xl p-6 text-white shadow-lg">
             <div className="flex items-center gap-3 mb-2">
               <Sparkles className="h-6 w-6" />
               <span className="text-sm font-medium uppercase tracking-wider opacity-90">
@@ -484,13 +484,13 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
             <Table>
               <TableHeader>
                 <TableRow className="border-gray-200 hover:bg-transparent">
-                  <TableHead className="text-amber-600">Year</TableHead>
-                  <TableHead className="text-amber-600 text-right">Cost Seg</TableHead>
-                  <TableHead className="text-amber-600 text-right">Refi Savings</TableHead>
-                  <TableHead className="text-amber-600 text-right">Combined</TableHead>
-                  <TableHead className="text-amber-600 text-right">Cumulative</TableHead>
-                  <TableHead className="text-amber-600 text-right">Balance (w/ Paydown)</TableHead>
-                  <TableHead className="text-amber-600 text-right">Balance (Standard)</TableHead>
+                  <TableHead className="text-gray-500">Year</TableHead>
+                  <TableHead className="text-gray-500 text-right">Cost Seg</TableHead>
+                  <TableHead className="text-gray-500 text-right">Refi Savings</TableHead>
+                  <TableHead className="text-gray-500 text-right">Combined</TableHead>
+                  <TableHead className="text-gray-500 text-right">Cumulative</TableHead>
+                  <TableHead className="text-gray-500 text-right">Balance (w/ Paydown)</TableHead>
+                  <TableHead className="text-gray-500 text-right">Balance (Standard)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -500,7 +500,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
                     className="border-gray-100 hover:bg-amber-50/50"
                   >
                     <TableCell className="text-gray-900 font-medium">{entry.year}</TableCell>
-                    <TableCell className="text-amber-600 text-right">
+                    <TableCell className="text-amber-700 text-right">
                       {formatCurrency(entry.costSegSavings)}
                     </TableCell>
                     <TableCell className="text-blue-600 text-right">

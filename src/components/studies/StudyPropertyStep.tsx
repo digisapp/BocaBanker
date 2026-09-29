@@ -59,7 +59,7 @@ export default function StudyPropertyStep({
             </SelectTrigger>
             <SelectContent className="bg-white border-gray-200">
               {properties.map((prop) => (
-                <SelectItem key={prop.id} value={prop.id} className="text-gray-900 focus:bg-amber-50 focus:text-amber-600">
+                <SelectItem key={prop.id} value={prop.id} className="text-gray-900 focus:bg-gray-100 focus:text-navy">
                   {prop.address}{prop.city ? `, ${prop.city}` : ''}{prop.state ? `, ${prop.state}` : ''}
                 </SelectItem>
               ))}
@@ -75,7 +75,7 @@ export default function StudyPropertyStep({
             </SelectTrigger>
             <SelectContent className="bg-white border-gray-200">
               {clients.map((client) => (
-                <SelectItem key={client.id} value={client.id} className="text-gray-900 focus:bg-amber-50 focus:text-amber-600">
+                <SelectItem key={client.id} value={client.id} className="text-gray-900 focus:bg-gray-100 focus:text-navy">
                   {client.firstName} {client.lastName}
                   {client.company ? ` - ${client.company}` : ''}
                 </SelectItem>
@@ -87,7 +87,7 @@ export default function StudyPropertyStep({
       </div>
       {selectedProperty && (
         <div className="mt-6 p-4 rounded-lg bg-gray-50 border border-gray-100">
-          <h4 className="text-sm font-medium text-amber-600 mb-3">Property Details</h4>
+          <h4 className="text-sm font-medium text-navy mb-3">Property Details</h4>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
               <span className="text-gray-500">Address</span>

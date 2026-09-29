@@ -11,7 +11,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   },
   processing: {
     label: 'Processing',
-    className: 'bg-amber-50 text-amber-600 border-amber-200',
+    className: 'bg-amber-50 text-amber-700 border-amber-200',
   },
   underwriting: {
     label: 'Underwriting',

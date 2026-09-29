@@ -8,6 +8,7 @@ import {
   useMemo,
   useSyncExternalStore,
 } from 'react';
+import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import type { UIMessage } from 'ai';
@@ -20,7 +21,6 @@ import {
   History,
   ChevronLeft,
   Loader2,
-  Landmark,
   Trash2,
   AlertCircle,
   RotateCcw,
@@ -262,7 +262,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
             variant="ghost"
             size="icon-xs"
             onClick={handleStartNew}
-            className="size-10 md:size-6 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+            className="size-10 md:size-6 text-navy hover:bg-gray-100"
             title="New conversation"
             aria-label="New conversation"
           >
@@ -349,9 +349,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
             />
           </Button>
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-serif font-bold text-xs">
-              BB
-            </div>
+            <BocaBankerAvatar size={32} />
             <div>
               <h2 className="text-sm font-semibold text-gray-900">
                 Boca Banker
@@ -371,10 +369,8 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
             </div>
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center px-8">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 mb-4">
-                <Landmark className="h-8 w-8 text-amber-600" />
-              </div>
-              <h3 className="text-lg font-serif font-semibold text-amber-600 mb-2">
+              <BocaBankerAvatar size={64} className="mb-4" />
+              <h3 className="text-lg font-serif font-semibold text-navy mb-2">
                 Welcome to Boca Banker
               </h3>
               <p className="text-sm text-gray-500 max-w-md leading-relaxed">
@@ -411,9 +407,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
               {isLoading &&
                 messages[messages.length - 1]?.role !== 'assistant' && (
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-serif font-bold text-xs flex-shrink-0">
-                      BB
-                    </div>
+                    <BocaBankerAvatar size={32} />
                     <div className="bg-gray-100 text-gray-800 border-l-2 border-l-amber-500 rounded-xl rounded-bl-sm px-4 py-3">
                       <div className="flex items-center gap-1.5">
                         <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />

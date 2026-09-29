@@ -14,6 +14,7 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import PageHeader from '@/components/shared/PageHeader'
 import dynamic from 'next/dynamic'
 import { MortgageQuickActions } from '@/components/mortgage/MortgageQuickActions'
 import { LoanStatusBadge } from '@/components/mortgage/LoanStatusBadge'
@@ -111,7 +112,7 @@ export default function MortgageDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-navy" />
       </div>
     )
   }
@@ -129,33 +130,25 @@ export default function MortgageDashboard() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-            <Landmark className="h-5 w-5 text-amber-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Mortgage Intelligence
-            </h1>
-            <p className="text-sm text-gray-500">
-              Your command center for loan origination
-            </p>
-          </div>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefreshRates}
-          disabled={refreshing}
-          className="border-gray-200 text-gray-600 hover:bg-gray-50"
-        >
-          <RefreshCw
-            className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`}
-          />
-          {refreshing ? 'Refreshing...' : 'Refresh Rates'}
-        </Button>
-      </div>
+      <PageHeader
+        icon={Landmark}
+        title="Mortgage Intelligence"
+        description="Your command center for loan origination"
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefreshRates}
+            disabled={refreshing}
+            className="border-gray-200 text-gray-600 hover:bg-gray-50"
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`}
+            />
+            {refreshing ? 'Refreshing...' : 'Refresh Rates'}
+          </Button>
+        }
+      />
 
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -268,7 +261,7 @@ export default function MortgageDashboard() {
               variant="ghost"
               size="sm"
               onClick={() => router.push('/mortgage/loans')}
-              className="text-amber-600 hover:text-amber-700"
+              className="text-amber-700 hover:text-navy"
             >
               View All
             </Button>

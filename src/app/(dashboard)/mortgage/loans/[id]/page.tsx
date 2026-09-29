@@ -225,7 +225,7 @@ export default function LoanDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-navy" />
       </div>
     )
   }
@@ -237,25 +237,25 @@ export default function LoanDetailPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-6 sm:gap-y-3">
+        <div className="flex min-w-0 items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => router.push('/mortgage/loans')}
-            className="text-gray-500 hover:text-amber-600"
+            className="text-gray-500 hover:text-navy"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center">
-              <Landmark className="h-6 w-6 text-amber-600" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-navy">
+              <Landmark className="h-5 w-5 text-amber-400" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
                 {loan.borrowerName || 'Untitled Loan'}
               </h1>
-              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 mt-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
                 <LoanStatusBadge status={status} />
                 {loan.loanType && (
                   <Badge
@@ -275,13 +275,13 @@ export default function LoanDetailPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {editing ? (
             <>
               <Button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
+                className="bg-navy text-white font-semibold hover:bg-navy-light"
               >
                 {saving ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -307,7 +307,7 @@ export default function LoanDetailPage() {
                   onClick={handleSendAriveLink}
                   disabled={sendingArive}
                   variant="outline"
-                  className="border-amber-200 text-amber-700 hover:bg-amber-50"
+                  className="border-gray-200 text-navy hover:bg-gray-100"
                 >
                   {sendingArive ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -351,8 +351,8 @@ export default function LoanDetailPage() {
       {/* Edit Mode Form */}
       {editing && (
         <div className="bg-amber-50/50 rounded-2xl border border-amber-200 shadow-sm p-6 space-y-5">
-          <h2 className="text-lg font-semibold text-amber-600 flex items-center gap-2">
-            <Pencil className="h-4 w-4" />
+          <h2 className="text-lg font-semibold text-navy flex items-center gap-2">
+            <Pencil className="h-4 w-4 text-amber-600" />
             Edit Loan
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -532,8 +532,8 @@ export default function LoanDetailPage() {
 
       {/* Borrower Information */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-          <User className="h-4 w-4" />
+        <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+          <User className="h-4 w-4 text-amber-600" />
           Borrower Information
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -553,7 +553,7 @@ export default function LoanDetailPage() {
               {loan.borrowerEmail ? (
                 <a
                   href={`mailto:${loan.borrowerEmail}`}
-                  className="-mb-2 -mt-1.5 block break-all py-2 text-sm text-amber-600 hover:underline"
+                  className="-mb-2 -mt-1.5 block break-all py-2 text-sm text-amber-700 hover:underline"
                 >
                   {loan.borrowerEmail}
                 </a>
@@ -573,7 +573,7 @@ export default function LoanDetailPage() {
               {loan.borrowerPhone ? (
                 <a
                   href={`tel:${loan.borrowerPhone}`}
-                  className="-mb-2 -mt-1.5 block break-all py-2 text-sm text-amber-600 hover:underline"
+                  className="-mb-2 -mt-1.5 block break-all py-2 text-sm text-amber-700 hover:underline"
                 >
                   {loan.borrowerPhone}
                 </a>
@@ -587,8 +587,8 @@ export default function LoanDetailPage() {
 
       {/* Property Information */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-          <Building2 className="h-4 w-4" />
+        <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-amber-600" />
           Property Information
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -622,8 +622,8 @@ export default function LoanDetailPage() {
 
       {/* Loan Details */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-          <Landmark className="h-4 w-4" />
+        <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+          <Landmark className="h-4 w-4 text-amber-600" />
           Loan Details
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -672,8 +672,8 @@ export default function LoanDetailPage() {
       {/* Commission */}
       {(loan.commissionBps || loan.commissionAmount) && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-            <DollarSign className="h-4 w-4" />
+          <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-amber-600" />
             Commission
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -694,8 +694,8 @@ export default function LoanDetailPage() {
       {/* Arive Integration */}
       {(loan.ariveLink || loan.ariveLinkSentAt) && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-            <ExternalLink className="h-4 w-4" />
+          <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+            <ExternalLink className="h-4 w-4 text-amber-600" />
             Arive Integration
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -712,7 +712,7 @@ export default function LoanDetailPage() {
                     href={loan.ariveLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-amber-600 hover:underline mt-0.5 block truncate max-w-[300px]"
+                    className="text-sm text-amber-700 hover:underline mt-0.5 block truncate max-w-[300px]"
                   >
                     {loan.ariveLink}
                   </a>
@@ -757,8 +757,8 @@ export default function LoanDetailPage() {
       {/* Notes */}
       {loan.notes && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-            <StickyNote className="h-4 w-4" />
+          <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+            <StickyNote className="h-4 w-4 text-amber-600" />
             Notes
           </h2>
           <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">

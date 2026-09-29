@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Building2, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Building2, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
+import PageHeader from '@/components/shared/PageHeader';
 import {
   PROPERTY_PROPERTY_TYPES,
   propertyTypeOptions,
@@ -170,29 +171,12 @@ export default function EditPropertyPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Link href="/properties">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-gray-500 hover:text-amber-600 hover:bg-amber-50"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
-            <Building2 className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-serif font-bold text-amber-600">
-              Edit Property
-            </h1>
-            <p className="text-sm text-gray-500">Update property details</p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        icon={Building2}
+        title="Edit Property"
+        description="Update property details"
+        backHref="/properties"
+      />
 
       {/* Form */}
       <form
@@ -430,7 +414,7 @@ export default function EditPropertyPage() {
           <Button
             type="submit"
             disabled={saving}
-            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
+            className="bg-navy text-white hover:bg-navy-light font-semibold"
           >
             {saving ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { logger } from '@/lib/logger';
-import { ArrowLeft, Mail, Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import { History, Mail, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import PageHeader from '@/components/shared/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -91,60 +91,48 @@ export default function EmailHistoryPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button
-            asChild
-            variant="ghost"
-            size="icon"
-            className="size-10 md:size-9 text-gray-500 hover:text-amber-600 hover:bg-amber-50"
+      <PageHeader
+        icon={History}
+        title="Email History"
+        description={`${total} total emails`}
+        backHref="/email"
+        actions={
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => {
+              setStatusFilter(v);
+              setPage(1);
+            }}
           >
-            <Link href="/email" aria-label="Back to email">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-serif font-bold text-amber-600">
-              Email History
-            </h1>
-            <p className="text-sm text-gray-500">{total} total emails</p>
-          </div>
-        </div>
-        <Select
-          value={statusFilter}
-          onValueChange={(v) => {
-            setStatusFilter(v);
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className="w-full sm:w-[160px] bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500">
-            <SelectValue placeholder="Filter status" />
-          </SelectTrigger>
-          <SelectContent className="bg-white border-gray-200">
-            <SelectItem value="all" className="text-gray-900 focus:bg-amber-50 focus:text-amber-700">
-              All Status
-            </SelectItem>
-            <SelectItem value="sent" className="text-gray-900 focus:bg-amber-50 focus:text-amber-700">
-              Sent
-            </SelectItem>
-            <SelectItem value="delivered" className="text-gray-900 focus:bg-amber-50 focus:text-amber-700">
-              Delivered
-            </SelectItem>
-            <SelectItem value="bounced" className="text-gray-900 focus:bg-amber-50 focus:text-amber-700">
-              Bounced
-            </SelectItem>
-            <SelectItem value="failed" className="text-gray-900 focus:bg-amber-50 focus:text-amber-700">
-              Failed
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+            <SelectTrigger className="w-full sm:w-[160px] bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500">
+              <SelectValue placeholder="Filter status" />
+            </SelectTrigger>
+            <SelectContent className="bg-white border-gray-200">
+              <SelectItem value="all" className="text-gray-900 focus:bg-gray-100 focus:text-navy">
+                All Status
+              </SelectItem>
+              <SelectItem value="sent" className="text-gray-900 focus:bg-gray-100 focus:text-navy">
+                Sent
+              </SelectItem>
+              <SelectItem value="delivered" className="text-gray-900 focus:bg-gray-100 focus:text-navy">
+                Delivered
+              </SelectItem>
+              <SelectItem value="bounced" className="text-gray-900 focus:bg-gray-100 focus:text-navy">
+                Bounced
+              </SelectItem>
+              <SelectItem value="failed" className="text-gray-900 focus:bg-gray-100 focus:text-navy">
+                Failed
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        }
+      />
 
       {/* Table */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+            <Loader2 className="h-6 w-6 animate-spin text-navy" />
           </div>
         ) : logs.length === 0 ? (
           <div className="text-center py-16">
@@ -191,11 +179,11 @@ export default function EmailHistoryPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-gray-200 hover:bg-transparent">
-                    <TableHead className="text-amber-600">Date</TableHead>
-                    <TableHead className="text-amber-600">Recipient</TableHead>
-                    <TableHead className="text-amber-600">Subject</TableHead>
-                    <TableHead className="text-amber-600">Template</TableHead>
-                    <TableHead className="text-amber-600">Status</TableHead>
+                    <TableHead className="text-gray-500">Date</TableHead>
+                    <TableHead className="text-gray-500">Recipient</TableHead>
+                    <TableHead className="text-gray-500">Subject</TableHead>
+                    <TableHead className="text-gray-500">Template</TableHead>
+                    <TableHead className="text-gray-500">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -248,7 +236,7 @@ export default function EmailHistoryPage() {
             size="sm"
             disabled={page <= 1}
             onClick={() => setPage(page - 1)}
-            className="h-10 md:h-8 border-gray-200 text-gray-500 hover:bg-amber-50 disabled:opacity-40"
+            className="h-10 md:h-8 border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-40"
           >
             Previous
           </Button>
@@ -260,7 +248,7 @@ export default function EmailHistoryPage() {
             size="sm"
             disabled={page >= totalPages}
             onClick={() => setPage(page + 1)}
-            className="h-10 md:h-8 border-gray-200 text-gray-500 hover:bg-amber-50 disabled:opacity-40"
+            className="h-10 md:h-8 border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-40"
           >
             Next
           </Button>

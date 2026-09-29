@@ -360,7 +360,7 @@ export function LeadImportModal({
                   {i > 0 && (
                     <div
                       className={`h-px w-8 ${
-                        isComplete ? 'bg-amber-500' : 'bg-gray-200'
+                        isComplete ? 'bg-navy' : 'bg-gray-200'
                       }`}
                     />
                   )}
@@ -368,9 +368,9 @@ export function LeadImportModal({
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                         isActive
-                          ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white'
+                          ? 'bg-navy text-white'
                           : isComplete
-                          ? 'bg-amber-50 text-amber-600 border border-amber-200'
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
                           : 'bg-gray-100 text-gray-500 border border-gray-200'
                       }`}
                     >
@@ -383,9 +383,9 @@ export function LeadImportModal({
                     <span
                       className={`text-sm hidden sm:inline ${
                         isActive
-                          ? 'text-amber-600 font-medium'
+                          ? 'text-navy font-medium'
                           : isComplete
-                          ? 'text-amber-600/70'
+                          ? 'text-gray-700'
                           : 'text-gray-500'
                       }`}
                     >
@@ -518,7 +518,7 @@ export function LeadImportModal({
                 <Button
                   onClick={handleMappingConfirm}
                   disabled={!hasRequiredFields}
-                  className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90 px-8"
+                  className="bg-navy text-white font-semibold hover:bg-navy-light px-8"
                 >
                   Confirm Mapping
                 </Button>
@@ -530,7 +530,7 @@ export function LeadImportModal({
           {step === 3 && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold text-amber-600 mb-2">
+                <h3 className="text-lg font-semibold text-navy mb-2">
                   Review Import
                 </h3>
                 <p className="text-sm text-gray-500">
@@ -549,7 +549,7 @@ export function LeadImportModal({
                       {mappedFieldNames.map((field) => (
                         <TableHead
                           key={field}
-                          className="bg-gray-50 text-amber-600 font-semibold text-xs uppercase tracking-wider whitespace-nowrap"
+                          className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider whitespace-nowrap"
                         >
                           {field.replace(/_/g, ' ')}
                         </TableHead>
@@ -587,7 +587,7 @@ export function LeadImportModal({
                 <Button
                   onClick={handleImport}
                   disabled={importing}
-                  className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90 px-8"
+                  className="bg-navy text-white font-semibold hover:bg-navy-light px-8"
                 >
                   {importing && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -610,7 +610,7 @@ export function LeadImportModal({
                 </h3>
                 <p className="text-gray-500">
                   Successfully imported{' '}
-                  <strong className="text-amber-600">{result.imported}</strong> leads.
+                  <strong className="text-amber-700">{result.imported}</strong> leads.
                 </p>
                 {result.errors.length > 0 && (
                   <p className="text-sm text-red-500 mt-2">
@@ -643,7 +643,7 @@ export function LeadImportModal({
               <div className="flex justify-center">
                 <Button
                   onClick={() => handleOpenChange(false)}
-                  className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90 px-8"
+                  className="bg-navy text-white font-semibold hover:bg-navy-light px-8"
                 >
                   Done
                 </Button>

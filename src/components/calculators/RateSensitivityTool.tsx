@@ -94,7 +94,7 @@ export default function RateSensitivityTool({ initialValues }: RateSensitivityTo
       {/* Input Section */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-navy text-amber-400">
             <Activity className="h-5 w-5" />
           </div>
           <div>
@@ -142,7 +142,7 @@ export default function RateSensitivityTool({ initialValues }: RateSensitivityTo
                   <SelectItem
                     key={t.value}
                     value={t.value}
-                    className="text-gray-900 focus:bg-amber-50 focus:text-amber-700"
+                    className="text-gray-900 focus:bg-gray-100 focus:text-navy"
                   >
                     {t.label}
                   </SelectItem>
@@ -155,7 +155,7 @@ export default function RateSensitivityTool({ initialValues }: RateSensitivityTo
         <div className="flex gap-3 mt-6">
           <Button
             onClick={handleCalculate}
-            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold"
+            className="bg-navy text-white hover:bg-navy-light font-semibold"
           >
             Analyze Rates
           </Button>
@@ -163,7 +163,7 @@ export default function RateSensitivityTool({ initialValues }: RateSensitivityTo
             <Button
               onClick={handleReset}
               variant="outline"
-              className="border-gray-200 text-amber-600 hover:bg-amber-50"
+              className="border-gray-200 text-navy hover:bg-gray-100"
             >
               Reset
             </Button>
@@ -264,11 +264,11 @@ export default function RateSensitivityTool({ initialValues }: RateSensitivityTo
             <Table>
               <TableHeader>
                 <TableRow className="border-gray-200 hover:bg-transparent">
-                  <TableHead className="text-amber-600">Rate</TableHead>
-                  <TableHead className="text-amber-600 text-right">Monthly Payment</TableHead>
-                  <TableHead className="text-amber-600 text-right">Total Interest</TableHead>
-                  <TableHead className="text-amber-600 text-right">Total Cost</TableHead>
-                  <TableHead className="text-amber-600 text-right">Change vs Base</TableHead>
+                  <TableHead className="text-gray-500">Rate</TableHead>
+                  <TableHead className="text-gray-500 text-right">Monthly Payment</TableHead>
+                  <TableHead className="text-gray-500 text-right">Total Interest</TableHead>
+                  <TableHead className="text-gray-500 text-right">Total Cost</TableHead>
+                  <TableHead className="text-gray-500 text-right">Change vs Base</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -286,7 +286,7 @@ export default function RateSensitivityTool({ initialValues }: RateSensitivityTo
                       <TableCell className="text-gray-900">
                         {entry.rate}%
                         {isBase && (
-                          <span className="ml-2 text-xs text-amber-600 font-normal">(base)</span>
+                          <span className="ml-2 text-xs text-amber-700 font-normal">(base)</span>
                         )}
                       </TableCell>
                       <TableCell className="text-gray-900 text-right">

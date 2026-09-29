@@ -152,7 +152,7 @@ export default function StudyReportPage() {
         <Button
           variant="ghost"
           onClick={() => router.push(`/studies/${id}`)}
-          className="text-gray-500 hover:text-amber-600"
+          className="text-gray-500 hover:text-navy"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Study
@@ -173,7 +173,7 @@ export default function StudyReportPage() {
           </Button>
           <Button
             onClick={() => window.print()}
-            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
+            className="bg-navy text-white font-semibold hover:bg-navy-light"
           >
             <Printer className="h-4 w-4 mr-2" />
             Print Report
@@ -186,11 +186,11 @@ export default function StudyReportPage() {
         {/* Report Header */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
           <div className="flex justify-center mb-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500">
-              <Building2 className="h-7 w-7 text-white" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-navy">
+              <Building2 className="h-7 w-7 text-amber-400" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-amber-600 font-serif mb-2">
+          <h1 className="text-3xl font-bold text-navy font-serif mb-2">
             Cost Segregation Study Report
           </h1>
           <p className="text-gray-500 text-lg">{study.studyName}</p>
@@ -203,7 +203,7 @@ export default function StudyReportPage() {
 
         {/* Property Information */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
+          <h2 className="text-lg font-semibold text-navy border-b border-gray-200 pb-2 mb-4">
             Property Information
           </h2>
           <div className="grid grid-cols-2 gap-x-8 gap-y-4">
@@ -241,7 +241,7 @@ export default function StudyReportPage() {
 
         {/* Tax Parameters */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
+          <h2 className="text-lg font-semibold text-navy border-b border-gray-200 pb-2 mb-4">
             Tax Parameters
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
@@ -262,7 +262,7 @@ export default function StudyReportPage() {
 
         {/* Executive Summary */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
+          <h2 className="text-lg font-semibold text-navy border-b border-gray-200 pb-2 mb-4">
             Executive Summary
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -303,7 +303,7 @@ export default function StudyReportPage() {
 
         {/* First Year Analysis */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
+          <h2 className="text-lg font-semibold text-navy border-b border-gray-200 pb-2 mb-4">
             First Year Depreciation Analysis
           </h2>
           {/* sm (not md) so the printed page keeps four columns */}
@@ -322,7 +322,7 @@ export default function StudyReportPage() {
             </div>
             <div>
               <span className="text-xs text-gray-400">Total First Year</span>
-              <p className="text-lg font-semibold text-amber-600 mt-1">
+              <p className="text-lg font-semibold text-amber-700 mt-1">
                 {formatCurrency(results.firstYearAnalysis.totalFirstYear)}
               </p>
             </div>
@@ -337,7 +337,7 @@ export default function StudyReportPage() {
 
         {/* Asset Breakdown Table */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
+          <h2 className="text-lg font-semibold text-navy border-b border-gray-200 pb-2 mb-4">
             Asset Classification Breakdown
           </h2>
           <table className="w-full text-sm">
@@ -365,11 +365,11 @@ export default function StudyReportPage() {
                 </tr>
               ))}
               <tr className="border-t-2 border-gray-300">
-                <td className="py-3 text-amber-600 font-semibold" colSpan={2}>Total</td>
-                <td className="py-3 text-amber-600 text-right font-bold">
+                <td className="py-3 text-amber-700 font-semibold" colSpan={2}>Total</td>
+                <td className="py-3 text-amber-700 text-right font-bold">
                   {formatCurrency(results.assetBreakdown.reduce((sum, a) => sum + a.amount, 0))}
                 </td>
-                <td className="py-3 text-amber-600 text-right font-medium">100.0%</td>
+                <td className="py-3 text-amber-700 text-right font-medium">100.0%</td>
               </tr>
             </tbody>
           </table>
@@ -377,21 +377,21 @@ export default function StudyReportPage() {
 
         {/* Charts Section */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
+          <h2 className="text-lg font-semibold text-navy border-b border-gray-200 pb-2 mb-4">
             Asset Allocation
           </h2>
           <AssetBreakdownChart data={results.assetBreakdown} />
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
+          <h2 className="text-lg font-semibold text-navy border-b border-gray-200 pb-2 mb-4">
             Depreciation Schedule Comparison
           </h2>
           <DepreciationChart data={results.depreciationSchedule} />
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
+          <h2 className="text-lg font-semibold text-navy border-b border-gray-200 pb-2 mb-4">
             Cumulative Tax Savings
           </h2>
           <TaxSavingsChart data={results.taxSavingsSchedule} />
@@ -399,7 +399,7 @@ export default function StudyReportPage() {
 
         {/* Depreciation Schedule Table */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
+          <h2 className="text-lg font-semibold text-navy border-b border-gray-200 pb-2 mb-4">
             Year-by-Year Depreciation Schedule
           </h2>
           <div className="overflow-x-auto">
@@ -416,7 +416,7 @@ export default function StudyReportPage() {
                 {results.depreciationSchedule.slice(0, 20).map((row) => (
                   <tr key={row.year} className="border-b border-gray-100">
                     <td className="py-2 text-gray-900">{row.year}</td>
-                    <td className="py-2 text-amber-600 text-right">{formatCurrency(row.accelerated)}</td>
+                    <td className="py-2 text-amber-700 text-right">{formatCurrency(row.accelerated)}</td>
                     <td className="py-2 text-gray-500 text-right">{formatCurrency(row.straightLine)}</td>
                     <td className={`py-2 text-right font-medium ${row.difference >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
                       {formatCurrency(row.difference)}
@@ -435,7 +435,7 @@ export default function StudyReportPage() {
 
         {/* Tax Savings Schedule */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-amber-600 border-b border-gray-200 pb-2 mb-4">
+          <h2 className="text-lg font-semibold text-navy border-b border-gray-200 pb-2 mb-4">
             Tax Savings Schedule
           </h2>
           <div className="overflow-x-auto">
@@ -453,12 +453,12 @@ export default function StudyReportPage() {
                 {results.taxSavingsSchedule.slice(0, 20).map((row) => (
                   <tr key={row.year} className="border-b border-gray-100">
                     <td className="py-2 text-gray-900">{row.year}</td>
-                    <td className="py-2 text-amber-600 text-right">{formatCurrency(row.withCostSeg)}</td>
+                    <td className="py-2 text-amber-700 text-right">{formatCurrency(row.withCostSeg)}</td>
                     <td className="py-2 text-gray-500 text-right">{formatCurrency(row.withoutCostSeg)}</td>
                     <td className={`py-2 text-right ${row.savings >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
                       {formatCurrency(row.savings)}
                     </td>
-                    <td className="py-2 text-amber-600 text-right font-medium">
+                    <td className="py-2 text-amber-700 text-right font-medium">
                       {formatCurrency(row.cumulativeSavings)}
                     </td>
                   </tr>
@@ -488,7 +488,7 @@ export default function StudyReportPage() {
 
         {/* Footer */}
         <div className="text-center py-4 text-xs text-gray-400">
-          <p className="text-amber-600 font-serif font-bold text-sm mb-1">Boca Banker</p>
+          <p className="text-amber-700 font-serif font-bold text-sm mb-1">Boca Banker</p>
           <p>Cost Segregation & Banking Intelligence</p>
           <p className="mt-1">Report generated on {new Date().toLocaleDateString('en-US', {
             year: 'numeric',

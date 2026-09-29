@@ -85,12 +85,12 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                   isActive
-                    ? 'bg-amber-50 text-amber-700 border-l-2 border-amber-500'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 border-l-2 border-transparent',
+                    ? 'bg-navy text-white'
+                    : 'text-gray-500 hover:text-navy hover:bg-gray-100',
                   collapsed && 'justify-center px-2'
                 )}
               >
-                <item.icon className={cn('h-5 w-5 shrink-0', isActive && 'text-amber-600')} />
+                <item.icon className={cn('h-5 w-5 shrink-0', isActive && 'text-amber-400')} />
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             )
@@ -118,7 +118,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             onClick={onToggle}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             className={cn(
-              'w-full text-gray-500 hover:text-amber-600 hover:bg-amber-50',
+              'w-full text-gray-500 hover:text-navy hover:bg-gray-100',
               collapsed && 'justify-center'
             )}
           >

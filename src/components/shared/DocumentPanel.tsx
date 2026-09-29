@@ -212,14 +212,14 @@ export default function DocumentPanel({ clientId, studyId }: DocumentPanelProps)
       >
         {uploading ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
+            <Loader2 className="h-4 w-4 animate-spin text-navy" />
             <span className="text-sm text-gray-500">Uploading...</span>
           </>
         ) : (
           <>
             <CloudUpload className="h-4 w-4 text-amber-500" />
             <span className="text-sm text-gray-500">
-              Drop files or <span className="text-amber-600 font-medium">click to upload</span>
+              Drop files or <span className="text-amber-700 font-medium">click to upload</span>
             </span>
             <Upload className="h-3 w-3 text-gray-400" />
           </>
@@ -270,7 +270,7 @@ export default function DocumentPanel({ clientId, studyId }: DocumentPanelProps)
                   variant="ghost"
                   size="sm"
                   onClick={() => handleDownload(doc)}
-                  className="h-9 w-9 md:h-7 md:w-7 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                  className="h-9 w-9 md:h-7 md:w-7 p-0 text-navy hover:bg-gray-100"
                   title="Download"
                   aria-label={`Download ${doc.fileName}`}
                 >

@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Calculator, DollarSign, Zap, Home, ArrowRightLeft, Landmark, Activity, Sparkles, GitCompare } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import PageHeader from '@/components/shared/PageHeader';
 import dynamic from 'next/dynamic';
 
 // Each calculator pulls in recharts (~360KB). Radix Tabs only mounts the
@@ -62,77 +63,77 @@ function CalculatorsContent() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-serif font-bold text-amber-600">
-          Financial Calculators
-        </h1>
-        <p className="text-gray-500 mt-1">
-          Cost segregation, depreciation, mortgage payments, and refinance analysis
-        </p>
-      </div>
+      <PageHeader
+        icon={Calculator}
+        title="Financial Calculators"
+        description="Cost segregation, depreciation, mortgage payments, and refinance analysis"
+      />
 
       {/* Calculator Tabs */}
       <Tabs defaultValue={activeTab} className="w-full">
-        <TabsList className="bg-gray-100 border border-gray-200 p-1 h-auto flex-wrap">
+        {/* The base TabsList pins its height with a group selector that
+            outranks a plain h-auto, so override that same selector. Nine tabs
+            wrap inside the bar on desktop and swipe as one row on phones. */}
+        <TabsList className="bg-gray-100 border border-gray-200 p-1 w-full justify-start group-data-[orientation=horizontal]/tabs:h-auto md:flex-wrap max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden [&>button]:flex-none">
           <TabsTrigger
             value="combined"
-            className="data-[state=active]:bg-amber-500 data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
+            className="data-[state=active]:bg-navy data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
           >
             <Sparkles className="h-4 w-4" />
             Combined Analysis
           </TabsTrigger>
           <TabsTrigger
             value="depreciation"
-            className="data-[state=active]:bg-amber-500 data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
+            className="data-[state=active]:bg-navy data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
           >
             <Calculator className="h-4 w-4" />
             Depreciation
           </TabsTrigger>
           <TabsTrigger
             value="tax-savings"
-            className="data-[state=active]:bg-amber-500 data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
+            className="data-[state=active]:bg-navy data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
           >
             <DollarSign className="h-4 w-4" />
             Tax Savings
           </TabsTrigger>
           <TabsTrigger
             value="bonus"
-            className="data-[state=active]:bg-amber-500 data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
+            className="data-[state=active]:bg-navy data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
           >
             <Zap className="h-4 w-4" />
             Bonus Depreciation
           </TabsTrigger>
           <TabsTrigger
             value="mortgage"
-            className="data-[state=active]:bg-amber-500 data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
+            className="data-[state=active]:bg-navy data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
           >
             <Home className="h-4 w-4" />
             Mortgage
           </TabsTrigger>
           <TabsTrigger
             value="refinance"
-            className="data-[state=active]:bg-amber-500 data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
+            className="data-[state=active]:bg-navy data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
           >
             <ArrowRightLeft className="h-4 w-4" />
             Refinance
           </TabsTrigger>
           <TabsTrigger
             value="dscr"
-            className="data-[state=active]:bg-amber-500 data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
+            className="data-[state=active]:bg-navy data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
           >
             <Landmark className="h-4 w-4" />
             DSCR
           </TabsTrigger>
           <TabsTrigger
             value="rate-sensitivity"
-            className="data-[state=active]:bg-amber-500 data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
+            className="data-[state=active]:bg-navy data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
           >
             <Activity className="h-4 w-4" />
             Rate Sensitivity
           </TabsTrigger>
           <TabsTrigger
             value="scenario-compare"
-            className="data-[state=active]:bg-amber-500 data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
+            className="data-[state=active]:bg-navy data-[state=active]:text-white text-gray-500 gap-2 px-4 py-2"
           >
             <GitCompare className="h-4 w-4" />
             Loan Comparison

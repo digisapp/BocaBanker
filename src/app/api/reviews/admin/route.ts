@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
         .select()
         .from(reviews)
         .where(finalWhere)
-        .orderBy(desc(reviews.createdAt))
+        .orderBy(desc(reviews.reviewDate), desc(reviews.createdAt))
         .limit(limit)
         .offset(offset),
       db

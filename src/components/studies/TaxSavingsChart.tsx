@@ -44,7 +44,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
         <div className="flex items-center gap-2">
           <div className="h-2.5 w-2.5 rounded-full bg-amber-500" />
           <span className="text-xs text-gray-500">Cumulative:</span>
-          <span className="text-xs font-medium text-amber-600">
+          <span className="text-xs font-medium text-amber-700">
             {formatCurrency(item.cumulativeSavings)}
           </span>
         </div>

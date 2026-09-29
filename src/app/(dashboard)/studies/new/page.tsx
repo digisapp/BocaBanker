@@ -3,8 +3,8 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { logger } from '@/lib/logger'
-import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { FileBarChart } from 'lucide-react'
+import PageHeader from '@/components/shared/PageHeader'
 import { Skeleton } from '@/components/ui/skeleton'
 import StudyForm from '@/components/studies/StudyForm'
 
@@ -125,22 +125,12 @@ function NewStudyContent() {
   return (
     <div className="animate-fade-in max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.back()}
-          className="text-gray-500 hover:text-amber-600 hover:bg-amber-50"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">New Study</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Create a new cost segregation study
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={FileBarChart}
+        title="New Study"
+        description="Create a new cost segregation study"
+        onBack={() => router.back()}
+      />
 
       <StudyForm
         properties={properties}

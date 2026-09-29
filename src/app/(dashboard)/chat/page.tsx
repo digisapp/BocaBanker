@@ -2,7 +2,8 @@
 
 import { Suspense } from 'react';
 import { ChatInterface } from '@/components/chat/ChatInterface';
-import { Landmark } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
+import PageHeader from '@/components/shared/PageHeader';
 import { useSearchParams } from 'next/navigation';
 
 function ChatContent() {
@@ -18,19 +19,12 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-full min-h-0 bg-[#FAFAF8] md:p-6">
       {/* Page Header (the Topbar already says "AI Chat" on mobile) */}
-      <div className="hidden md:flex items-center gap-3 mb-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
-          <Landmark className="h-5 w-5" />
-        </div>
-        <div>
-          <h1 className="text-xl font-serif font-bold text-amber-600">
-            Chat with Boca Banker
-          </h1>
-          <p className="text-xs text-gray-500">
-            Your AI-powered banking, mortgage, and cost segregation advisor
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={MessageSquare}
+        title="Chat with Boca Banker"
+        description="Your AI-powered banking, mortgage, and cost segregation advisor"
+        className="hidden md:flex mb-4"
+      />
 
       {/* Chat Interface */}
       <Suspense fallback={<div className="flex-1" />}>

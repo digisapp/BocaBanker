@@ -136,8 +136,8 @@ export default function ScenarioCompareCalculator({
     <div className="space-y-6">
       {/* Inputs */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-amber-600 mb-4 flex items-center gap-2">
-          <Calculator className="h-5 w-5" />
+        <h3 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+          <Calculator className="h-5 w-5 text-amber-600" />
           Loan Comparison Inputs
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -189,7 +189,7 @@ export default function ScenarioCompareCalculator({
         </div>
         <Button
           onClick={calculate}
-          className="mt-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
+          className="bg-navy mt-4 text-white font-semibold hover:bg-navy-light"
         >
           Compare Scenarios
         </Button>
@@ -208,7 +208,7 @@ export default function ScenarioCompareCalculator({
               }`}
             >
               {s.recommended && (
-                <Badge className="absolute -top-2.5 left-4 bg-amber-500 text-white border-0">
+                <Badge className="absolute -top-2.5 left-4 bg-navy text-white border-0">
                   <Star className="h-3 w-3 mr-1" />
                   Recommended
                 </Badge>
@@ -238,7 +238,7 @@ export default function ScenarioCompareCalculator({
                   <span className="text-sm font-semibold text-gray-700">
                     Total Monthly
                   </span>
-                  <span className="text-lg font-bold text-amber-600">
+                  <span className="text-lg font-bold text-amber-700">
                     {formatCurrencyCents(s.totalMonthly)}
                   </span>
                 </div>

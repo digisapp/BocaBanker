@@ -1,6 +1,7 @@
 'use client';
 
 import { memo } from 'react';
+import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar';
 import { cn } from '@/lib/utils';
 import ChatMarkdown from '@/components/landing/ChatMarkdown';
 import type { UIMessage } from 'ai';
@@ -135,9 +136,7 @@ function ChatMessageImpl({ role, content, parts, createdAt }: ChatMessageProps) 
       {/* Assistant avatar */}
       {!isUser && (
         <div className="flex-shrink-0 mt-1">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-serif font-bold text-xs">
-            BB
-          </div>
+          <BocaBankerAvatar size={32} />
         </div>
       )}
 

@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { logger } from '@/lib/logger'
-import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Building2 } from 'lucide-react'
+import PageHeader from '@/components/shared/PageHeader'
 import { Skeleton } from '@/components/ui/skeleton'
 import PropertyForm from '@/components/properties/PropertyForm'
 import type { PropertyInput } from '@/lib/validation/schemas'
@@ -80,21 +80,12 @@ export default function NewPropertyPage() {
   return (
     <div className="animate-fade-in max-w-3xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Go back"
-          onClick={() => router.back()}
-          className="text-gray-500 hover:text-amber-600 hover:bg-amber-50"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">New Property</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Add a new property to your portfolio</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Building2}
+        title="New Property"
+        description="Add a new property to your portfolio"
+        onBack={() => router.back()}
+      />
 
       <PropertyForm
         clients={clients}

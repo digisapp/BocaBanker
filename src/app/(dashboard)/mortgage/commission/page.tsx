@@ -11,6 +11,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import PageHeader from '@/components/shared/PageHeader'
 
 // recharts is heavy; load the chart lazily on the client
 const CommissionChart = dynamic(
@@ -80,7 +81,7 @@ export default function CommissionPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-navy" />
       </div>
     )
   }
@@ -93,19 +94,11 @@ export default function CommissionPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-          <DollarSign className="h-5 w-5 text-amber-600" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Commission Tracker
-          </h1>
-          <p className="text-sm text-gray-500">
-            Revenue from funded loans
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={DollarSign}
+        title="Commission Tracker"
+        description="Revenue from funded loans"
+      />
 
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -177,7 +170,7 @@ export default function CommissionPage() {
                         .join(' · ')}
                     </p>
                   </div>
-                  <p className="shrink-0 text-sm font-medium text-amber-600">
+                  <p className="shrink-0 text-sm font-medium text-amber-700">
                     {formatCurrency(c.commissionAmount)}
                   </p>
                 </div>
@@ -212,7 +205,7 @@ export default function CommissionPage() {
                     <TableCell className="text-sm text-gray-700">
                       {c.commissionBps ?? '--'}
                     </TableCell>
-                    <TableCell className="text-sm font-medium text-amber-600">
+                    <TableCell className="text-sm font-medium text-amber-700">
                       {formatCurrency(c.commissionAmount)}
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">

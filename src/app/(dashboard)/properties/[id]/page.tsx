@@ -165,23 +165,26 @@ export default function PropertyDetailPage() {
   return (
     <div className="animate-fade-in max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-6 sm:gap-y-3">
+        <div className="flex min-w-0 items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
             aria-label="Go back"
             onClick={() => router.push('/properties')}
-            className="text-gray-500 hover:text-amber-600 hover:bg-amber-50"
+            className="text-gray-500 hover:text-navy hover:bg-gray-100"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-navy">
+            <Building2 className="h-5 w-5 text-amber-400" />
+          </div>
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-gray-900">{property.address}</h1>
               <Badge
                 variant="secondary"
-                className="bg-amber-50 text-amber-600 border-amber-200"
+                className="bg-amber-50 text-amber-700 border-amber-200"
               >
                 {TYPE_LABELS[property.propertyType] || property.propertyType}
               </Badge>
@@ -195,7 +198,7 @@ export default function PropertyDetailPage() {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <RoleGate permission="canEdit">
             <Button
               variant="outline"
@@ -421,7 +424,7 @@ export default function PropertyDetailPage() {
                 <Link
                   href={`/calculators?tab=combined&propertyValue=${property.purchasePrice}&propertyType=${property.propertyType}&loanAmount=${property.loanAmount}${property.interestRate ? `&currentRate=${property.interestRate}` : ''}${property.loanTermYears ? `&remainingYears=${property.loanTermYears}` : ''}`}
                 >
-                  <Button size="sm" className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:opacity-90 font-semibold">
+                  <Button size="sm" className="bg-navy text-white hover:bg-navy-light font-semibold">
                     <Sparkles className="h-3.5 w-3.5 mr-1.5" />
                     Combined Analysis
                   </Button>
@@ -429,7 +432,7 @@ export default function PropertyDetailPage() {
                 <Link
                   href={`/calculators?tab=refinance&currentBalance=${property.loanAmount}${property.interestRate ? `&currentRate=${property.interestRate}` : ''}${property.loanTermYears ? `&remainingYears=${property.loanTermYears}` : ''}`}
                 >
-                  <Button size="sm" variant="outline" className="border-gray-200 text-gray-700 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200">
+                  <Button size="sm" variant="outline" className="border-gray-200 text-gray-700 hover:bg-gray-100 hover:text-navy hover:border-gray-300">
                     <ArrowRightLeft className="h-3.5 w-3.5 mr-1.5" />
                     Refinance
                   </Button>
@@ -437,7 +440,7 @@ export default function PropertyDetailPage() {
                 <Link
                   href={`/calculators?tab=dscr&loanAmount=${property.loanAmount}${property.interestRate ? `&interestRate=${property.interestRate}` : ''}${property.loanTermYears ? `&termYears=${property.loanTermYears}` : ''}`}
                 >
-                  <Button size="sm" variant="outline" className="border-gray-200 text-gray-700 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200">
+                  <Button size="sm" variant="outline" className="border-gray-200 text-gray-700 hover:bg-gray-100 hover:text-navy hover:border-gray-300">
                     <Calculator className="h-3.5 w-3.5 mr-1.5" />
                     DSCR
                   </Button>
@@ -445,7 +448,7 @@ export default function PropertyDetailPage() {
                 <Link
                   href={`/calculators?tab=rate-sensitivity&loanAmount=${property.loanAmount}${property.interestRate ? `&baseRate=${property.interestRate}` : ''}${property.loanTermYears ? `&termYears=${property.loanTermYears}` : ''}`}
                 >
-                  <Button size="sm" variant="outline" className="border-gray-200 text-gray-700 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200">
+                  <Button size="sm" variant="outline" className="border-gray-200 text-gray-700 hover:bg-gray-100 hover:text-navy hover:border-gray-300">
                     <Activity className="h-3.5 w-3.5 mr-1.5" />
                     Rate Sensitivity
                   </Button>
@@ -466,7 +469,7 @@ export default function PropertyDetailPage() {
           <Button
             size="sm"
             onClick={() => router.push(`/studies/new?property_id=${id}`)}
-            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
+            className="bg-navy text-white font-semibold hover:bg-navy-light"
           >
             <Plus className="h-4 w-4 mr-1.5" />
             New Study
@@ -501,7 +504,7 @@ export default function PropertyDetailPage() {
                 <div className="flex items-center gap-4">
                   {study.totalFirstYearDeduction && (
                     <div className="text-right">
-                      <p className="text-sm font-medium text-amber-600">
+                      <p className="text-sm font-medium text-amber-700">
                         {formatCurrency(study.totalFirstYearDeduction)}
                       </p>
                       <p className="text-[11px] text-gray-500">First Year</p>

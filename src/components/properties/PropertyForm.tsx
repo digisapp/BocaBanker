@@ -195,7 +195,7 @@ export default function PropertyForm({
                   <FormLabel className="text-gray-500">Purchase Price</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-600">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-700">$</span>
                       <Input
                         type="number"
                         inputMode="decimal"
@@ -240,7 +240,7 @@ export default function PropertyForm({
                   <FormLabel className="text-gray-500">Building Value</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-600">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-700">$</span>
                       <Input
                         type="number"
                         inputMode="decimal"
@@ -265,7 +265,7 @@ export default function PropertyForm({
                   <FormLabel className="text-gray-500">Land Value</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-600">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-700">$</span>
                       <Input
                         type="number"
                         inputMode="decimal"
@@ -308,7 +308,7 @@ export default function PropertyForm({
                     </FormControl>
                     <SelectContent className="bg-white border-gray-200">
                       {PROPERTY_TYPES.map((type) => (
-                        <SelectItem key={type.value} value={type.value} className="text-gray-900 focus:bg-amber-50 focus:text-amber-600">
+                        <SelectItem key={type.value} value={type.value} className="text-gray-900 focus:bg-gray-100 focus:text-navy">
                           {type.label}
                         </SelectItem>
                       ))}
@@ -333,7 +333,7 @@ export default function PropertyForm({
                     </FormControl>
                     <SelectContent className="bg-white border-gray-200">
                       {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id} className="text-gray-900 focus:bg-amber-50 focus:text-amber-600">
+                        <SelectItem key={client.id} value={client.id} className="text-gray-900 focus:bg-gray-100 focus:text-navy">
                           {client.firstName} {client.lastName}
                           {client.company ? ` - ${client.company}` : ''}
                         </SelectItem>
@@ -422,7 +422,7 @@ export default function PropertyForm({
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90 px-8"
+            className="bg-navy text-white font-semibold hover:bg-navy-light px-8"
           >
             {isSubmitting ? (
               <>

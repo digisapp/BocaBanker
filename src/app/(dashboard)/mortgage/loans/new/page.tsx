@@ -4,9 +4,9 @@ import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { logger } from '@/lib/logger'
 import { toast } from 'sonner'
-import { ArrowLeft, Landmark, Loader2 } from 'lucide-react'
+import { Landmark, Loader2 } from 'lucide-react'
 import { LoanForm } from '@/components/mortgage/LoanForm'
-import { Button } from '@/components/ui/button'
+import PageHeader from '@/components/shared/PageHeader'
 import type { LoanInput } from '@/lib/validation/schemas'
 
 function NewLoanContent() {
@@ -62,27 +62,12 @@ function NewLoanContent() {
   return (
     <div className="space-y-6 animate-fade-in max-w-3xl">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.back()}
-          className="text-gray-500 hover:text-amber-600"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-            <Landmark className="h-5 w-5 text-amber-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">New Loan</h1>
-            <p className="text-sm text-gray-500">
-              Add a new loan to your pipeline
-            </p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        icon={Landmark}
+        title="New Loan"
+        description="Add a new loan to your pipeline"
+        onBack={() => router.back()}
+      />
 
       {/* Form */}
       <LoanForm
@@ -99,7 +84,7 @@ export default function NewLoanPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-navy" />
         </div>
       }
     >

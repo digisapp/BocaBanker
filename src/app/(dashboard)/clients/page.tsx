@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { RoleGate } from '@/components/shared/RoleGate'
+import EmptyState from '@/components/shared/EmptyState'
+import PageHeader from '@/components/shared/PageHeader'
 import {
   Select,
   SelectContent,
@@ -116,47 +118,39 @@ export default function ClientsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-            <Users className="h-5 w-5 text-amber-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Clients</h1>
-            <p className="text-sm text-gray-500">
-              Manage your client database
-            </p>
-          </div>
-          <Badge
-            variant="outline"
-            className="border-amber-200 text-amber-600 ml-2 hidden sm:inline-flex"
-          >
+      <PageHeader
+        icon={Users}
+        title="Clients"
+        description="Manage your client database"
+        badge={
+          <Badge variant="outline" className="border-amber-200 text-amber-700">
             {total}
           </Badge>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <RoleGate permission="canCreate">
-            <Button
-              variant="outline"
-              onClick={() => router.push('/clients/import')}
-              className="border-gray-200 text-gray-700 hover:bg-gray-50"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              Import CSV
-            </Button>
-          </RoleGate>
-          <RoleGate permission="canCreate">
-            <Button
-              onClick={() => router.push('/clients/new')}
-              className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-semibold hover:opacity-90"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Client
-            </Button>
-          </RoleGate>
-        </div>
-      </div>
+        }
+        actions={
+          <>
+            <RoleGate permission="canCreate">
+              <Button
+                variant="outline"
+                onClick={() => router.push('/clients/import')}
+                className="border-gray-200 text-gray-700 hover:bg-gray-50"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Import CSV
+              </Button>
+            </RoleGate>
+            <RoleGate permission="canCreate">
+              <Button
+                onClick={() => router.push('/clients/new')}
+                className="bg-navy text-white font-semibold hover:bg-navy-light"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Client
+              </Button>
+            </RoleGate>
+          </>
+        }
+      />
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
@@ -183,8 +177,16 @@ export default function ClientsPage() {
       {/* Table */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-navy" />
         </div>
+      ) : total === 0 && !debouncedSearch && statusFilter === 'all' ? (
+        <EmptyState
+          icon={Users}
+          title="No clients yet"
+          description="Add your first client, import a CSV, or convert a lead once they're ready to work with you."
+          actionLabel="Add Client"
+          actionHref="/clients/new"
+        />
       ) : (
         <ClientsTable
           data={clients}
