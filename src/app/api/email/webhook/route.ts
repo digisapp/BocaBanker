@@ -94,6 +94,31 @@ function isAutoResponder(headers: Record<string, string>): boolean {
   return false;
 }
 
+// ── Whose mail is this? ────────────────────────────────────────────
+
+/**
+ * The Resend account is shared with other businesses (Staycio, Mayells,
+ * Digis, EXA, ...) and its webhooks are account-wide, so this endpoint is
+ * called for every domain's inbound mail. Without this check another
+ * business's customer email was stored here and could be classified and
+ * auto-answered as Boca Banker.
+ */
+const OWN_EMAIL_DOMAINS = ['bocabanker.com'];
+
+/** True when any envelope or header recipient is on one of our domains. */
+function isAddressedToBocaBanker(data: Record<string, unknown>): boolean {
+  const recipients = [data.received_for, data.to, data.cc, data.bcc].flatMap((v) =>
+    Array.isArray(v) ? v : typeof v === 'string' ? [v] : [],
+  );
+  return recipients.some((raw) => {
+    const text = String(raw);
+    const bracketed = text.match(/<([^<>]+)>\s*$/);
+    const address = (bracketed ? bracketed[1] : text).trim().toLowerCase();
+    const domain = address.slice(address.lastIndexOf('@') + 1);
+    return OWN_EMAIL_DOMAINS.some((own) => domain === own || domain.endsWith(`.${own}`));
+  });
+}
+
 // ── Webhook handler ────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
@@ -129,6 +154,12 @@ export async function POST(request: NextRequest) {
 
     const body = JSON.parse(rawBody);
     const { type, data } = body;
+
+    // Another business's mail: acknowledge it so Resend stops retrying, but
+    // never store, classify or answer it.
+    if (type === 'email.received' && !isAddressedToBocaBanker(data ?? {})) {
+      return NextResponse.json({ success: true, ignored: 'not our domain' });
+    }
 
     // ── Inbound email ──────────────────────────────────────────────
     if (type === 'email.received') {
