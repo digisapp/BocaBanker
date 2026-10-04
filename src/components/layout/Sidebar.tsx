@@ -27,6 +27,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
+import { useUnreadEmailCount } from '@/hooks/useUnreadEmailCount'
 
 interface SidebarProps {
   collapsed: boolean
@@ -50,6 +51,7 @@ const navItems = [
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname()
+  const unreadEmails = useUnreadEmailCount()
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -90,8 +92,24 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   collapsed && 'justify-center px-2'
                 )}
               >
-                <item.icon className={cn('h-5 w-5 shrink-0', isActive && 'text-amber-400')} />
-                {!collapsed && <span>{item.label}</span>}
+                <span className="relative shrink-0">
+                  <item.icon className={cn('h-5 w-5', isActive && 'text-amber-400')} />
+                  {collapsed && item.href === '/email' && unreadEmails > 0 && (
+                    <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-white" aria-hidden="true" />
+                  )}
+                </span>
+                {!collapsed && <span className="flex-1">{item.label}</span>}
+                {!collapsed && item.href === '/email' && unreadEmails > 0 && (
+                  <span
+                    className={cn(
+                      'rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none tabular-nums',
+                      isActive ? 'bg-amber-400 text-navy' : 'bg-navy text-white'
+                    )}
+                    aria-label={`${unreadEmails} unread emails`}
+                  >
+                    {unreadEmails > 99 ? '99+' : unreadEmails}
+                  </span>
+                )}
               </Link>
             )
 

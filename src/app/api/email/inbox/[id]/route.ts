@@ -1,111 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
-import { db } from '@/db';
+import { requireUuid } from '@/lib/api/params';
 import { logger } from '@/lib/logger';
-import { emails, clients } from '@/db/schema';
-import { eq, and, desc, or, isNull } from 'drizzle-orm';
-import { isUuid } from '@/lib/email/ids';
+import { AdminInboxService } from '@/lib/email/admin-inbox';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 /**
- * These routes are admin-only (requireAdmin). The admin can see emails
- * assigned to them plus legacy rows with NULL user_id.
- */
-function adminOwnerFilter(userId: string) {
-  return or(eq(emails.userId, userId), isNull(emails.userId))!;
-}
-
-const emailSelectFields = {
-  id: emails.id,
-  direction: emails.direction,
-  fromEmail: emails.fromEmail,
-  fromName: emails.fromName,
-  toEmail: emails.toEmail,
-  subject: emails.subject,
-  bodyHtml: emails.bodyHtml,
-  bodyText: emails.bodyText,
-  status: emails.status,
-  isRead: emails.isRead,
-  resendId: emails.resendId,
-  threadId: emails.threadId,
-  inReplyToId: emails.inReplyToId,
-  template: emails.template,
-  createdAt: emails.createdAt,
-  readAt: emails.readAt,
-  repliedAt: emails.repliedAt,
-  clientId: emails.clientId,
-  clientFirstName: clients.firstName,
-  clientLastName: clients.lastName,
-  clientEmail: clients.email,
-  aiDraftHtml: emails.aiDraftHtml,
-  aiDraftText: emails.aiDraftText,
-  aiCategory: emails.aiCategory,
-  aiConfidence: emails.aiConfidence,
-  aiSummary: emails.aiSummary,
-  aiProcessedAt: emails.aiProcessedAt,
-};
-
-/**
- * GET /api/email/inbox/[id]
- *
- * Fetch a single email with thread and AI data. Marks as read.
+ * GET /api/email/inbox/[id] — one email plus its thread (oldest first).
+ * Reading does not mark it read; the client PATCHes { isRead: true }.
  */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await requireAdmin();
-    const { id } = await params;
-    if (!isUuid(id)) return apiError('Email not found', 404);
+    await requireAdmin();
+    const id = requireUuid((await params).id, 'Email not found');
 
-    const [email] = await db
-      .select(emailSelectFields)
-      .from(emails)
-      .leftJoin(clients, eq(emails.clientId, clients.id))
-      .where(and(eq(emails.id, id), adminOwnerFilter(user.id)))
-      .limit(1);
+    const email = await AdminInboxService.getEmail(id);
+    if (!email) return apiError('Email not found', 404);
 
-    if (!email) {
-      return apiError('Email not found', 404);
-    }
-
-    // Mark as read and fetch the thread concurrently (independent queries)
-    const threadId = email.threadId || id;
-    const [, threadEmails] = await Promise.all([
-      email.isRead
-        ? Promise.resolve()
-        : db
-            .update(emails)
-            .set({
-              isRead: true,
-              status: email.status === 'received' ? 'read' : email.status,
-              readAt: new Date(),
-            })
-            .where(eq(emails.id, id)),
-      db
-        .select(emailSelectFields)
-        .from(emails)
-        .leftJoin(clients, eq(emails.clientId, clients.id))
-        .where(and(
-          adminOwnerFilter(user.id),
-          or(eq(emails.id, threadId), eq(emails.threadId, threadId)),
-        ))
-        .orderBy(desc(emails.createdAt))
-        // Bound pathological threads (e.g. a sender-matched catch-all thread)
-        .limit(100),
-    ]);
-
-    const thread = threadEmails.length > 0
-      ? threadEmails
-      : [{ ...email, isRead: true }];
-
-    return NextResponse.json({
-      ...email,
-      isRead: true,
-      status: email.status === 'received' ? 'read' : email.status,
-      thread,
-    });
+    const thread = await AdminInboxService.getThread(email.threadId || email.id);
+    return NextResponse.json({ email, thread: thread.length > 0 ? thread : [email] });
   } catch (error) {
     if (error instanceof ApiError) return error.response;
     logger.error('email-api', 'Email fetch error', error);
@@ -114,41 +33,72 @@ export async function GET(
 }
 
 /**
+ * PATCH /api/email/inbox/[id]
+ * Body: { isRead?, isStarred?, isSpam? } — or { useAiDraft: true } to send
+ * the AI's suggested reply as is.
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await requireAdmin();
+    const id = requireUuid((await params).id, 'Email not found');
+    const body = await request.json().catch(() => ({}));
+
+    if (body.useAiDraft === true) {
+      const email = await AdminInboxService.getEmail(id);
+      if (!email) return apiError('Email not found', 404);
+      if (email.direction !== 'inbound') return apiError('Only inbound mail has a draft', 400);
+      if (!email.aiDraftText) return apiError('No AI draft available', 400);
+      if (email.status === 'replied') return apiError('This email was already answered', 409);
+
+      const result = await AdminInboxService.sendNewEmail({
+        to: email.fromEmail,
+        subject: /^re:/i.test(email.subject) ? email.subject : `Re: ${email.subject}`,
+        bodyText: email.aiDraftText,
+        replyToEmailId: id,
+        userId: user.id,
+      });
+      if (!result.success) {
+        return apiError(result.error || 'Failed to send AI draft', 502);
+      }
+      return NextResponse.json({ success: true, sent: true, id: result.id });
+    }
+
+    const flags: Array<[string, (_v: boolean) => Promise<void>]> = [
+      ['isRead', (v) => AdminInboxService.markRead(id, v)],
+      ['isStarred', (v) => AdminInboxService.setStar(id, v)],
+      ['isSpam', (v) => AdminInboxService.markSpam(id, v)],
+    ];
+    let touched = 0;
+    for (const [key, apply] of flags) {
+      if (typeof body[key] === 'boolean') {
+        await apply(body[key]);
+        touched++;
+      }
+    }
+    if (touched === 0) return apiError('Nothing to update', 400);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    if (error instanceof ApiError) return error.response;
+    logger.error('email-api', 'Email update error', error);
+    return apiError('Internal server error');
+  }
+}
+
+/**
  * DELETE /api/email/inbox/[id]
- *
- * Delete single email with thread reference cleanup.
  */
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await requireAdmin();
-    const { id } = await params;
-    if (!isUuid(id)) return apiError('Email not found', 404);
-
-    // Verify ownership first, then clean up thread references and delete —
-    // inside a transaction so references aren't cleared for emails that
-    // don't end up deleted.
-    const deleted = await db.transaction(async (tx) => {
-      const [owned] = await tx
-        .select({ id: emails.id })
-        .from(emails)
-        .where(and(eq(emails.id, id), adminOwnerFilter(user.id)))
-        .limit(1);
-
-      if (!owned) return false;
-
-      await tx.update(emails).set({ threadId: null }).where(eq(emails.threadId, id));
-      await tx.update(emails).set({ inReplyToId: null }).where(eq(emails.inReplyToId, id));
-      await tx.delete(emails).where(eq(emails.id, id));
-      return true;
-    });
-
-    if (!deleted) {
-      return apiError('Email not found', 404);
-    }
-
+    await requireAdmin();
+    const id = requireUuid((await params).id, 'Email not found');
+    await AdminInboxService.deleteEmail(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     if (error instanceof ApiError) return error.response;

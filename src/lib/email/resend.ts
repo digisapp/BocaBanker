@@ -2,6 +2,7 @@ import { Resend } from 'resend';
 import { db } from '@/db';
 import { emailLogs, emails } from '@/db/schema';
 import { logger } from '@/lib/logger';
+import { getFrom, getInboundAddress, parseEmailAddress } from './inbound-address';
 
 let _resend: Resend | null = null;
 export function getResend(): Resend {
@@ -11,16 +12,30 @@ export function getResend(): Resend {
   return _resend;
 }
 
+/** True when the API key is set, i.e. sending (and the inbox status check) can work. */
+export function isResendConfigured(): boolean {
+  return !!process.env.RESEND_API_KEY;
+}
+
 export interface SendEmailAttachment {
   content: string;
   filename: string;
   contentType?: string;
 }
 
+/** JSON stored in `emails.metadata` for a row we sent. */
+export interface OutboundEmailMetadata {
+  headers?: Record<string, string>;
+  /** Set on the "Send me a test" row so the UI can label it. */
+  test?: boolean;
+}
+
 interface SendEmailParams {
   to: string;
   subject: string;
   html: string;
+  /** Plain-text part. Also what the list preview and quoting use. */
+  text?: string;
   userId: string | null;
   clientId?: string;
   template?: string;
@@ -31,6 +46,19 @@ interface SendEmailParams {
   /** RFC Message-IDs for the References header (with or without angle brackets). */
   referencesMessageIds?: string[] | null;
   attachments?: SendEmailAttachment[];
+  /**
+   * Where a reply to this email goes. Defaults to the inbox address (see
+   * inbound-address.ts) so "just reply to this email" lands in /email
+   * instead of wherever the From mailbox points. Pass `null` to send with
+   * no Reply-To at all.
+   */
+  replyTo?: string | null;
+  /**
+   * Resend idempotency key: a retried call with the same key (webhook
+   * retries, double clicks) is delivered once. Unique per logical send.
+   */
+  idempotencyKey?: string;
+  metadata?: OutboundEmailMetadata;
 }
 
 /** Wrap a bare RFC message-id in angle brackets if needed. */
@@ -51,10 +79,14 @@ interface SendEmailResult {
  */
 export async function sendEmail(params: SendEmailParams): Promise<SendEmailResult> {
   const {
-    to, subject, html, userId, clientId, template, threadId, inReplyToId,
-    inReplyToMessageId, referencesMessageIds, attachments,
+    to, subject, html, text, userId, clientId, template, threadId, inReplyToId,
+    inReplyToMessageId, referencesMessageIds, attachments, replyTo, idempotencyKey, metadata,
   } = params;
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'Boca Banker <team@bocabanker.com>';
+  const from = getFrom();
+  const { name: fromName, email: fromEmail } = parseEmailAddress(from);
+
+  // undefined → the inbox; null → explicitly none.
+  const resolvedReplyTo = replyTo === undefined ? getInboundAddress() : replyTo;
 
   // RFC threading headers so replies thread correctly in recipients' mail clients
   const headers: Record<string, string> = {};
@@ -66,23 +98,33 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
     headers['References'] = references.join(' ');
   }
 
+  const rowMetadata: OutboundEmailMetadata = { ...(metadata || {}) };
+  if (Object.keys(headers).length > 0) rowMetadata.headers = headers;
+
   try {
-    const { data, error } = await getResend().emails.send({
-      from: fromEmail,
-      to,
-      subject,
-      html,
-      ...(Object.keys(headers).length > 0 ? { headers } : {}),
-      ...(attachments && attachments.length > 0
-        ? {
-            attachments: attachments.map((a) => ({
-              content: a.content,
-              filename: a.filename,
-              ...(a.contentType ? { contentType: a.contentType } : {}),
-            })),
-          }
-        : {}),
-    });
+    // The SDK takes camelCase (`replyTo`) and maps it to the API's `reply_to`
+    // itself; a snake_case key here is silently dropped.
+    const { data, error } = await getResend().emails.send(
+      {
+        from,
+        to,
+        subject,
+        html,
+        ...(text ? { text } : {}),
+        ...(resolvedReplyTo ? { replyTo: resolvedReplyTo } : {}),
+        ...(Object.keys(headers).length > 0 ? { headers } : {}),
+        ...(attachments && attachments.length > 0
+          ? {
+              attachments: attachments.map((a) => ({
+                content: a.content,
+                filename: a.filename,
+                ...(a.contentType ? { contentType: a.contentType } : {}),
+              })),
+            }
+          : {}),
+      },
+      idempotencyKey ? { idempotencyKey } : undefined,
+    );
 
     const status = error ? 'failed' : 'sent';
     const resendId = data?.id || null;
@@ -92,17 +134,20 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
       userId,
       clientId: clientId || null,
       direction: 'outbound',
-      fromEmail: fromEmail.includes('<') ? fromEmail.match(/<(.+)>/)?.[1] || fromEmail : fromEmail,
-      fromName: fromEmail.includes('<') ? fromEmail.match(/^(.+?)\s*</)?.[1] || null : null,
+      fromEmail,
+      fromName,
       toEmail: to,
+      replyTo: resolvedReplyTo || null,
       subject,
       bodyHtml: html,
+      bodyText: text || null,
       template: template || null,
       status,
       resendId,
       threadId: threadId || null,
       inReplyToId: inReplyToId || null,
       isRead: true,
+      metadata: rowMetadata,
     }).returning({ id: emails.id });
 
     // Also write to legacy email_logs for dashboard stats
@@ -117,7 +162,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
     });
 
     if (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: error.message, emailId: inserted?.id };
     }
 
     return { success: true, resendId: data?.id, emailId: inserted?.id };
@@ -129,13 +174,16 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
         userId,
         clientId: clientId || null,
         direction: 'outbound',
-        fromEmail: fromEmail.includes('<') ? fromEmail.match(/<(.+)>/)?.[1] || fromEmail : fromEmail,
+        fromEmail,
+        fromName,
         toEmail: to,
         subject,
         bodyHtml: html,
+        bodyText: text || null,
         template: template || null,
         status: 'failed',
         isRead: true,
+        metadata: rowMetadata,
       });
 
       await db.insert(emailLogs).values({

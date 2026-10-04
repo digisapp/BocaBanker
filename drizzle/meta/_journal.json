@@ -78,6 +78,13 @@
       "when": 1790205449341,
       "tag": "0010_add_email_chat_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790884020344,
+      "tag": "0011_add_inbox_flags",
+      "breakpoints": true
     }
   ]
 }

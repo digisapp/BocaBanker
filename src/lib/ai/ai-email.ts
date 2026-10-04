@@ -4,7 +4,11 @@ import { emails, platformSettings } from '@/db/schema';
 import { and, eq, gte, count } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
 import { sendEmail } from '@/lib/email/resend';
+import { autoReplySuppressionReason, threadReplyAddress } from '@/lib/email/inbound-address';
+import { brandedTemplate, htmlToText, textToHtml, quotedOriginalHtml, quotedOriginalText } from '@/lib/email/render';
 import { EMAIL_MODEL, REASONING_EFFORT } from './models';
+
+export { htmlToText };
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -36,8 +40,10 @@ export const EMAIL_CATEGORIES = [
   'other',
 ] as const;
 
+export type EmailCategory = (typeof EMAIL_CATEGORIES)[number];
+
 // Categories safe for auto-reply
-const AUTO_SEND_CATEGORIES = [
+export const AUTO_SEND_CATEGORIES: readonly string[] = [
   'cost_seg_inquiry',
   'property_question',
   'study_request',
@@ -48,52 +54,16 @@ const AUTO_SEND_CATEGORIES = [
   'general_inquiry',
 ];
 
-const AUTO_SEND_CONFIDENCE_THRESHOLD = 0.85;
+export const AUTO_SEND_CONFIDENCE_THRESHOLD = 0.85;
 
 /** At most this many auto-replies to a single address per 24 h (mail-bomb / loop guard). */
 const MAX_AUTO_REPLIES_PER_SENDER_PER_DAY = 1;
+/** How long after our last outbound in a thread we refuse to auto-reply again. */
+const AUTO_REPLY_THREAD_COOLDOWN_MS = 24 * 60 * 60_000;
 /** Auto-reply drafts longer than this are held for human review. */
 const MAX_AUTO_REPLY_CHARS = 2500;
 /** Hosts an auto-reply may link to. Anything else is held for review. */
 const ALLOWED_LINK_HOSTS = ['bocabanker.com', 'www.bocabanker.com'];
-
-// ── Text helpers ───────────────────────────────────────────────────
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-/** Crude HTML -> text for LLM input / quoting (drops style/script/head content). */
-export function htmlToText(html: string): string {
-  return html
-    .replace(/<(style|script|head)[^>]*>[\s\S]*?<\/\1>/gi, ' ')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|tr|li|h[1-6])>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .replace(/[ \t]+/g, ' ')
-    .replace(/ *\n */g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-}
-
-/** Plain text -> safe HTML paragraphs. */
-function textToHtml(text: string): string {
-  return text
-    .split(/\n{2,}/)
-    .map((para) => `<p>${escapeHtml(para).replace(/\n/g, '<br/>')}</p>`)
-    .join('');
-}
 
 /**
  * The inbound email is attacker-controlled and can prompt-inject the drafter.
@@ -122,6 +92,11 @@ export function autoReplySafetyIssue(draftText: string): string | null {
     }
   }
   return null;
+}
+
+/** The HTML we actually send for a draft: the escaped text in the branded shell, never the model's HTML. */
+export function renderDraftHtml(draftText: string, quotedHtml?: string): string {
+  return brandedTemplate(textToHtml(draftText), quotedHtml);
 }
 
 // ── xAI Client ─────────────────────────────────────────────────────
@@ -156,7 +131,7 @@ export async function classifyAndDraftReply(
     messages: [
       {
         role: 'system',
-        content: `You are an AI assistant for Boca Banker, a platform specializing in cost segregation studies and mortgage lending services for commercial real estate investors.
+        content: `You are an AI assistant for Boca Banker, a mortgage lender and cost segregation specialist serving home buyers and real estate investors nationwide from Boca Raton, Florida.
 
 Classify this inbound email and draft a professional reply.
 
@@ -240,7 +215,9 @@ ${content.slice(0, 3000)}
     category,
     confidence,
     summary: typeof result.summary === 'string' && result.summary ? result.summary : 'Email received',
-    draftHtml: typeof result.draftHtml === 'string' ? result.draftHtml : '',
+    // What the admin previews and what "Send as is" sends: our own rendering
+    // of the text, never the model's HTML.
+    draftHtml: draftText ? renderDraftHtml(draftText) : '',
     draftText,
     autoSendable:
       AUTO_SEND_CATEGORIES.includes(category) &&
@@ -266,45 +243,6 @@ export async function storeClassification(
       aiProcessedAt: new Date(),
     })
     .where(eq(emails.id, emailId));
-}
-
-// ── Branded email template ─────────────────────────────────────────
-
-function brandedTemplate(bodyHtml: string, quotedOriginal?: string): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;margin-top:20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-    <!-- Header -->
-    <div style="background:linear-gradient(135deg,#f59e0b,#eab308);padding:24px 32px;">
-      <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;font-family:Georgia,serif;">Boca Banker</h1>
-      <p style="margin:4px 0 0;color:rgba(255,255,255,0.85);font-size:13px;">Cost Segregation &amp; Mortgage Solutions</p>
-    </div>
-    <!-- Body -->
-    <div style="padding:28px 32px;color:#374151;font-size:15px;line-height:1.7;">
-      ${bodyHtml}
-    </div>
-    ${quotedOriginal ? `
-    <!-- Quoted Original -->
-    <div style="padding:0 32px 24px;color:#9ca3af;font-size:13px;">
-      <div style="border-left:2px solid #d4a855;padding-left:12px;margin-top:8px;">
-        ${quotedOriginal}
-      </div>
-    </div>
-    ` : ''}
-    <!-- Footer -->
-    <div style="background:#f9fafb;padding:20px 32px;border-top:1px solid #e5e7eb;color:#9ca3af;font-size:12px;">
-      <p style="margin:0;">Boca Banker | Cost Segregation &amp; Mortgage Lending</p>
-      <p style="margin:4px 0 0;">
-        <a href="https://bocabanker.com" style="color:#d97706;text-decoration:none;">bocabanker.com</a>
-        &nbsp;·&nbsp; team@bocabanker.com
-      </p>
-    </div>
-  </div>
-</body>
-</html>`.trim();
 }
 
 // ── Platform settings cache (TTL: 60 s) ───────────────────────────
@@ -339,32 +277,40 @@ export async function sendAutoReply(
     userId: string | null;
     clientId: string | null;
     threadId: string | null;
+    createdAt?: Date | string | null;
     /** RFC Message-ID of the inbound email (bare, no angle brackets) for threading headers. */
     messageId?: string | null;
+    /** Lower-cased inbound headers, for the auto-responder loop guard. */
+    headers?: Record<string, string> | null;
   },
   classification: EmailClassification,
-): Promise<boolean> {
+): Promise<{ sent: boolean; reason?: string }> {
+  // 0. Loop / automation guards — evaluated before anything else so a
+  //    misconfigured platform setting can't override them.
+  const suppression = autoReplySuppressionReason({ from: originalEmail.fromEmail, headers: originalEmail.headers });
+  if (suppression) {
+    return { sent: false, reason: `suppressed: ${suppression}` };
+  }
+
   // Check if auto-reply is enabled (cached for 60 s)
   if (!(await isAutoReplyEnabled())) {
-    logger.info('ai-email', 'Auto-reply disabled, skipping');
-    return false;
+    return { sent: false, reason: 'ai_auto_reply_enabled is off' };
   }
 
   if (!classification.autoSendable) {
-    logger.info('ai-email', `Not auto-sendable: ${classification.category} (${classification.confidence})`);
-    return false;
+    return { sent: false, reason: `not auto-sendable: ${classification.category} (${classification.confidence})` };
   }
 
   // Re-check at send time (defense in depth for callers passing their own classification)
   const safetyIssue = autoReplySafetyIssue(classification.draftText);
   if (safetyIssue) {
-    logger.warn('ai-email', `Auto-reply blocked for ${emailId}: ${safetyIssue}`);
-    return false;
+    return { sent: false, reason: `blocked: ${safetyIssue}` };
   }
+
+  const since = new Date(Date.now() - AUTO_REPLY_THREAD_COOLDOWN_MS);
 
   // Throttle per recipient: a spoofed From address (or a sender loop) must not
   // turn us into a mail cannon aimed at one inbox.
-  const since = new Date(Date.now() - 24 * 60 * 60_000);
   const [recent] = await db
     .select({ n: count() })
     .from(emails)
@@ -375,8 +321,22 @@ export async function sendAutoReply(
       gte(emails.createdAt, since),
     ));
   if ((recent?.n ?? 0) >= MAX_AUTO_REPLIES_PER_SENDER_PER_DAY) {
-    logger.info('ai-email', `Auto-reply throttled for ${originalEmail.fromEmail}`);
-    return false;
+    return { sent: false, reason: `throttled: already auto-replied to ${originalEmail.fromEmail} in the last 24h` };
+  }
+
+  // Never twice on one thread in 24 h, whoever sent the last one.
+  if (originalEmail.threadId) {
+    const [inThread] = await db
+      .select({ n: count() })
+      .from(emails)
+      .where(and(
+        eq(emails.direction, 'outbound'),
+        eq(emails.threadId, originalEmail.threadId),
+        gte(emails.createdAt, since),
+      ));
+    if ((inThread?.n ?? 0) > 0) {
+      return { sent: false, reason: 'throttled: we already replied on this thread in the last 24h' };
+    }
   }
 
   const replySubject = /^re:/i.test(originalEmail.subject)
@@ -386,12 +346,16 @@ export async function sendAutoReply(
   // Never send attacker-controlled HTML from our domain: the reply body is
   // rendered from the (escaped) plain-text draft, not the model's HTML, and
   // the original is quoted as escaped, truncated plain text.
-  const originalText =
-    originalEmail.bodyText || (originalEmail.bodyHtml ? htmlToText(originalEmail.bodyHtml) : '');
-  const quotedOriginal = originalText
-    ? textToHtml(originalText.length > 2000 ? originalText.slice(0, 2000) + '…' : originalText)
-    : '';
-  const html = brandedTemplate(textToHtml(classification.draftText), quotedOriginal);
+  const quoteSource = {
+    bodyText: originalEmail.bodyText,
+    bodyHtml: originalEmail.bodyHtml,
+    fromName: originalEmail.fromName,
+    fromEmail: originalEmail.fromEmail,
+    createdAt: originalEmail.createdAt ?? null,
+  };
+  const html = renderDraftHtml(classification.draftText, quotedOriginalHtml(quoteSource) || undefined);
+  const quotedText = quotedOriginalText(quoteSource);
+  const text = quotedText ? `${classification.draftText}\n\n${quotedText}` : classification.draftText;
 
   const threadId = originalEmail.threadId || emailId;
 
@@ -399,6 +363,7 @@ export async function sendAutoReply(
     to: originalEmail.fromEmail,
     subject: replySubject,
     html,
+    text,
     userId: originalEmail.userId ?? null,
     clientId: originalEmail.clientId || undefined,
     template: 'ai-auto-reply',
@@ -406,6 +371,8 @@ export async function sendAutoReply(
     inReplyToId: emailId,
     inReplyToMessageId: originalEmail.messageId || null,
     referencesMessageIds: originalEmail.messageId ? [originalEmail.messageId] : null,
+    replyTo: threadReplyAddress(threadId),
+    idempotencyKey: `inbox-auto-reply-${emailId}`,
   });
 
   if (result.success) {
@@ -419,9 +386,9 @@ export async function sendAutoReply(
       .where(eq(emails.id, emailId));
 
     logger.info('ai-email', `Auto-replied to ${originalEmail.fromEmail} (${classification.category})`);
-    return true;
+    return { sent: true };
   }
 
   logger.error('ai-email', `Auto-reply failed: ${result.error}`);
-  return false;
+  return { sent: false, reason: `send failed: ${result.error}` };
 }
