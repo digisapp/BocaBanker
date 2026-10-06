@@ -528,12 +528,27 @@ export const AdminInboxService = {
       return row || null;
     };
 
+    // A thread is a conversation with one person. Mail only joins it when it
+    // comes from that person (the thread's counterpart), however the thread
+    // was found. Otherwise anyone who learns a plus tag or a Message-ID could
+    // attach mail to someone else's conversation and draw replies — manual
+    // or automatic — that go to, and quote, the other person.
+    const me = from.trim().toLowerCase();
+    const fromCounterpart = async (candidate: { id: string; threadId: string | null }): Promise<boolean> => {
+      const members = await db
+        .select({ direction: emails.direction, fromEmail: emails.fromEmail, toEmail: emails.toEmail })
+        .from(emails)
+        .where(inThread(candidate.threadId || candidate.id))
+        .limit(500);
+      return members.some((m) => (m.direction === 'inbound' ? m.fromEmail : m.toEmail).trim().toLowerCase() === me);
+    };
+
     // 1. Plus-address tag (team+<threadId>@…) — we set it on every outbound
     //    Reply-To, so this is exact. Verify the thread exists so a guessed or
     //    forged tag can't attach mail to nothing.
     if (!spam && threadIdHint) {
       const latest = await related(inThread(threadIdHint));
-      if (latest) {
+      if (latest && (await fromCounterpart(latest))) {
         threadId = latest.threadId || threadIdHint;
         inReplyToId = latest.id;
         threadOwnerId = latest.userId;
@@ -551,7 +566,7 @@ export const AdminInboxService = {
         const found = await related(
           or(...headerIds.map((hid) => sql`${emails.metadata}->>'messageId' = ${hid}`))!,
         );
-        if (found) {
+        if (found && (await fromCounterpart(found))) {
           threadId = found.threadId || found.id;
           inReplyToId = found.id;
           threadOwnerId = found.userId;

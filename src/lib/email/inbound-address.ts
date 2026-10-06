@@ -1,3 +1,4 @@
+import { parseAuthResults, senderAuthenticated } from './sender-auth';
 /**
  * Inbox addressing helpers. Pure (no DB, no network) so they are unit
  * testable and shared by the Resend webhook, the send path, and the AI
@@ -176,13 +177,13 @@ export function parseThreadIdFromAddresses(
 }
 
 /**
- * Reasons an inbound email must never receive an automatic reply, no matter
- * how confident the classifier is. Without these, an out-of-office responder
- * (or another bot) and our auto-reply ping-pong forever, and anything sent
- * from our own domain / a mailer-daemon gets a cheerful "Thanks for reaching
- * out" back.
+ * Reasons an inbound email is machine mail (an auto-responder, a bounce, a
+ * list) rather than a person writing to us. Such mail is stored but never
+ * classified or answered: an out-of-office responder (or another bot) and our
+ * auto-reply would ping-pong forever, and anything sent from our own domain /
+ * a mailer-daemon would get a cheerful "Thanks for reaching out" back.
  */
-export function autoReplySuppressionReason(args: {
+export function automatedMailReason(args: {
   from: string;
   headers?: Record<string, string | string[] | undefined> | null;
 }): string | null {
@@ -208,6 +209,28 @@ export function autoReplySuppressionReason(args: {
   if (/bulk|list|junk|auto[-_]reply/.test(precedence)) return `Precedence: ${precedence}`;
   if (h['x-auto-response-suppress'] || h['x-autoreply'] || h['x-autorespond'] || h['list-id'] || h['list-unsubscribe']) {
     return 'automated/list mail headers present';
+  }
+  return null;
+}
+
+/**
+ * Reasons an inbound email must never receive an automatic reply, no matter
+ * how confident the classifier is: everything in automatedMailReason, plus a
+ * From address the receiving server did not authenticate. From is trivially
+ * forged, and a reply to a forged From lands on a third party, which is how
+ * an inbox becomes a relay for mail to people who never wrote to us. A
+ * person whose mail fails this check is still classified and shown; they
+ * just get a human answer instead of an automatic one (sender-auth.ts).
+ */
+export function autoReplySuppressionReason(args: {
+  from: string;
+  headers?: Record<string, string | string[] | undefined> | null;
+}): string | null {
+  const automated = automatedMailReason(args);
+  if (automated) return automated;
+  const auth = Object.entries(args.headers || {}).find(([k]) => k.toLowerCase() === 'authentication-results')?.[1];
+  if (!senderAuthenticated(parseAuthResults(Array.isArray(auth) ? auth.join(' ') : auth))) {
+    return 'sender not authenticated (no DMARC pass)';
   }
   return null;
 }

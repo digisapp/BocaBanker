@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import {
-  autoReplySuppressionReason,
+  automatedMailReason, autoReplySuppressionReason,
   decodeEncodedWords,
   findOurRecipient,
   getFrom,
@@ -113,18 +113,29 @@ describe('our domains', () => {
   })
 })
 
+const PASS = { 'Authentication-Results': 'amazonses.com; spf=pass smtp.mailfrom=example.com; dkim=pass header.i=@example.com; dmarc=pass header.from=example.com' }
+
 describe('autoReplySuppressionReason', () => {
-  it('lets a normal human sender through', () => {
-    expect(autoReplySuppressionReason({ from: 'jane@example.com', headers: { 'auto-submitted': 'no' } })).toBeNull()
+  it('lets a normal human sender through once their address passed DMARC', () => {
+    expect(autoReplySuppressionReason({ from: 'jane@example.com', headers: { ...PASS, 'auto-submitted': 'no' } })).toBeNull()
+  })
+  it('does not mistake an unauthenticated person for machine mail (they are still classified and shown)', () => {
+    expect(automatedMailReason({ from: 'jane@example.com', headers: { 'auto-submitted': 'no' } })).toBeNull()
+    expect(automatedMailReason({ from: 'jane@example.com', headers: { 'Auto-Submitted': 'auto-replied' } })).toMatch(/Auto-Submitted/)
+  })
+  it('never answers a sender whose From address is not proven (a reply would land on a third party)', () => {
+    expect(autoReplySuppressionReason({ from: 'jane@example.com', headers: { 'auto-submitted': 'no' } })).toMatch(/not authenticated/)
+    expect(autoReplySuppressionReason({ from: 'jane@example.com', headers: { 'Authentication-Results': 'amazonses.com; spf=pass; dmarc=none' } })).toMatch(/not authenticated/)
+    expect(autoReplySuppressionReason({ from: 'jane@example.com', headers: { 'Authentication-Results': 'mx.attacker.test; dmarc=pass' } })).toMatch(/not authenticated/)
   })
 
   it('blocks our own domain, automated local parts and auto-responder headers', () => {
     expect(autoReplySuppressionReason({ from: 'team@bocabanker.com' })).toMatch(/own domain/)
     expect(autoReplySuppressionReason({ from: 'no-reply@bank.com' })).toMatch(/automated/)
     expect(autoReplySuppressionReason({ from: 'newsletter@shop.com' })).toMatch(/automated/)
-    expect(autoReplySuppressionReason({ from: 'jane@example.com', headers: { 'Auto-Submitted': 'auto-replied' } })).toMatch(/Auto-Submitted/)
-    expect(autoReplySuppressionReason({ from: 'jane@example.com', headers: { precedence: 'bulk' } })).toMatch(/Precedence/)
-    expect(autoReplySuppressionReason({ from: 'jane@example.com', headers: { 'list-unsubscribe': '<mailto:x>' } })).toMatch(/list/)
+    expect(autoReplySuppressionReason({ from: 'jane@example.com', headers: { ...PASS, 'Auto-Submitted': 'auto-replied' } })).toMatch(/Auto-Submitted/)
+    expect(autoReplySuppressionReason({ from: 'jane@example.com', headers: { ...PASS, precedence: 'bulk' } })).toMatch(/Precedence/)
+    expect(autoReplySuppressionReason({ from: 'jane@example.com', headers: { ...PASS, 'list-unsubscribe': '<mailto:x>' } })).toMatch(/list/)
     expect(autoReplySuppressionReason({ from: '' })).toMatch(/no sender/)
   })
 })
