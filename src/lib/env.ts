@@ -7,6 +7,9 @@ const serverSchema = z.object({
   RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY is required'),
   RESEND_FROM_EMAIL: z.string().email('RESEND_FROM_EMAIL must be a valid email'),
   RESEND_WEBHOOK_SECRET: z.string().optional(),
+  // The receiving mailbox for the admin inbox; defaults to RESEND_FROM_EMAIL.
+  // Its domain must have receiving enabled in Resend (see docs/ADMIN_EMAIL_INBOX.md).
+  ADMIN_EMAIL_ADDRESS: z.string().optional(),
   GUEST_CHAT_SECRET: z.string().min(16, 'GUEST_CHAT_SECRET must be at least 16 characters'),
   NEXT_PUBLIC_SUPABASE_URL: z.url('NEXT_PUBLIC_SUPABASE_URL must be a valid URL'),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1, 'NEXT_PUBLIC_SUPABASE_ANON_KEY is required'),

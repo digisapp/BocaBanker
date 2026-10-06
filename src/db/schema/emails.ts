@@ -27,6 +27,9 @@ export const emails = pgTable('emails', {
   inReplyToId: uuid('in_reply_to_id'),
   sentBy: uuid('sent_by').references(() => users.id, { onDelete: 'set null' }),
   isRead: boolean('is_read').default(false),
+  // Inbox folders: spam leaves the inbox (recoverable), starred is a pin.
+  isSpam: boolean('is_spam').default(false).notNull(),
+  isStarred: boolean('is_starred').default(false).notNull(),
   metadata: jsonb('metadata').default({}),
   createdAt: timestamp('created_at').default(sql`now()`),
   readAt: timestamp('read_at'),
@@ -47,6 +50,9 @@ export const emails = pgTable('emails', {
   index('emails_from_email_idx').on(table.fromEmail),
   index('emails_to_email_idx').on(table.toEmail),
   index('emails_is_read_idx').on(table.isRead),
+  // folder pills: inbox / unread / starred / spam counts
+  index('emails_direction_spam_read_idx').on(table.direction, table.isSpam, table.isRead),
+  index('emails_is_starred_idx').on(table.isStarred),
   index('emails_created_at_idx').on(table.createdAt),
   // inbox/sent list: filter by owner + direction, sort by newest
   index('emails_user_id_direction_created_at_idx').on(table.userId, table.direction, table.createdAt),

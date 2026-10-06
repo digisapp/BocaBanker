@@ -28,6 +28,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import BocaBankerAvatar from '@/components/landing/BocaBankerAvatar'
+import { useUnreadEmailCount } from '@/hooks/useUnreadEmailCount'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -47,6 +48,7 @@ const navItems = [
 export default function MobileNav() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const unreadEmails = useUnreadEmailCount()
 
   return (
     <div className="md:hidden">
@@ -92,7 +94,18 @@ export default function MobileNav() {
                   )}
                 >
                   <item.icon className={cn('h-5 w-5 shrink-0', isActive && 'text-amber-400')} />
-                  <span>{item.label}</span>
+                  <span className="flex-1">{item.label}</span>
+                  {item.href === '/email' && unreadEmails > 0 && (
+                    <span
+                      className={cn(
+                        'rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none tabular-nums',
+                        isActive ? 'bg-amber-400 text-navy' : 'bg-navy text-white'
+                      )}
+                      aria-label={`${unreadEmails} unread emails`}
+                    >
+                      {unreadEmails > 99 ? '99+' : unreadEmails}
+                    </span>
+                  )}
                 </Link>
               )
             })}
