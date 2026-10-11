@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { logger } from '@/lib/logger'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, parseDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
   ArrowLeft,
@@ -84,7 +84,7 @@ const loanTypeLabels: Record<string, string> = {
 
 const formatDate = (value: string | null) => {
   if (!value) return '--'
-  return new Date(value).toLocaleDateString('en-US', {
+  return parseDate(value).toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
@@ -173,14 +173,15 @@ export default function LoanDetailPage() {
           notes: editForm.notes || null,
         }),
       })
-      if (!res.ok) throw new Error('Failed to save')
-      const updated = await res.json()
+      const updated = await res.json().catch(() => ({}))
+      // Surface the server's message (e.g. which field failed validation)
+      if (!res.ok) throw new Error(updated.error || 'Failed to update loan')
       setLoan(updated)
       setEditing(false)
       toast.success('Loan updated')
     } catch (error) {
       logger.error('loan-detail', 'Failed to save loan', error)
-      toast.error('Failed to update loan')
+      toast.error(error instanceof Error ? error.message : 'Failed to update loan')
     } finally {
       setSaving(false)
     }

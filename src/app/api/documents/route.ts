@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError, apiValidationError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { isUuid } from '@/lib/api/params';
 import { resolveOwnedClientId, resolveOwnedStudyId } from '@/lib/api/ownership';
 import { documentCreateSchema } from '@/lib/validation/update-schemas';
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
 
-    const body = await request.json();
+    const body = await readJson(request);
     const parsed = documentCreateSchema.safeParse(body);
     if (!parsed.success) {
       return apiValidationError(parsed.error);

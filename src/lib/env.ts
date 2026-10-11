@@ -5,7 +5,12 @@ const serverSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'SUPABASE_SERVICE_ROLE_KEY is required'),
   XAI_API_KEY: z.string().min(1, 'XAI_API_KEY is required'),
   RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY is required'),
-  RESEND_FROM_EMAIL: z.string().email('RESEND_FROM_EMAIL must be a valid email'),
+  RESEND_FROM_EMAIL: z
+    .string()
+    .regex(
+      /^\s*(?:[^<>]*<\s*[^\s@<>]+@[^\s@<>]+\s*>|[^\s@<>]+@[^\s@<>]+)\s*$/,
+      'RESEND_FROM_EMAIL must be an email or "Name <email>"'
+    ),
   RESEND_WEBHOOK_SECRET: z.string().optional(),
   // The receiving mailbox for the admin inbox; defaults to RESEND_FROM_EMAIL.
   // Its domain must have receiving enabled in Resend (see docs/ADMIN_EMAIL_INBOX.md).
@@ -44,6 +49,14 @@ export function getServerEnv(): ServerEnv {
 
   _serverEnv = result.data
   return _serverEnv
+}
+
+/** Missing or invalid server env vars, one line each; empty when all is well. */
+export function serverEnvProblems(): string[] {
+  const result = serverSchema.safeParse(process.env)
+  return result.success
+    ? []
+    : result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`)
 }
 
 let _clientEnv: ClientEnv | null = null

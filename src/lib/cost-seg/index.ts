@@ -7,6 +7,7 @@
  *
  * Modules:
  * - macrs-tables:        Official IRS MACRS depreciation rate tables
+ * - placed-in-service:   Study placed-in-service year/month defaults
  * - asset-classes:       Standard asset classifications and reclassification percentages
  * - depreciation:        MACRS depreciation schedule calculator
  * - bonus-depreciation:  Section 168(k) bonus depreciation calculator
@@ -22,9 +23,14 @@ export {
   MACRS_15_YEAR,
   MACRS_27_5_YEAR,
   MACRS_39_YEAR,
+  MACRS_MID_QUARTER,
   getMacrsRates,
+  quarterForMonth,
 } from './macrs-tables';
-export type { MacrsRecoveryPeriod } from './macrs-tables';
+export type { MacrsRecoveryPeriod, PlacedInServiceQuarter } from './macrs-tables';
+
+// Placed-in-service defaults
+export { defaultPlacedInServiceYear, placedInServiceMonthFor } from './placed-in-service';
 
 // Asset Classes
 export {
@@ -56,3 +62,5 @@ export { calculateNPV, calculateIRR } from './npv';
 // Report Generator
 export { generateStudyReport } from './report-generator';
 export type { StudyReportInput, StudyReport } from './report-generator';
+export { conventionLabel } from './conventions';
+export type { StudyAssumptions } from './conventions';

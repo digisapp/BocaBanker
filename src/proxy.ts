@@ -59,18 +59,24 @@ export async function proxy(request: NextRequest) {
     (prefix) => pathname === prefix || pathname.startsWith(prefix + '/')
   )
 
+  // Redirects carry over any session cookies getUser() just refreshed;
+  // dropping them leaves the browser holding a rotated-out refresh token.
+  const redirectTo = (path: string) => {
+    const url = request.nextUrl.clone()
+    url.pathname = path
+    const response = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie))
+    return response
+  }
+
   // Redirect to login if not authenticated
   if (isProtected && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    return redirectTo('/login')
   }
 
   // Redirect authenticated users away from login to dashboard
   if (pathname === '/login' && user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+    return redirectTo('/dashboard')
   }
 
   // IMPORTANT: Return the supabaseResponse so that the refreshed session

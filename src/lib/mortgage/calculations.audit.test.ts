@@ -106,6 +106,21 @@ describe('calculateRateSensitivity grid', () => {
     expect(r.entries.every((e) => e.rate > 0)).toBe(true);
   });
 
+  it('totals match the Mortgage calculator (schedule totals, not payment x n)', () => {
+    // $300k at 6.5%/30y: $1,896.20 x 360 - 300,000 = $382,632.00, but the
+    // amortization schedule (final payment absorbs the cent rounding) totals
+    // $382,636.71 of interest — worked independently.
+    const r = calculateRateSensitivity(300_000, 6.5, 30);
+    const base = r.entries.find((e) => e.rate === 6.5)!;
+    expect(base.totalInterest).toBe(382_636.71);
+    expect(base.totalCost).toBe(682_636.71);
+    for (const e of r.entries) {
+      const m = calculateMortgage(300_000, e.rate, 30);
+      expect(e.totalInterest).toBe(m.totalInterest);
+      expect(e.totalCost).toBe(m.totalCost);
+    }
+  });
+
   it('produces 2*steps+1 evenly spaced entries without float drift', () => {
     const r = calculateRateSensitivity(400_000, 6.5, 30, 0.125, 8);
     expect(r.entries).toHaveLength(17);
@@ -133,6 +148,59 @@ describe('calculateCombinedAnalysis refinance consistency', () => {
     const zero = calculateCombinedAnalysis(2_000_000, 'commercial', 37, 0, 1_000_000, 7, 25, 6, 30, 0);
     const full = calculateCombinedAnalysis(2_000_000, 'commercial', 37, 100, 1_000_000, 7, 25, 6, 30, 0);
     expect(zero.costSegFirstYearSavings).toBeLessThan(full.costSegFirstYearSavings);
+  });
+
+  it('months saved: the baseline loan pays off in its scheduled 360 months', () => {
+    // $600k at 6%/30y ($3,597.30/mo) with the $90,223.58 year-1 cost seg
+    // savings paid down after month 12. Worked independently (exact
+    // decimal amortization): the paid-down loan's last payment is month 253,
+    // so 360 - 253 = 107 months saved and $297,308.33 less interest. The
+    // cent-rounded payment leaves ~$3.17 on the baseline after 360 payments,
+    // which used to count as a 361st month (108 saved).
+    const r = calculateCombinedAnalysis(1_000_000, 'commercial', 37, 100, 600_000, 7, 25, 6, 30, 0);
+    expect(r.costSegFirstYearSavings).toBe(90_223.58);
+    expect(r.newMonthlyPayment).toBe(3_597.3);
+    expect(r.monthsSavedOnMortgage).toBe(107);
+    expect(r.additionalInterestSaved).toBeCloseTo(297_308.33, 1);
+  });
+
+  it('no cost seg savings means no months saved', () => {
+    const r = calculateCombinedAnalysis(1_000_000, 'commercial', 0, 100, 600_000, 7, 25, 6, 30, 0);
+    expect(r.monthsSavedOnMortgage).toBe(0);
+    expect(r.additionalInterestSaved).toBe(0);
+  });
+});
+
+describe('refinance break-even within the loan term', () => {
+  it('flags a break-even that never arrives', () => {
+    // Same 30-yr term: $1,896.20 -> $1,892.26 saves $3.94/mo, so $6,000 of
+    // closing takes 1,523 months to recover
+    const r = calculateRefinanceAnalysis(300_000, 6.5, 30, 6.48, 30, 6000);
+    expect(r.monthlySavings).toBe(3.94);
+    expect(r.breakEvenMonths).toBe(1523);
+    expect(r.breakEvenWithinTerm).toBe(false);
+  });
+
+  it('a break-even past the end of the current loan is never reached', () => {
+    // 10 yrs left at 5% ($2,121.31) -> 15-yr at 9.5% ($2,088.45): $32.86/mo
+    // recovers $5,000 in 153 months, but the old loan would be paid off after
+    // 120 — the monthly savings stop there
+    const r = calculateRefinanceAnalysis(200_000, 5, 10, 9.5, 15, 5000);
+    expect(r.monthlySavings).toBe(32.86);
+    expect(r.breakEvenMonths).toBe(153);
+    expect(r.breakEvenWithinTerm).toBe(false);
+  });
+
+  it('a normal refinance breaks even within the term', () => {
+    // $1,995.91 -> $1,798.65 saves $197.26/mo: 31 months
+    const r = calculateRefinanceAnalysis(300_000, 7, 30, 6, 30, 6000);
+    expect(r.breakEvenMonths).toBe(31);
+    expect(r.breakEvenWithinTerm).toBe(true);
+  });
+
+  it('no monthly savings: not flagged as within term', () => {
+    const r = calculateRefinanceAnalysis(300_000, 7, 25, 5.5, 15, 5000);
+    expect(r.breakEvenWithinTerm).toBe(false);
   });
 });
 

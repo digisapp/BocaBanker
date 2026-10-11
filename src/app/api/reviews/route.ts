@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ApiError } from '@/lib/api/auth';
+import { readJson } from '@/lib/api/request';
+import { apiValidationError } from '@/lib/api/response';
+import { businessToday } from '@/lib/dates';
 import { db } from '@/db';
 import { reviews } from '@/db/schema';
 import { getPublicReviews } from '@/lib/reviews';
@@ -42,14 +46,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    const body = await readJson(request);
     const parsed = reviewSubmissionSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: parsed.error.flatten() },
-        { status: 400 }
-      );
+      return apiValidationError(parsed.error);
     }
 
     const data = parsed.data;
@@ -70,12 +71,13 @@ export async function POST(request: NextRequest) {
         isFirstTimeBuyer: data.is_first_time_buyer ?? null,
         isSelfEmployed: data.is_self_employed ?? null,
         status: 'pending',
-        reviewDate: new Date().toISOString().split('T')[0],
+        reviewDate: businessToday(),
       })
       .returning();
 
     return NextResponse.json(created, { status: 201 });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('reviews-api', 'POST /api/reviews error', error);
     return NextResponse.json(
       { error: 'Failed to submit review' },

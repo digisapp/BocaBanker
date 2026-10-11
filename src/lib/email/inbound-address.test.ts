@@ -129,6 +129,20 @@ describe('autoReplySuppressionReason', () => {
     expect(autoReplySuppressionReason({ from: 'jane@example.com', headers: { 'Authentication-Results': 'mx.attacker.test; dmarc=pass' } })).toMatch(/not authenticated/)
   })
 
+  it('reads every copy of Authentication-Results: a second DMARC verdict, in any order, is unauthenticated', () => {
+    const ses = (verdict: string) => `amazonses.com; spf=pass smtp.mailfrom=example.com; dkim=none; dmarc=${verdict} header.from=example.com`
+    const forged = 'amazonses.com; dmarc=pass header.from=example.com'
+    // The sender's own copy sits below the receiver's; picking the last copy would trust it.
+    expect(autoReplySuppressionReason({ from: 'jane@example.com', headers: { 'authentication-results': [ses('fail'), forged] } })).toMatch(/not authenticated/)
+    expect(autoReplySuppressionReason({ from: 'jane@example.com', headers: { 'authentication-results': [forged, ses('fail')] } })).toMatch(/not authenticated/)
+    // Copies already folded into one value (how the webhook passes repeats on).
+    expect(autoReplySuppressionReason({ from: 'jane@example.com', headers: { 'authentication-results': `${ses('none')} ${forged}` } })).toMatch(/not authenticated/)
+    // Copies split across differently-cased keys still count together.
+    expect(autoReplySuppressionReason({ from: 'jane@example.com', headers: { 'Authentication-Results': ses('fail'), 'authentication-results': forged } })).toMatch(/not authenticated/)
+    // One copy, as an array: still accepted.
+    expect(autoReplySuppressionReason({ from: 'jane@example.com', headers: { 'authentication-results': [ses('pass')] } })).toBeNull()
+  })
+
   it('blocks our own domain, automated local parts and auto-responder headers', () => {
     expect(autoReplySuppressionReason({ from: 'team@bocabanker.com' })).toMatch(/own domain/)
     expect(autoReplySuppressionReason({ from: 'no-reply@bank.com' })).toMatch(/automated/)

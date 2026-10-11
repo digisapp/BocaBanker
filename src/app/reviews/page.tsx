@@ -68,7 +68,7 @@ export default async function ReviewsPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <ReviewsClient initial={initial} />
+      <ReviewsClient initial={initial} year={new Date().getFullYear()} />
     </>
   )
 }

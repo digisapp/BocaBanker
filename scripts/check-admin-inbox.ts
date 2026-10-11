@@ -3,7 +3,7 @@
  *
  *   npx tsx scripts/check-admin-inbox.ts
  *
- * Reads .env.local; talks to Resend read-only.
+ * Reads .env.local; talks to Resend and DNS read-only.
  */
 import 'dotenv/config';
 import { config } from 'dotenv';
@@ -20,6 +20,8 @@ async function main() {
   for (const r of s.domain.records) {
     console.log(`  ${r.status.padEnd(11)} ${r.record.padEnd(9)} ${r.type.padEnd(5)} ${r.host.padEnd(28)} ${r.value}${r.priority ? `  (prio ${r.priority})` : ''}`);
   }
+  const mx = s.mx.records.map((r) => `${r.priority} ${r.exchange}`).join(', ');
+  console.log(`MX:       ${s.mx.state}${mx ? ` (${mx})` : ''}${s.mx.error ? ` — ${s.mx.error}` : ''}  [DNS at ${s.dnsHost ?? 'unknown host'}]`);
   console.log(`Webhook:  ${s.webhook.found ? `${s.webhook.endpoint} [${s.webhook.status}] events: ${s.webhook.events.join(', ') || 'none'}${s.webhook.canonical ? '' : '  ← wrong host'}` : 'none'}`);
   console.log('');
   if (s.ready) {

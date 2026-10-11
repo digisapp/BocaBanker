@@ -41,6 +41,13 @@ function CopyValue({ value }: { value: string }) {
 
 const outlineBtn = 'border-gray-200 bg-white text-navy hover:bg-gray-100';
 
+const MX_BADGE: Record<InboxStatus['mx']['state'], { label: string; tone: string }> = {
+  resend: { label: 'Resend', tone: BADGE_TONES.green },
+  other: { label: 'Not Resend', tone: BADGE_TONES.red },
+  none: { label: 'Missing', tone: BADGE_TONES.red },
+  unknown: { label: 'Lookup failed', tone: BADGE_TONES.gold },
+};
+
 /**
  * Shown while mail can't reach the inbox. Lists what is missing in fix
  * order plus the exact DNS records Resend wants, so the admin can finish
@@ -94,7 +101,7 @@ export function InboxSetupCard({ status, loading, onRecheck, onSendTest, sending
           {status.domain.found && status.domain.records.length > 0 && (
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-900">
-                DNS records for bocabanker.com (at the registrar)
+                DNS records for bocabanker.com (at {status.dnsHost ?? 'the registrar'})
               </p>
               <div className="overflow-x-auto rounded-xl border border-amber-200 bg-white">
                 <table className="w-full text-left text-xs">
@@ -125,7 +132,7 @@ export function InboxSetupCard({ status, loading, onRecheck, onSendTest, sending
             </div>
           )}
 
-          <dl className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
+          <dl className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-lg border border-amber-200 bg-white px-3 py-2">
               <dt className="text-gray-500">Resend domain</dt>
               <dd className="mt-0.5 flex flex-wrap items-center gap-1.5 text-gray-800">
@@ -138,6 +145,13 @@ export function InboxSetupCard({ status, loading, onRecheck, onSendTest, sending
                     </Badge>
                   </>
                 ) : <Badge variant="outline" className={BADGE_TONES.red}>Not in Resend</Badge>}
+              </dd>
+            </div>
+            <div className="rounded-lg border border-amber-200 bg-white px-3 py-2">
+              <dt className="text-gray-500">MX (where mail is delivered){status.dnsHost && ` · DNS at ${status.dnsHost}`}</dt>
+              <dd className="mt-0.5 flex flex-wrap items-center gap-1.5 text-gray-800">
+                <span className="break-all font-mono">{status.mx.preferred ?? 'none'}</span>
+                <Badge variant="outline" className={MX_BADGE[status.mx.state].tone}>{MX_BADGE[status.mx.state].label}</Badge>
               </dd>
             </div>
             <div className="rounded-lg border border-amber-200 bg-white px-3 py-2">

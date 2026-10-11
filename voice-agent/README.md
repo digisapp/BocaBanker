@@ -18,7 +18,15 @@ The same agent takes voice calls from the website's **Talk** buttons. The web ap
 
 - open with "Hi, I'm Boca Banker's AI assistant…" and ask for a phone number (no caller ID),
 - save leads with `source = web-voice`,
-- end after 10 minutes (`WEB_CALL_LIMIT_S`), with a one-minute warning.
+- end after 10 minutes (`WEB_CALL_LIMIT_S`), with a one-minute warning,
+- count toward a site-wide daily cap (150, `WEB_VOICE_CALLS_PER_DAY` in `src/lib/voice.ts`) when
+  the call actually starts: the agent claims it through `POST /api/voice/claim` and, over the cap,
+  says voice chat is busy and hangs up.
+
+New leads from either channel trigger the owner's new-lead email through
+`POST /api/voice/lead-alert` (Settings → Preferences turns it off or changes the address). Both
+calls go to `APP_URL` (default `https://bocabanker.com`) with the service-role key as a bearer
+token, and fail open: if the web app is down, calls still go ahead.
 
 To turn it on, add this project's `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET`
 to the web app's environment (Vercel) and redeploy it. The Talk buttons only appear when all

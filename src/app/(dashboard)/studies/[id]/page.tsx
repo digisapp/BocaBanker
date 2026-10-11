@@ -31,6 +31,7 @@ import {
 import StudyResults from '@/components/studies/StudyResults'
 import { RoleGate } from '@/components/shared/RoleGate'
 import DocumentPanel from '@/components/shared/DocumentPanel'
+import type { StudyAssumptions } from '@/lib/cost-seg/conventions'
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Draft',
@@ -52,6 +53,7 @@ interface StudyDetail {
   discountRate: string | null
   bonusDepreciationRate: string | null
   studyYear: number
+  midQuarterConvention?: boolean
   results: Record<string, unknown> | null
   totalFirstYearDeduction: string | null
   totalTaxSavings: string | null
@@ -195,8 +197,9 @@ export default function StudyDetailPage() {
         </div>
 
         <div className="flex gap-2 flex-wrap">
-          {/* Calculate button for draft/in_progress studies */}
-          {study.status !== 'completed' && (
+          {/* Calculate for draft/in_progress studies; completed ones can be
+              recalculated (results are stored, so math fixes need a re-run) */}
+          {study.status !== 'completed' ? (
             <Button
               onClick={handleCalculate}
               disabled={calculating}
@@ -213,6 +216,21 @@ export default function StudyDetailPage() {
                   Run Calculation
                 </>
               )}
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCalculate}
+              disabled={calculating}
+              className="border-gray-200 text-gray-500 hover:text-navy hover:bg-gray-100"
+            >
+              {calculating ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+              ) : (
+                <Play className="h-4 w-4 mr-1.5" />
+              )}
+              Recalculate
             </Button>
           )}
 
@@ -290,7 +308,7 @@ export default function StudyDetailPage() {
               </p>
             </div>
             <div>
-              <span className="text-xs text-gray-400">Study Year</span>
+              <span className="text-xs text-gray-400">Placed in Service</span>
               <p className="text-sm font-medium text-gray-900 mt-1">{study.studyYear}</p>
             </div>
           </div>
@@ -309,6 +327,13 @@ export default function StudyDetailPage() {
               <p className="text-sm font-medium text-gray-900 mt-1">{study.bonusDepreciationRate || '100'}%</p>
             </div>
           </div>
+
+          {study.midQuarterConvention && (
+            <p className="text-xs text-gray-500 -mt-2 mb-6">
+              Mid-quarter convention: 5, 7 and 15-year property uses the IRS
+              mid-quarter tables for the quarter placed in service.
+            </p>
+          )}
 
           {/* Assets */}
           {assets.length > 0 && (
@@ -398,5 +423,6 @@ type StudyResults = {
       totalFirstYear: number
       taxSavings: number
     }
+    assumptions?: StudyAssumptions
   }
 }

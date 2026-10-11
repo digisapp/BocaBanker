@@ -3,21 +3,24 @@ import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
+import { businessPeriods, isDateInRange } from '@/lib/dates';
+import { CLOSED_LOAN_STATUSES } from '@/lib/loans';
 
 export async function GET(_request: NextRequest) {
   try {
     const user = await requireAuth();
 
-    const now = new Date();
-    const yearStart = `${now.getFullYear()}-01-01`;
-    const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+    // Month/year in Eastern time — the server's UTC clock rolled the month
+    // over at 8pm on its last day. Bounded on both ends so a date entered
+    // in a later month/year doesn't count toward this one.
+    const period = businessPeriods();
 
     // Get all funded/closed loans
     const { data: loans, error: loansError } = await supabaseAdmin
       .from('loans')
       .select('borrower_name, loan_amount, commission_bps, commission_amount, actual_closing_date, lender_name, status')
       .eq('user_id', user.id)
-      .in('status', ['funded', 'closed'])
+      .in('status', [...CLOSED_LOAN_STATUSES])
       .order('actual_closing_date', { ascending: false, nullsFirst: false });
 
     if (loansError) {
@@ -35,7 +38,7 @@ export async function GET(_request: NextRequest) {
     // Monthly breakdown for the current year
     const monthlyCommission: Record<string, number> = {};
     for (let m = 0; m < 12; m++) {
-      const key = `${now.getFullYear()}-${String(m + 1).padStart(2, '0')}`;
+      const key = `${period.year}-${String(m + 1).padStart(2, '0')}`;
       monthlyCommission[key] = 0;
     }
 
@@ -58,7 +61,7 @@ export async function GET(_request: NextRequest) {
         bpsCount++;
       }
 
-      if (closeDate && closeDate >= yearStart) {
+      if (isDateInRange(closeDate, period.yearStart, period.nextYearStart)) {
         commissionYTD += amount;
         loansFundedYTD++;
 
@@ -68,7 +71,7 @@ export async function GET(_request: NextRequest) {
           monthlyCommission[monthKey] += amount;
         }
 
-        if (closeDate >= monthStart) {
+        if (isDateInRange(closeDate, period.monthStart, period.nextMonthStart)) {
           commissionMTD += amount;
           loansFundedMTD++;
         }

@@ -76,9 +76,12 @@ export default withSentryConfig(nextConfig, {
   // Only upload source maps when DSN is configured
   silent: !process.env.SENTRY_DSN,
 
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-
-  // Enables automatic instrumentation of Vercel Cron Monitors
-  automaticVercelMonitors: true,
+  // Webpack-only options (Next 16 builds with Turbopack, which ignores them);
+  // kept under `webpack` so a `next build --webpack` still gets them.
+  webpack: {
+    // Tree-shake Sentry logger statements to reduce bundle size
+    treeshake: { removeDebugLogging: true },
+    // Automatic instrumentation of Vercel Cron Monitors
+    automaticVercelMonitors: true,
+  },
 });

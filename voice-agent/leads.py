@@ -13,6 +13,8 @@ from dataclasses import dataclass, field
 
 import httpx
 
+from app_api import send_lead_alert
+
 logger = logging.getLogger("boca-banker-voice")
 
 # (source, tag) per channel: the phone line, or the website's voice chat
@@ -47,7 +49,7 @@ def build_lead_row(
     return {
         "user_id": owner_id,
         "property_address": "Not provided",
-        "property_state": "FL",
+        "property_state": None,
         "property_type": "other",
         "buyer_name": name.strip()[:100],
         "buyer_phone": (phone or "").strip()[:40] or None,
@@ -93,12 +95,17 @@ class LeadStore:
 
     async def save(self, **fields) -> None:
         async with httpx.AsyncClient(timeout=10) as client:
-            row = build_lead_row(owner_id=await self._owner(client), channel=self.channel, **fields)
+            owner_id = await self._owner(client)
+            if owner_id is None:
+                # Every dashboard read filters by user_id: an unowned lead is invisible
+                raise RuntimeError("no admin user to own the lead")
+            row = build_lead_row(owner_id=owner_id, channel=self.channel, **fields)
             if self.lead_id is None:
                 res = await client.post(f"{self.url}/rest/v1/leads", json=row, headers=self._headers)
                 res.raise_for_status()
                 self.lead_id = res.json()[0]["id"]
                 logger.info("created %s lead %s", self.channel, self.lead_id)
+                await send_lead_alert(self.lead_id)
             else:
                 # Only overwrite fields the caller actually provided
                 patch = {k: v for k, v in row.items() if v is not None and k not in ("user_id", "status")}

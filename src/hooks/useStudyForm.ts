@@ -10,6 +10,10 @@ import {
   type AllocationBreakdown,
 } from '@/lib/cost-seg/asset-classes'
 import { getBonusRateForYear } from '@/lib/cost-seg/bonus-depreciation'
+import {
+  defaultPlacedInServiceYear,
+  placedInServiceMonthFor,
+} from '@/lib/cost-seg/placed-in-service'
 
 export interface PropertyOption {
   id: string
@@ -20,6 +24,8 @@ export interface PropertyOption {
   purchasePrice: string | number
   buildingValue?: string | number | null
   landValue?: string | number | null
+  /** 'YYYY-MM-DD' — the acquisition date for the §168(k) bonus rate */
+  purchaseDate?: string | null
   clientId?: string | null
 }
 
@@ -45,7 +51,9 @@ export interface StudyFormData {
   tax_rate: number
   discount_rate: number
   bonus_depreciation_rate: number
+  /** Tax year the property was placed in service (year 1 of the schedules) */
   study_year: number
+  mid_quarter_convention: boolean
   assets: AssetRow[]
 }
 
@@ -134,31 +142,30 @@ export function useStudyForm({
   const [clientId, setClientId] = useState('')
   const [taxRate, setTaxRate] = useState(37)
   const [discountRate, setDiscountRate] = useState(5)
-  const [bonusDepreciationRate, setBonusDepreciationRateState] = useState(() =>
-    getBonusRateForYear(new Date().getFullYear())
-  )
-  const [studyYear, setStudyYearState] = useState(new Date().getFullYear())
-  // Once the user edits the bonus rate by hand, stop re-deriving it from the
-  // study year (e.g. property acquired before Jan 20, 2025 under TCJA rules).
-  const bonusRateTouchedRef = useRef(false)
-
-  const setBonusDepreciationRate = useCallback((value: number) => {
-    bonusRateTouchedRef.current = true
-    setBonusDepreciationRateState(value)
-  }, [])
-
-  const setStudyYear = useCallback((year: number) => {
-    setStudyYearState(year)
-    // Default the §168(k) rate to the statutory rate for the placed-in-service
-    // year (60% for 2024, 80% for 2023, 100% for 2025+ under OBBBA) instead
-    // of leaving a hard-coded 100% that overstates pre-2025 studies.
-    if (!bonusRateTouchedRef.current && year >= 2000 && year <= 2100) {
-      setBonusDepreciationRateState(getBonusRateForYear(year))
-    }
-  }, [])
+  // The study year is the tax year placed in service. Both it and the bonus
+  // rate are null until edited by hand: until then the year follows the
+  // property's purchase date, and the bonus rate the statutory rate for that
+  // year and acquisition date (bought Dec 2024, in service 2025 = 40%).
+  const [studyYearOverride, setStudyYear] = useState<number | null>(null)
+  const [bonusRateOverride, setBonusDepreciationRate] = useState<number | null>(null)
+  const [midQuarterConvention, setMidQuarterConvention] = useState(false)
   const [assets, setAssets] = useState<AssetRow[]>([])
 
   const selectedProperty = properties.find((p) => p.id === propertyId)
+
+  const studyYear = studyYearOverride ?? defaultPlacedInServiceYear(selectedProperty?.purchaseDate)
+
+  const bonusDepreciationRate =
+    bonusRateOverride ??
+    getBonusRateForYear(
+      // fall back to the current year while a year is half-typed
+      studyYear >= 2000 && studyYear <= 2100 ? studyYear : new Date().getFullYear(),
+      selectedProperty?.purchaseDate
+    )
+
+  // Month placed in service, as the calculation will use it (mid-month /
+  // mid-quarter column): the purchase month if bought in the study year.
+  const placedInServiceMonth = placedInServiceMonthFor(studyYear, selectedProperty?.purchaseDate)
 
   // Remember which property we last populated from so renaming the study (or
   // any other re-render) never re-runs population and clobbers manual edits.
@@ -168,6 +175,10 @@ export function useStudyForm({
     if (prop.clientId) {
       setClientId(prop.clientId)
     }
+    // A different property has its own placed-in-service year and
+    // acquisition date: go back to the defaults derived from them.
+    setStudyYear(null)
+    setBonusDepreciationRate(null)
     setStudyName((prev) => prev || `Cost Seg Study - ${prop.address}`)
     const purchasePrice = typeof prop.purchasePrice === 'string'
       ? parseFloat(prop.purchasePrice)
@@ -209,7 +220,7 @@ export function useStudyForm({
       if (taxRate < 0 || taxRate > 100) newErrors.tax_rate = 'Tax rate must be 0-100'
       if (discountRate < 0 || discountRate > 100) newErrors.discount_rate = 'Discount rate must be 0-100'
       if (bonusDepreciationRate < 0 || bonusDepreciationRate > 100) newErrors.bonus_depreciation_rate = 'Rate must be 0-100'
-      if (studyYear < 2000 || studyYear > 2100) newErrors.study_year = 'Invalid year'
+      if (!Number.isInteger(studyYear) || studyYear < 2000 || studyYear > 2100) newErrors.study_year = 'Enter a year from 2000 to 2100'
     }
     if (step === 2) {
       if (assets.length === 0) newErrors.assets = 'Add at least one asset class'
@@ -285,6 +296,7 @@ export function useStudyForm({
         discount_rate: discountRate,
         bonus_depreciation_rate: bonusDepreciationRate,
         study_year: studyYear,
+        mid_quarter_convention: midQuarterConvention,
         assets,
       })
     } catch (error) {
@@ -322,6 +334,8 @@ export function useStudyForm({
     setBonusDepreciationRate,
     studyYear,
     setStudyYear,
+    midQuarterConvention,
+    setMidQuarterConvention,
     assets,
     totalAssetValue,
 
@@ -340,6 +354,7 @@ export function useStudyForm({
 
     // Derived
     selectedProperty,
+    placedInServiceMonth,
   }
 }
 

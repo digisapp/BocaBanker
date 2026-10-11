@@ -9,7 +9,7 @@ import { OpenChatButton } from '@/components/landing/LandingClient'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/lib/utils'
+import { cn, parseDate } from '@/lib/utils'
 import { siteConfig } from '@/lib/site-config'
 import type { Review } from '@/types'
 
@@ -91,7 +91,7 @@ function ReviewCard({ review }: { review: Review }) {
         </div>
         {review.reviewDate && (
           <span className="text-xs text-gray-400 whitespace-nowrap">
-            {new Date(review.reviewDate + 'T00:00:00').toLocaleDateString('en-US', {
+            {parseDate(review.reviewDate).toLocaleDateString('en-US', {
               month: 'short',
               year: 'numeric',
             })}
@@ -165,7 +165,18 @@ export interface InitialReviews {
   ratingBreakdown: Record<number, number>
 }
 
-export default function ReviewsClient({ initial }: { initial: InitialReviews | null }) {
+export default function ReviewsClient({
+  initial,
+  year,
+}: {
+  initial: InitialReviews | null
+  /**
+   * Copyright year, taken from the server render. This page is ISR-cached, so
+   * computing it here would differ between the cached HTML and hydration
+   * around New Year.
+   */
+  year: number
+}) {
   const [reviews, setReviews] = useState<Review[]>(initial?.reviews ?? [])
   const [total, setTotal] = useState(initial?.total ?? 0)
   const [averageRating, setAverageRating] = useState(initial?.averageRating ?? 0)
@@ -214,7 +225,13 @@ export default function ReviewsClient({ initial }: { initial: InitialReviews | n
       if (res.ok) {
         const data = await res.json()
         if (controller.signal.aborted) return
-        setReviews((prev) => (p === 1 ? data.reviews : [...prev, ...data.reviews]))
+        setReviews((prev) => {
+          if (p === 1) return data.reviews
+          // A review approved or deleted between pages shifts the offset;
+          // skip ones already shown so keys stay unique
+          const seen = new Set(prev.map((r) => r.id))
+          return [...prev, ...(data.reviews as Review[]).filter((r) => !seen.has(r.id))]
+        })
         setTotal(data.total)
         setAverageRating(data.averageRating)
         setTotalReviews(data.totalReviews)
@@ -690,7 +707,7 @@ export default function ReviewsClient({ initial }: { initial: InitialReviews | n
             Reviews are submitted by clients and approved before they appear.
           </p>
           <p>
-            &copy; {new Date().getFullYear()} Boca Banker ·{' '}
+            &copy; {year} Boca Banker ·{' '}
             <Link href="/" className="py-2.5 hover:text-navy">Home</Link>
           </p>
         </div>

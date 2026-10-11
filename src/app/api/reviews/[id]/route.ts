@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, ApiError } from '@/lib/api/auth';
 import { apiError, apiValidationError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { requireUuid } from '@/lib/api/params';
 import { db } from '@/db';
 import { reviews } from '@/db/schema';
@@ -16,7 +17,7 @@ export async function PUT(
     await requireAdmin();
 
     const id = requireUuid((await params).id, 'Review not found');
-    const body = await request.json();
+    const body = await readJson(request);
     const parsed = reviewAdminUpdateSchema.safeParse(body);
 
     if (!parsed.success) {

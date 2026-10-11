@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { logger } from '@/lib/logger'
 import { toast } from 'sonner'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, parseDate } from '@/lib/utils'
 import {
   ArrowLeft,
   Pencil,
@@ -107,7 +107,7 @@ const priorityColorMap: Record<string, string> = {
 
 const formatDate = (value: string | null) => {
   if (!value) return '--'
-  return new Date(value).toLocaleDateString('en-US', {
+  return parseDate(value).toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
@@ -217,7 +217,8 @@ export default function LeadDetailPage() {
         // (Echoing propertyAddress back failed validation for leads with no
         // address, silently breaking save.)
         body: JSON.stringify({
-          status: editForm.status,
+          // Only send status when it changed
+          ...(editForm.status !== (lead?.status ?? 'new') && { status: editForm.status }),
           priority: editForm.priority,
           buyerEmail: editForm.buyerEmail || null,
           buyerPhone: editForm.buyerPhone || null,
@@ -396,7 +397,9 @@ export default function LeadDetailPage() {
             <div className="flex-1">
               <p className="font-semibold text-emerald-700">Lead Converted</p>
               <p className="text-sm text-emerald-600 mt-0.5">
-                This lead has been converted to a client and property.
+                {lead.convertedClientId
+                  ? 'This lead has been converted to a client.'
+                  : 'This lead is marked converted, but has no linked client.'}
               </p>
             </div>
             <div className="flex gap-2">
@@ -435,7 +438,12 @@ export default function LeadDetailPage() {
                   <SelectItem value="contacted">Contacted</SelectItem>
                   <SelectItem value="qualified">Qualified</SelectItem>
                   <SelectItem value="proposal_sent">Proposal Sent</SelectItem>
-                  <SelectItem value="converted">Converted</SelectItem>
+                  {/* Converting goes through "Convert to Client" (it creates the
+                      client and property); only show the option for a lead
+                      that is already converted */}
+                  {status === 'converted' && (
+                    <SelectItem value="converted">Converted</SelectItem>
+                  )}
                   <SelectItem value="lost">Lost</SelectItem>
                 </SelectContent>
               </Select>

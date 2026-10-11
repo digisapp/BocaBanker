@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError, apiValidationError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { requireUuid } from '@/lib/api/params';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
@@ -42,7 +43,7 @@ export async function PUT(
     const user = await requireAuth();
 
     const id = requireUuid((await params).id, 'Client not found');
-    const body = await request.json();
+    const body = await readJson(request);
     const parsed = clientSchema.safeParse(body);
 
     if (!parsed.success) {

@@ -119,6 +119,10 @@ export default function StudyForm({
           onBonusDepreciationRateChange={form.setBonusDepreciationRate}
           studyYear={form.studyYear}
           onStudyYearChange={form.setStudyYear}
+          midQuarterConvention={form.midQuarterConvention}
+          onMidQuarterConventionChange={form.setMidQuarterConvention}
+          purchaseDate={form.selectedProperty?.purchaseDate}
+          placedInServiceMonth={form.placedInServiceMonth}
           errors={form.errors}
         />
       )}
@@ -145,6 +149,8 @@ export default function StudyForm({
           taxRate={form.taxRate}
           discountRate={form.discountRate}
           bonusDepreciationRate={form.bonusDepreciationRate}
+          midQuarterConvention={form.midQuarterConvention}
+          placedInServiceMonth={form.placedInServiceMonth}
           assets={form.assets}
           totalAssetValue={form.totalAssetValue}
         />

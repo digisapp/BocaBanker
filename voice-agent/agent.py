@@ -28,8 +28,9 @@ from livekit.agents import (
 from livekit.agents.beta.tools import EndCallTool
 from livekit.plugins import noise_cancellation, xai
 
+from app_api import claim_web_call
 from leads import LeadStore, monthly_payment
-from prompt import GREETING, WEB_GOODBYE, WEB_GREETING, WEB_WRAP_UP, build_instructions
+from prompt import GREETING, WEB_BUSY, WEB_GOODBYE, WEB_GREETING, WEB_WRAP_UP, build_instructions
 
 load_dotenv(".env.local")
 logger = logging.getLogger("boca-banker-voice")
@@ -106,7 +107,9 @@ class BocaBankerVoiceAgent(Agent):
         try:
             await self.leads.save(
                 name=name,
-                phone=callback_number or self.caller_number,
+                # Caller ID only seeds a new lead; on a later update it would
+                # overwrite a callback number the caller chose earlier.
+                phone=callback_number or (None if self.leads.lead_id else self.caller_number),
                 email=email,
                 summary=summary,
                 interest=interest,
@@ -146,6 +149,16 @@ async def entrypoint(ctx: JobContext) -> None:
     session = AgentSession(
         llm=xai.realtime.RealtimeModel(model=VOICE_MODEL, voice=VOICE),
     )
+
+    # Website calls count toward a daily cap when they actually start (not
+    # when the browser asks for a token), so token requests alone can't use
+    # up the day. Over the cap: say so briefly and hang up.
+    if channel == "web" and not await claim_web_call():
+        await session.start(agent=Agent(instructions=WEB_BUSY), room=ctx.room, record=False)
+        await session.generate_reply(instructions=WEB_BUSY)
+        await ctx.delete_room()
+        return
+
     await session.start(
         agent=BocaBankerVoiceAgent(channel, caller_number),
         room=ctx.room,

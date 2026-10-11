@@ -7,6 +7,7 @@ import { formatCurrency } from '@/lib/utils'
 import { ArrowLeft, Printer, Download, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { conventionLabel, type StudyAssumptions } from '@/lib/cost-seg/conventions'
 
 import dynamic from 'next/dynamic'
 
@@ -68,6 +69,8 @@ interface StudyDetail {
       totalFirstYear: number
       taxSavings: number
     }
+    /** absent on results calculated before conventions were recorded */
+    assumptions?: StudyAssumptions
   } | null
   totalFirstYearDeduction: string | null
   totalTaxSavings: string | null
@@ -197,7 +200,7 @@ export default function StudyReportPage() {
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mt-4 text-sm text-gray-400">
             <span>Prepared: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
             <span className="text-gray-300">|</span>
-            <span>Study Year: {study.studyYear}</span>
+            <span>Placed in Service: {study.studyYear}</span>
           </div>
         </div>
 
@@ -258,6 +261,10 @@ export default function StudyReportPage() {
               <p className="text-xl font-bold text-gray-900 mt-1">{study.bonusDepreciationRate || '100'}%</p>
             </div>
           </div>
+          <p className="text-xs text-gray-500 mt-4">
+            <span className="font-medium text-gray-700">Depreciation convention:</span>{' '}
+            {conventionLabel(results.assumptions)}
+          </p>
         </div>
 
         {/* Executive Summary */}

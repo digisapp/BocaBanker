@@ -19,6 +19,12 @@ interface AuthContextType {
   /** Role from /api/auth/me — fetched once per signed-in user, shared by all consumers */
   role: UserRole
   roleLoading: boolean
+  /**
+   * True once /api/auth/me has confirmed the signed-in account is not the
+   * owner (admin). A failed lookup never sets it, so a network blip can't
+   * lock the owner out of the dashboard; the APIs enforce access regardless.
+   */
+  accessDenied: boolean
   signOut: () => Promise<void>
 }
 
@@ -27,6 +33,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   role: 'viewer',
   roleLoading: true,
+  accessDenied: false,
   signOut: async () => {},
 })
 
@@ -35,8 +42,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const supabaseRef = useRef<SupabaseClient | null>(null)
   // Role is keyed by user id so token refreshes (which emit a new User object)
-  // don't trigger a refetch.
-  const [roleState, setRoleState] = useState<{ userId: string; role: UserRole } | null>(null)
+  // don't trigger a refetch. `confirmed` is false when the lookup failed and
+  // the role is only the 'viewer' fallback.
+  const [roleState, setRoleState] = useState<{
+    userId: string
+    role: UserRole
+    confirmed: boolean
+  } | null>(null)
   const userId = user?.id ?? null
 
   if (supabaseRef.current === null) {
@@ -80,11 +92,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetch('/api/auth/me', { signal: controller.signal })
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { role?: UserRole } | null) => {
-        setRoleState({ userId, role: data?.role ?? 'viewer' })
+        setRoleState({
+          userId,
+          role: data?.role ?? 'viewer',
+          confirmed: typeof data?.role === 'string',
+        })
       })
       .catch(() => {
         // Default to viewer on error (ignore aborts from a user switch)
-        if (!controller.signal.aborted) setRoleState({ userId, role: 'viewer' })
+        if (!controller.signal.aborted) {
+          setRoleState({ userId, role: 'viewer', confirmed: false })
+        }
       })
     return () => controller.abort()
   }, [userId])
@@ -92,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const roleResolved = userId !== null && roleState?.userId === userId
   const role: UserRole = roleResolved ? roleState!.role : 'viewer'
   const roleLoading = loading || (userId !== null && !roleResolved)
+  const accessDenied = roleResolved && roleState!.confirmed && roleState!.role !== 'admin'
 
   const signOut = async () => {
     const supabase = supabaseRef.current
@@ -102,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, role, roleLoading, signOut }}>
+    <AuthContext.Provider value={{ user, loading, role, roleLoading, accessDenied, signOut }}>
       {children}
     </AuthContext.Provider>
   )

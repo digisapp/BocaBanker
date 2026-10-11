@@ -113,3 +113,30 @@ describe('calculateStraightLineDepreciation', () => {
     expect(schedule[0].depreciation).toBeCloseTo(24_610, 0);
   });
 });
+
+describe('calculateDepreciation with the mid-quarter convention', () => {
+  it('Q4 5-year, no bonus: 5% in year 1 (vs 20% half-year)', () => {
+    const mq = calculateDepreciation(100_000, 5, 0, 11, true);
+    expect(mq.map((e) => e.depreciation)).toEqual([5_000, 38_000, 22_800, 13_680, 10_940, 9_580]);
+    expect(mq[mq.length - 1].cumulativeDepreciation).toBe(100_000);
+    expect(calculateDepreciation(100_000, 5, 0, 11)[0].depreciation).toBe(20_000);
+  });
+
+  it('applies bonus to the full basis first, then the quarter table to the rest', () => {
+    // 60% bonus + 40,000 x 3.57% (Q4 7-year)
+    const mq = calculateDepreciation(100_000, 7, 60, 12, true);
+    expect(mq[0].depreciation).toBe(60_000 + 1_428);
+    expect(mq[1].depreciation).toBe(11_020); // 40,000 x 27.55%
+    expect(mq[mq.length - 1].cumulativeDepreciation).toBe(100_000);
+  });
+
+  it('100% bonus leaves nothing for the convention to change', () => {
+    expect(calculateDepreciation(100_000, 15, 100, 10, true)[0].depreciation).toBe(100_000);
+  });
+
+  it('does not change real property (mid-month)', () => {
+    expect(calculateDepreciation(1_000_000, 39, 0, 11, true)).toEqual(
+      calculateDepreciation(1_000_000, 39, 0, 11)
+    );
+  });
+});

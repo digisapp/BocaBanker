@@ -32,20 +32,25 @@ const BONUS_ELIGIBLE_MAX_PERIOD = 20;
  * @param costBasis - The depreciable cost basis of the asset
  * @param recoveryPeriod - The MACRS recovery period (5, 7, 15, 27.5, or 39)
  * @param bonusDepreciationRate - Bonus depreciation rate as a percentage (0-100), default 100
- * @param placedInServiceMonth - 1-12; selects the mid-month column for 27.5/39-year property (default 1)
+ * @param placedInServiceMonth - 1-12; selects the mid-month column for 27.5/39-year property,
+ *   and the quarter under the mid-quarter convention (default 1)
+ * @param midQuarter - Use the mid-quarter convention for 5/7/15-year property (default false)
  * @returns Array of yearly depreciation entries with cumulative tracking
  */
 export function calculateDepreciation(
   costBasis: number,
   recoveryPeriod: MacrsRecoveryPeriod,
   bonusDepreciationRate: number = 100,
-  placedInServiceMonth: number = 1
+  placedInServiceMonth: number = 1,
+  midQuarter: boolean = false
 ): DepreciationEntry[] {
   if (!Number.isFinite(costBasis) || costBasis <= 0) {
     return [];
   }
 
-  const rates = getMacrsRates(recoveryPeriod, placedInServiceMonth);
+  // Bonus comes off the full basis first; the convention only shapes the
+  // MACRS schedule for what remains.
+  const rates = getMacrsRates(recoveryPeriod, placedInServiceMonth, midQuarter);
   const isBonusEligible = recoveryPeriod <= BONUS_ELIGIBLE_MAX_PERIOD;
 
   // Clamp so out-of-range/NaN rates can't produce negative MACRS basis

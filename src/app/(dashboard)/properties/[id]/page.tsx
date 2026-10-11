@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { logger } from '@/lib/logger'
 import { toast } from 'sonner'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, parseDate } from '@/lib/utils'
 import {
   ArrowLeft,
   Building2,
@@ -314,7 +314,7 @@ export default function PropertyDetailPage() {
                 <span className="text-xs text-gray-500">Purchase Date</span>
               </div>
               <p className="text-sm font-medium text-gray-900">
-                {new Date(property.purchaseDate).toLocaleDateString('en-US', {
+                {parseDate(property.purchaseDate).toLocaleDateString('en-US', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
@@ -406,7 +406,7 @@ export default function PropertyDetailPage() {
               <div>
                 <span className="text-xs text-gray-500">Origination Date</span>
                 <p className="text-sm font-medium text-gray-900 mt-1">
-                  {new Date(property.loanOriginationDate).toLocaleDateString('en-US', {
+                  {parseDate(property.loanOriginationDate).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',

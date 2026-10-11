@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, ApiError } from '@/lib/api/auth'
 import { apiError, apiValidationError } from '@/lib/api/response'
+import { readJson } from '@/lib/api/request'
 import { db } from '@/db'
 import { properties, clients } from '@/db/schema'
 import { logger } from '@/lib/logger'
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth()
 
-    const body = await request.json()
+    const body = await readJson(request)
     const parsed = propertySchema.safeParse(body)
 
     if (!parsed.success) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { logger } from '@/lib/logger';
 import { AdminInboxService, isInboxSettingKey } from '@/lib/email/admin-inbox';
 
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     await requireAdmin();
-    const body = await request.json().catch(() => ({}));
+    const body = await readJson(request);
     if (!isInboxSettingKey(body.key)) return apiError('Unknown setting', 400);
     if (typeof body.value !== 'boolean') return apiError('value must be true or false', 400);
     await AdminInboxService.setSetting(body.key, body.value);

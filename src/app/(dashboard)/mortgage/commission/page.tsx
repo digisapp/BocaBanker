@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { logger } from '@/lib/logger'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, parseDate } from '@/lib/utils'
 import {
   DollarSign,
   TrendingUp,
@@ -53,7 +53,7 @@ for (let m = 0; m < 12; m++) {
 
 const formatCloseDate = (value: string) =>
   value
-    ? new Date(value).toLocaleDateString('en-US', {
+    ? parseDate(value).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric',

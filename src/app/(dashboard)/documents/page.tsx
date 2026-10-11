@@ -28,7 +28,7 @@ import EmptyState from '@/components/shared/EmptyState';
 import PageHeader from '@/components/shared/PageHeader';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { cn, storageSafeFileName } from '@/lib/utils';
 
 interface DocumentEntry {
   id: string;
@@ -110,7 +110,7 @@ export default function DocumentsPage() {
     fetchDocuments();
   }, [fetchDocuments]);
 
-  async function handleUpload(files: FileList | null) {
+  async function handleUpload(files: FileList | File[] | null) {
     if (!files || files.length === 0 || !user) return;
 
     setUploading(true);
@@ -123,7 +123,8 @@ export default function DocumentsPage() {
         toast.error(`${file.name} exceeds the 50 MB limit`);
         continue;
       }
-      const filePath = `${user.id}/${Date.now()}-${file.name}`;
+      // Storage keys reject many characters; keep file.name for display only
+      const filePath = `${user.id}/${Date.now()}-${storageSafeFileName(file.name)}`;
 
       try {
         const { error: uploadError } = await supabase.storage
@@ -294,7 +295,12 @@ export default function DocumentsPage() {
                   multiple
                   accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp"
                   className="hidden"
-                  onChange={(e) => handleUpload(e.target.files)}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    // Clear the value so selecting the same file again re-fires onChange
+                    e.target.value = '';
+                    handleUpload(files);
+                  }}
                 />
               </label>
             </>

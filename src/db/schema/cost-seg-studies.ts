@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, numeric, integer, jsonb, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, numeric, integer, boolean, jsonb, index } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { users } from './users';
 import { clients } from './clients';
@@ -14,7 +14,12 @@ export const costSegStudies = pgTable('cost_seg_studies', {
   taxRate: numeric('tax_rate').notNull().default('37'),
   discountRate: numeric('discount_rate').default('5'),
   bonusDepreciationRate: numeric('bonus_depreciation_rate').default('100'),
+  // Tax year the property was placed in service (year 1 of the schedules)
   studyYear: integer('study_year').notNull(),
+  // IRC §168(d)(3): >40% of the taxpayer's personal property placed in
+  // service this year went in during Q4, so 5/7/15-year property uses the
+  // mid-quarter tables. Opt-in — the app can't see the taxpayer's other assets.
+  midQuarterConvention: boolean('mid_quarter_convention').notNull().default(false),
   results: jsonb('results'),
   totalFirstYearDeduction: numeric('total_first_year_deduction'),
   totalTaxSavings: numeric('total_tax_savings'),

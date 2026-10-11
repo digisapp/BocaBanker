@@ -56,20 +56,22 @@ interface BonusResult {
 }
 
 export default function BonusDepreciationCalculator() {
-  const [buildingValue, setBuildingValue] = useState('');
+  // Total property value (purchase price incl. land); the default allocation
+  // sets 20% aside as non-depreciable land.
+  const [propertyValue, setPropertyValue] = useState('');
   const [propertyType, setPropertyType] = useState('commercial');
   const [result, setResult] = useState<BonusResult | null>(null);
   const [calculated, setCalculated] = useState(false);
 
   function handleCalculate() {
-    const value = parseFloat(buildingValue);
+    const value = parseFloat(propertyValue);
     if (isNaN(value) || value <= 0) return;
 
     const allocation = getDefaultAllocation(propertyType, value);
     const isResidential = ['residential', 'multifamily'].includes(propertyType);
     const slPeriod: 27.5 | 39 = isResidential ? 27.5 : 39;
 
-    // Calculate without cost seg (straight-line on whole building minus land)
+    // Calculate without cost seg (straight-line on the property value minus land)
     const landAlloc = allocation.find((a) => a.recoveryPeriod === 0);
     const buildingBasis = value - (landAlloc ? landAlloc.amount : 0);
     const straightLine = calculateStraightLineDepreciation(buildingBasis, slPeriod);
@@ -129,7 +131,7 @@ export default function BonusDepreciationCalculator() {
   }
 
   function handleReset() {
-    setBuildingValue('');
+    setPropertyValue('');
     setPropertyType('commercial');
     setResult(null);
     setCalculated(false);
@@ -166,15 +168,16 @@ export default function BonusDepreciationCalculator() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-gray-500">Total Building Value ($)</Label>
+            <Label className="text-gray-500">Property Value ($)</Label>
             <Input
               type="number"
               inputMode="decimal"
               placeholder="e.g. 3000000"
-              value={buildingValue}
-              onChange={(e) => setBuildingValue(e.target.value)}
+              value={propertyValue}
+              onChange={(e) => setPropertyValue(e.target.value)}
               className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-amber-500/20"
             />
+            <p className="text-xs text-gray-400">Purchase price including land (20% is set aside as non-depreciable land)</p>
           </div>
 
           <div className="space-y-2">

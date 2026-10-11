@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, ApiError } from '@/lib/api/auth'
 import { apiError, apiValidationError } from '@/lib/api/response'
+import { readJson } from '@/lib/api/request'
 import { requireUuid } from '@/lib/api/params'
 import { resolveOwnedClientId } from '@/lib/api/ownership'
 import { db } from '@/db'
 import { properties, clients, costSegStudies } from '@/db/schema'
 import { logger } from '@/lib/logger'
 import { eq, and } from 'drizzle-orm'
-import { propertySchema } from '@/lib/validation/schemas'
+import { propertyUpdateSchema } from '@/lib/validation/update-schemas'
 
 export async function GET(
   request: NextRequest,
@@ -95,8 +96,10 @@ export async function PUT(
     const user = await requireAuth()
     const id = requireUuid((await params).id, 'Property not found')
 
-    const body = await request.json()
-    const parsed = propertySchema.safeParse(body)
+    const body = await readJson(request)
+    // Looser than the create schema: converted/imported properties have no
+    // city/state/ZIP and may carry a $0 purchase price.
+    const parsed = propertyUpdateSchema.safeParse(body)
 
     if (!parsed.success) {
       return apiValidationError(parsed.error)
@@ -128,20 +131,20 @@ export async function PUT(
         state: data.state,
         zip: data.zip,
         propertyType: data.property_type,
-        purchasePrice: data.purchase_price.toString(),
-        purchaseDate: data.purchase_date || null,
-        buildingValue: data.building_value?.toString() || null,
-        landValue: data.land_value?.toString() || null,
+        purchasePrice: data.purchase_price,
+        purchaseDate: data.purchase_date ?? null,
+        buildingValue: data.building_value ?? null,
+        landValue: data.land_value ?? null,
         squareFootage: data.square_footage || null,
-        yearBuilt: data.year_built || null,
+        yearBuilt: data.year_built ?? null,
         description,
-        loanAmount: data.loan_amount?.toString() || null,
-        interestRate: data.interest_rate?.toString() || null,
-        loanTermYears: data.loan_term_years || null,
-        monthlyPayment: data.monthly_payment?.toString() || null,
+        loanAmount: data.loan_amount ?? null,
+        interestRate: data.interest_rate ?? null,
+        loanTermYears: data.loan_term_years ?? null,
+        monthlyPayment: data.monthly_payment ?? null,
         loanType: data.loan_type || null,
         lenderName: data.lender_name || null,
-        loanOriginationDate: data.loan_origination_date || null,
+        loanOriginationDate: data.loan_origination_date ?? null,
         updatedAt: new Date(),
       })
       .where(and(eq(properties.id, id), eq(properties.userId, user.id)))

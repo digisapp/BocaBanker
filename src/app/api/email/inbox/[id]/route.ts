@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { requireUuid } from '@/lib/api/params';
 import { logger } from '@/lib/logger';
 import { AdminInboxService } from '@/lib/email/admin-inbox';
@@ -44,7 +45,7 @@ export async function PATCH(
   try {
     const user = await requireAdmin();
     const id = requireUuid((await params).id, 'Email not found');
-    const body = await request.json().catch(() => ({}));
+    const body = await readJson(request);
 
     if (body.useAiDraft === true) {
       const email = await AdminInboxService.getEmail(id);

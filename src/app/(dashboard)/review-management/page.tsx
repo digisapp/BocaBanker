@@ -32,7 +32,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
+import { cn, parseDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import type { Review } from '@/types'
 import Link from 'next/link'
@@ -123,6 +123,16 @@ export default function ReviewsManagementPage() {
     return () => controller.abort()
   }, [fetchReviews])
 
+  // After a change that drops a row out of the current view, step back a
+  // page if it was the last row on this one; otherwise just refetch
+  const refreshAfterChange = (rowLeavesView: boolean) => {
+    if (rowLeavesView && reviews.length === 1 && page > 1) {
+      setPage((p) => p - 1)
+    } else {
+      fetchReviews()
+    }
+  }
+
   const updateStatus = async (id: string, status: 'approved' | 'rejected') => {
     const res = await fetch(`/api/reviews/${id}`, {
       method: 'PUT',
@@ -131,7 +141,7 @@ export default function ReviewsManagementPage() {
     }).catch(() => null)
     if (res?.ok) {
       toast.success(`Review ${status}`)
-      fetchReviews()
+      refreshAfterChange(statusFilter !== 'all' && status !== statusFilter)
     } else {
       toast.error('Failed to update review')
     }
@@ -152,7 +162,7 @@ export default function ReviewsManagementPage() {
       toast.success('Response saved & review approved')
       setRespondReview(null)
       setResponseText('')
-      fetchReviews()
+      refreshAfterChange(statusFilter !== 'all' && statusFilter !== 'approved')
     } else {
       toast.error('Failed to save response')
     }
@@ -168,7 +178,7 @@ export default function ReviewsManagementPage() {
     if (res?.ok) {
       toast.success('Review deleted')
       setDeleteReview(null)
-      fetchReviews()
+      refreshAfterChange(true)
     } else {
       toast.error('Failed to delete review')
     }
@@ -282,7 +292,7 @@ export default function ReviewsManagementPage() {
                     </Badge>
                     {review.reviewDate && (
                       <span className="text-xs text-gray-400">
-                        {new Date(review.reviewDate + 'T00:00:00').toLocaleDateString(
+                        {parseDate(review.reviewDate).toLocaleDateString(
                           'en-US',
                           { month: 'short', day: 'numeric', year: 'numeric' }
                         )}

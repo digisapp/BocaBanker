@@ -6,6 +6,7 @@ import { leads } from '@/db/schema';
 import { eq, and, ilike, or, desc } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
 import { escapeLike } from '@/lib/api/params';
+import { businessToday } from '@/lib/dates';
 
 const CSV_COLUMNS = [
   { key: 'propertyAddress', label: 'Property Address' },
@@ -116,9 +117,11 @@ export async function GET(request: NextRequest) {
     const lines = rows.map((row: Record<string, unknown>) =>
       CSV_COLUMNS.map((c) => escapeCsvField(row[c.key])).join(',')
     );
-    const csv = [header, ...lines].join('\n');
+    // UTF-8 BOM so Excel doesn't read the file as Latin-1 and garble
+    // accented names (José -> JosÃ©).
+    const csv = '\uFEFF' + [header, ...lines].join('\n');
 
-    const date = new Date().toISOString().slice(0, 10);
+    const date = businessToday();
     const filename = `leads-export-${date}.csv`;
 
     return new NextResponse(csv, {

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDefaultAllocation } from '@/lib/cost-seg/asset-classes';
 import { logger } from '@/lib/logger';
+import { ApiError } from '@/lib/api/auth';
+import { readJson } from '@/lib/api/request';
+import { readNumber } from '@/app/api/calculators/_lib/numbers';
 import {
   calculateDepreciation,
   calculateStraightLineDepreciation,
@@ -11,10 +14,14 @@ import type { MacrsRecoveryPeriod } from '@/lib/cost-seg/macrs-tables';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { propertyValue, propertyType, taxRate, bonusDepreciationRate, discountRate } = body;
+    const body = await readJson(request);
+    const { propertyType } = body;
+    const propertyValue = readNumber(body.propertyValue);
+    const rate = readNumber(body.taxRate, 37);
+    const bonusDepreciationRate = readNumber(body.bonusDepreciationRate, 100);
+    const npvDiscountRate = readNumber(body.discountRate, 5);
 
-    if (!propertyValue || propertyValue <= 0) {
+    if (!(propertyValue > 0)) {
       return NextResponse.json(
         { error: 'propertyValue must be a positive number' },
         { status: 400 }
@@ -39,15 +46,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const rate = typeof taxRate === 'number' ? taxRate : 37;
-    const bonusRate =
-      typeof bonusDepreciationRate === 'number'
-        ? Math.max(0, Math.min(100, bonusDepreciationRate))
-        : 100;
-    const npvDiscountRate =
-      typeof discountRate === 'number' && Number.isFinite(discountRate) && discountRate >= 0
-        ? discountRate
-        : 5;
+    if (!(rate >= 0 && rate <= 100)) {
+      return NextResponse.json(
+        { error: 'taxRate must be between 0 and 100' },
+        { status: 400 }
+      );
+    }
+
+    if (Number.isNaN(bonusDepreciationRate)) {
+      return NextResponse.json(
+        { error: 'bonusDepreciationRate must be a number' },
+        { status: 400 }
+      );
+    }
+    const bonusRate = Math.max(0, Math.min(100, bonusDepreciationRate));
+
+    if (!(npvDiscountRate >= 0)) {
+      return NextResponse.json(
+        { error: 'discountRate must be a non-negative number' },
+        { status: 400 }
+      );
+    }
 
     // Get default allocation
     const allocation = getDefaultAllocation(propertyType, propertyValue);
@@ -99,10 +118,13 @@ export async function POST(request: NextRequest) {
         : taxSavings.length > 0
         ? taxSavings[taxSavings.length - 1].cumulativeSavings
         : 0;
-    const totalSavings =
-      taxSavings.length > 0
-        ? taxSavings[taxSavings.length - 1].cumulativeSavings
-        : 0;
+    // Cost seg is a timing benefit: lifetime cumulative savings net to ~zero,
+    // so (like the calculators and study reports) total savings is the PEAK
+    // cumulative savings, not the final cumulative value.
+    const totalSavings = taxSavings.reduce(
+      (max, e) => Math.max(max, e.cumulativeSavings),
+      0
+    );
 
     const annualFlows = taxSavings.map((e) => e.annualSavings);
     const npv = calculateNPV(annualFlows, npvDiscountRate);
@@ -120,6 +142,7 @@ export async function POST(request: NextRequest) {
       schedule: taxSavings,
     });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('calculators-api', 'Tax savings calculation error', error);
     return NextResponse.json(
       { error: 'Failed to calculate tax savings' },

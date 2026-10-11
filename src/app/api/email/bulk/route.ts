@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { clients } from '@/db/schema';
@@ -34,11 +35,6 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function isRateLimitError(error?: string): boolean {
-  if (!error) return false;
-  return /429|rate.?limit|too many requests/i.test(error);
-}
-
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
@@ -49,7 +45,7 @@ export async function POST(request: NextRequest) {
       return apiError('Too many bulk sends. Please wait a few minutes and try again.', 429);
     }
 
-    const body = await request.json();
+    const body = await readJson(request);
     const {
       clientIds,
       filter,
@@ -150,28 +146,17 @@ export async function POST(request: NextRequest) {
             throw new Error(`Unknown template: ${template}`);
         }
 
-        let result = await sendEmail({
+        // On rate limiting (429) sendEmail waits 1s and retries once before
+        // recording anything, so a retried send leaves a single row.
+        const result = await sendEmail({
           to: client.email!,
           subject,
           html,
           userId: user.id,
           clientId: client.id,
           template,
+          retryOnRateLimit: true,
         });
-
-        // On rate limiting (429), wait 1s and retry once before recording failure
-        if (!result.success && isRateLimitError(result.error)) {
-          logger.warn('email-api', `Rate limited sending to ${client.email}, retrying in 1s`);
-          await delay(1000);
-          result = await sendEmail({
-            to: client.email!,
-            subject,
-            html,
-            userId: user.id,
-            clientId: client.id,
-            template,
-          });
-        }
 
         if (result.success) {
           sent++;

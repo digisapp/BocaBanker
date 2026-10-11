@@ -24,6 +24,19 @@ interface PasswordFormData {
   confirmPassword: string;
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Message from a failed /api/settings call, preferring a field-specific one. */
+async function readSettingsError(res: Response, fallback: string): Promise<string> {
+  const data = await res.json().catch(() => null);
+  const fieldErrors: Record<string, string[] | undefined> | undefined =
+    data?.details?.fieldErrors;
+  const fieldMessage = fieldErrors
+    ? Object.values(fieldErrors).flat().find((m) => typeof m === 'string')
+    : undefined;
+  return fieldMessage || (typeof data?.error === 'string' ? data.error : '') || fallback;
+}
+
 export default function SettingsPage() {
   const { user } = useAuth();
   const supabase = createClient();
@@ -32,8 +45,16 @@ export default function SettingsPage() {
   const [passwordSaved, setPasswordSaved] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [passwordError, setPasswordError] = useState('');
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [studyAlerts, setStudyAlerts] = useState(true);
+
+  // New lead alerts: the switch saves on toggle, the address with its button
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [notifyNewLeads, setNotifyNewLeads] = useState(true);
+  const [notifySaving, setNotifySaving] = useState(false);
+  const [leadAlertEmail, setLeadAlertEmail] = useState('');
+  const [savedLeadAlertEmail, setSavedLeadAlertEmail] = useState('');
+  const [leadEmailError, setLeadEmailError] = useState('');
+  const [leadEmailSaving, setLeadEmailSaving] = useState(false);
+  const [leadEmailSaved, setLeadEmailSaved] = useState(false);
 
   // Mortgage settings
   const [ariveLink, setAriveLink] = useState('');
@@ -44,7 +65,7 @@ export default function SettingsPage() {
   const [mortgageSaved, setMortgageSaved] = useState(false);
 
   useEffect(() => {
-    async function loadMortgageSettings() {
+    async function loadSettings() {
       try {
         const res = await fetch('/api/settings');
         if (res.ok) {
@@ -53,34 +74,89 @@ export default function SettingsPage() {
           setAriveCompanyName(data.ariveCompanyName || '');
           setRateAlertEnabled(data.rateAlertEnabled || false);
           setRateAlertThresholdBps(data.rateAlertThresholdBps?.toString() || '25');
+          setNotifyNewLeads(data.notifyNewLeads ?? true);
+          setLeadAlertEmail(data.leadAlertEmail || '');
+          setSavedLeadAlertEmail(data.leadAlertEmail || '');
         }
       } catch {
         // Settings may not exist yet — that's fine
+      } finally {
+        setSettingsLoaded(true);
       }
     }
-    loadMortgageSettings();
+    loadSettings();
   }, []);
+
+  /** PUT is partial: only the keys sent are changed. */
+  async function saveSettings(changes: Record<string, unknown>, fallbackError: string) {
+    const res = await fetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(changes),
+    });
+    if (!res.ok) throw new Error(await readSettingsError(res, fallbackError));
+  }
+
+  async function handleNotifyNewLeadsChange(checked: boolean) {
+    // Optimistic: flip now, roll back if the save fails
+    setNotifyNewLeads(checked);
+    setNotifySaving(true);
+    try {
+      await saveSettings({ notifyNewLeads: checked }, 'Failed to save lead alerts');
+      toast.success(checked ? 'New lead alerts on' : 'New lead alerts off');
+    } catch (err) {
+      setNotifyNewLeads(!checked);
+      logger.error('settings-page', 'Failed to save lead alert preference', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to save lead alerts');
+    } finally {
+      setNotifySaving(false);
+    }
+  }
+
+  async function handleLeadAlertEmailSave(e: React.FormEvent) {
+    e.preventDefault();
+    const email = leadAlertEmail.trim();
+    if (email && (email.length > 200 || !EMAIL_RE.test(email))) {
+      setLeadEmailError('Enter a valid email address, or leave it blank');
+      return;
+    }
+    setLeadEmailError('');
+    setLeadEmailSaving(true);
+    setLeadEmailSaved(false);
+    try {
+      // Empty means "use the account email", stored as null
+      await saveSettings({ leadAlertEmail: email || null }, 'Failed to save alert email');
+      setLeadAlertEmail(email);
+      setSavedLeadAlertEmail(email);
+      setLeadEmailSaved(true);
+      setTimeout(() => setLeadEmailSaved(false), 3000);
+    } catch (err) {
+      logger.error('settings-page', 'Failed to save lead alert email', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to save alert email');
+    } finally {
+      setLeadEmailSaving(false);
+    }
+  }
 
   async function handleMortgageSettingsSave() {
     setMortgageSaving(true);
     setMortgageSaved(false);
     try {
-      const res = await fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Surfaces the server's message (e.g. which field failed validation)
+      await saveSettings(
+        {
           ariveLink: ariveLink || null,
           ariveCompanyName: ariveCompanyName || null,
           rateAlertEnabled,
           rateAlertThresholdBps: rateAlertThresholdBps ? Number(rateAlertThresholdBps) : null,
-        }),
-      });
-      if (!res.ok) throw new Error('Failed to save');
+        },
+        'Failed to save mortgage settings'
+      );
       setMortgageSaved(true);
       setTimeout(() => setMortgageSaved(false), 3000);
     } catch (err) {
       logger.error('settings-page', 'Failed to save mortgage settings', err);
-      toast.error('Failed to save mortgage settings');
+      toast.error(err instanceof Error ? err.message : 'Failed to save mortgage settings');
     } finally {
       setMortgageSaving(false);
     }
@@ -393,35 +469,77 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm text-gray-900">Email Notifications</p>
+              <p className="text-sm text-gray-900">New lead alerts</p>
               <p className="text-xs text-gray-400">
-                Receive email updates about your account activity
+                Get an email when a lead comes in from the website chat, contact form, or phone.
               </p>
             </div>
             <Switch
-              aria-label="Email notifications"
-              checked={emailNotifications}
-              onCheckedChange={setEmailNotifications}
+              aria-label="New lead alerts"
+              checked={notifyNewLeads}
+              onCheckedChange={handleNotifyNewLeadsChange}
+              disabled={!settingsLoaded || notifySaving}
             />
           </div>
 
-          <Separator className="bg-gray-200" />
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-900">Study Completion Alerts</p>
-              <p className="text-xs text-gray-400">
-                Get notified when a cost seg study is completed
-              </p>
-            </div>
-            <Switch
-              aria-label="Study completion alerts"
-              checked={studyAlerts}
-              onCheckedChange={setStudyAlerts}
-            />
-          </div>
+          {notifyNewLeads && (
+            <form onSubmit={handleLeadAlertEmailSave} noValidate className="space-y-2">
+              <Label htmlFor="settings-lead-alert-email" className="text-gray-500">
+                Send alerts to
+              </Label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Input
+                  id="settings-lead-alert-email"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  value={leadAlertEmail}
+                  onChange={(e) => {
+                    setLeadAlertEmail(e.target.value);
+                    if (leadEmailError) setLeadEmailError('');
+                  }}
+                  placeholder={user?.email || 'you@example.com'}
+                  disabled={!settingsLoaded}
+                  aria-invalid={leadEmailError ? true : undefined}
+                  aria-describedby="settings-lead-alert-email-hint"
+                  className="bg-gray-50 border-gray-200 text-gray-900 focus:border-amber-500 focus:ring-amber-500/20 sm:flex-1"
+                />
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="submit"
+                    disabled={
+                      !settingsLoaded ||
+                      leadEmailSaving ||
+                      leadAlertEmail.trim() === savedLeadAlertEmail
+                    }
+                    className="bg-navy text-white hover:bg-navy-light font-semibold"
+                  >
+                    {leadEmailSaving ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : null}
+                    Save
+                  </Button>
+                  {leadEmailSaved && (
+                    <span className="flex items-center gap-1 text-sm text-emerald-500">
+                      <CheckCircle className="h-4 w-4" />
+                      Saved
+                    </span>
+                  )}
+                </div>
+              </div>
+              {leadEmailError ? (
+                <p id="settings-lead-alert-email-hint" className="text-xs text-red-500">
+                  {leadEmailError}
+                </p>
+              ) : (
+                <p id="settings-lead-alert-email-hint" className="text-xs text-gray-400">
+                  Optional. Leave blank to use your account email.
+                </p>
+              )}
+            </form>
+          )}
         </div>
       </div>
     </div>

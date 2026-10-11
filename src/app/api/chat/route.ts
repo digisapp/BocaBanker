@@ -1,5 +1,6 @@
 import { requireAuth, ApiError } from '@/lib/api/auth'
 import { apiError } from '@/lib/api/response'
+import { readJson } from '@/lib/api/request'
 import { createChatStream, getMessageText } from '@/lib/api/chat-shared'
 import { createAuthLeadCapture } from '@/lib/ai/tool-executors'
 import { BOCA_BANKER_SYSTEM_PROMPT } from '@/lib/ai/boca-banker-prompt'
@@ -30,7 +31,8 @@ export async function POST(request: Request) {
     if (!rl.success) {
       return apiError('Rate limit exceeded. Please wait before sending another message.', 429)
     }
-    const { messages, conversationId, isGuestHandoff, trigger } = await request.json()
+    const { messages, conversationId, isGuestHandoff, trigger } =
+      await readJson(request)
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return apiError('messages must be a non-empty array', 400)
@@ -86,8 +88,22 @@ export async function POST(request: Request) {
     const makeTitle = (content: string) =>
       content.length > 60 ? content.substring(0, 60) + '...' : content
 
-    // Guest handoff: save ALL prior messages to the new conversation
-    if (isGuestHandoff && messages.length > 0) {
+    // Guest handoff: import the whole guest history, but only into a
+    // conversation with no messages yet. The client keeps the flag on until a
+    // request succeeds, so it can arrive with a conversation that already has
+    // a history; importing there would duplicate it, so that case falls
+    // through to saving just the new user message.
+    let importGuestHistory = isGuestHandoff === true
+    if (importGuestHistory && !isNewConversation) {
+      const [existing] = await db
+        .select({ id: chatMessages.id })
+        .from(chatMessages)
+        .where(eq(chatMessages.conversationId, activeConversationId))
+        .limit(1)
+      importGuestHistory = !existing
+    }
+
+    if (importGuestHistory) {
       // Single batched insert (was one round-trip per message). Rows in one
       // statement would share the same now() default, so assign strictly
       // increasing timestamps to keep the history ordered on reload.

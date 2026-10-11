@@ -8,7 +8,8 @@
 
 import { calculateBonusDepreciation } from './bonus-depreciation';
 import { calculateDepreciation, calculateStraightLineDepreciation } from './depreciation';
-import { type MacrsRecoveryPeriod, getMacrsRates } from './macrs-tables';
+import type { StudyAssumptions } from './conventions';
+import { type MacrsRecoveryPeriod, getMacrsRates, quarterForMonth } from './macrs-tables';
 import { calculateNPV } from './npv';
 import { calculateTaxSavings } from './tax-savings';
 
@@ -20,8 +21,13 @@ export interface StudyReportInput {
   propertyAddress: string;
   propertyType: string;
   purchasePrice: number;
+  /**
+   * Depreciable building value for the straight-line baseline. Pass 0 when
+   * unknown: the baseline then uses the depreciable basis of the assets.
+   */
   buildingValue: number;
   landValue: number;
+  /** Tax year the property was placed in service (year 1 of the schedules) */
   studyYear: number;
   taxRate: number;
   discountRate: number;
@@ -32,6 +38,13 @@ export interface StudyReportInput {
    * A-7a). Defaults to 1 (January) when omitted.
    */
   placedInServiceMonth?: number;
+  /**
+   * Apply the mid-quarter convention (IRC §168(d)(3)) to 5/7/15-year
+   * property: the quarter of `placedInServiceMonth` picks the IRS Pub 946
+   * Table A-2..A-5 column. Real property keeps mid-month. Default false
+   * (half-year convention).
+   */
+  midQuarterConvention?: boolean;
   assets: { category: string; costBasis: number; recoveryPeriod: number }[];
 }
 
@@ -39,8 +52,10 @@ export interface StudyReport {
   summary: {
     totalReclassified: number;
     totalFirstYearDeduction: number;
+    /** Peak cumulative savings vs. straight-line (the maximum timing benefit) */
     totalTaxSavings: number;
     npvTaxSavings: number;
+    /** Year-1 tax savings vs. straight-line as a % of purchase price */
     effectiveRate: number;
   };
   assetBreakdown: {
@@ -66,8 +81,11 @@ export interface StudyReport {
     bonusDepreciation: number;
     regularFirstYear: number;
     totalFirstYear: number;
+    /** Year-1 tax savings vs. straight-line (same as taxSavingsSchedule[0].savings) */
     taxSavings: number;
   };
+  /** Conventions the schedules were computed with (year 1 = placedInServiceYear) */
+  assumptions: StudyAssumptions;
 }
 
 // ---------------------------------------------------------------------------
@@ -117,7 +135,9 @@ export function generateStudyReport(input: StudyReportInput): StudyReport {
     bonusDepreciationRate,
     assets,
   } = input;
-  const month = input.placedInServiceMonth ?? 1;
+  const rawMonth = input.placedInServiceMonth ?? 1;
+  const month = Number.isInteger(rawMonth) && rawMonth >= 1 && rawMonth <= 12 ? rawMonth : 1;
+  const midQuarter = input.midQuarterConvention === true;
 
   const straightLinePeriod = getStraightLineRecoveryPeriod(propertyType);
 
@@ -158,16 +178,33 @@ export function generateStudyReport(input: StudyReportInput): StudyReport {
     );
   }
 
-  // Flag basis mismatches: savings should come from timing, not from the
-  // asset bases simply not summing to the building value.
   const depreciableBasis = assets
     .filter((a) => a.recoveryPeriod !== 0)
     .reduce((sum, a) => sum + a.costBasis, 0);
-  if (buildingValue > 0 && Math.abs(depreciableBasis - buildingValue) / buildingValue > 0.01) {
+
+  // The "without cost seg" baseline depreciates the building value. With no
+  // building value on record, the assets were allocated from the purchase
+  // price (minus land), so the baseline uses that same depreciable basis —
+  // an empty baseline would count every dollar of depreciation as savings.
+  const hasBuildingValue = Number.isFinite(buildingValue) && buildingValue > 0;
+  const baselineBasis = hasBuildingValue ? buildingValue : depreciableBasis;
+
+  // Flag basis mismatches: savings should come from timing, not from the
+  // asset bases simply not summing to the building value (or, without one,
+  // from the assets not adding up to the purchase price).
+  if (hasBuildingValue) {
+    if (Math.abs(depreciableBasis - buildingValue) / buildingValue > 0.01) {
+      console.warn(
+        `[report-generator] Depreciable asset basis ($${depreciableBasis.toFixed(2)}) ` +
+          `differs from building value ($${buildingValue.toFixed(2)}) by more than 1% — ` +
+          `savings will include spurious basis differences.`
+      );
+    }
+  } else if (purchasePrice > 0 && Math.abs(totalAssetValue - purchasePrice) / purchasePrice > 0.01) {
     console.warn(
-      `[report-generator] Depreciable asset basis ($${depreciableBasis.toFixed(2)}) ` +
-        `differs from building value ($${buildingValue.toFixed(2)}) by more than 1% — ` +
-        `savings will include spurious basis differences.`
+      `[report-generator] No building value on record and the assets ($${totalAssetValue.toFixed(2)}) ` +
+        `differ from the purchase price ($${purchasePrice.toFixed(2)}) by more than 1% — ` +
+        `the straight-line baseline uses the depreciable asset basis ($${depreciableBasis.toFixed(2)}).`
     );
   }
 
@@ -181,7 +218,8 @@ export function generateStudyReport(input: StudyReportInput): StudyReport {
       asset.costBasis,
       asset.recoveryPeriod,
       bonusDepreciationRate,
-      month
+      month,
+      midQuarter
     );
 
     assetSchedules.push(
@@ -216,10 +254,10 @@ export function generateStudyReport(input: StudyReportInput): StudyReport {
   // 3. Straight-line depreciation (without cost seg)
   // -------------------------------------------------------------------------
 
-  // Without cost seg, the entire building value is depreciated at the
+  // Without cost seg, the entire building basis is depreciated at the
   // straight-line period (39yr or 27.5yr) with no bonus.
   const straightLineSchedule = calculateStraightLineDepreciation(
-    buildingValue,
+    baselineBasis,
     straightLinePeriod,
     month
   );
@@ -300,13 +338,14 @@ export function generateStudyReport(input: StudyReportInput): StudyReport {
       asset.costBasis,
       asset.recoveryPeriod,
       bonusDepreciationRate,
-      month
+      month,
+      midQuarter
     );
 
     totalBonusDepreciation += bonusResult.bonusAmount;
 
     // Regular first year MACRS on remaining basis
-    const rates = getMacrsRates(asset.recoveryPeriod, month);
+    const rates = getMacrsRates(asset.recoveryPeriod, month, midQuarter);
     const firstYearMacrs = bonusResult.remainingBasis * (rates[0] / 100);
     totalRegularFirstYear += firstYearMacrs;
   }
@@ -318,9 +357,9 @@ export function generateStudyReport(input: StudyReportInput): StudyReport {
     (totalBonusDepreciation + totalRegularFirstYear) * 100
   ) / 100;
 
-  const firstYearTaxSavings = Math.round(
-    totalFirstYear * (taxRate / 100) * 100
-  ) / 100;
+  // Year-1 savings versus the straight-line baseline (not the gross tax value
+  // of the year-1 deduction, which ignores the depreciation you'd get anyway)
+  const firstYearTaxSavings = taxSavingsSchedule.length > 0 ? taxSavingsSchedule[0].savings : 0;
 
   const firstYearAnalysis = {
     bonusDepreciation: totalBonusDepreciation,
@@ -349,7 +388,7 @@ export function generateStudyReport(input: StudyReportInput): StudyReport {
     0
   );
 
-  // Effective rate: first-year tax savings as a percentage of purchase price
+  // Effective rate: first-year tax savings (vs. baseline) as a percentage of purchase price
   const effectiveRate =
     purchasePrice > 0
       ? Math.round((firstYearTaxSavings / purchasePrice) * 10000) / 100
@@ -363,11 +402,19 @@ export function generateStudyReport(input: StudyReportInput): StudyReport {
     effectiveRate,
   };
 
+  const assumptions: StudyAssumptions = {
+    placedInServiceYear: input.studyYear,
+    placedInServiceMonth: month,
+    placedInServiceQuarter: quarterForMonth(month),
+    midQuarterConvention: midQuarter,
+  };
+
   return {
     summary,
     assetBreakdown,
     depreciationSchedule,
     taxSavingsSchedule,
     firstYearAnalysis,
+    assumptions,
   };
 }

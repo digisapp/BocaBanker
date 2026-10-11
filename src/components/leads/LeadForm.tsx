@@ -440,7 +440,11 @@ export function LeadForm({
                       <SelectItem value="proposal_sent">
                         Proposal Sent
                       </SelectItem>
-                      <SelectItem value="converted">Converted</SelectItem>
+                      {/* Converting goes through "Convert to Client"; only
+                          offer it when the lead is already converted */}
+                      {defaultValues?.status === 'converted' && (
+                        <SelectItem value="converted">Converted</SelectItem>
+                      )}
                       <SelectItem value="lost">Lost</SelectItem>
                     </SelectContent>
                   </Select>

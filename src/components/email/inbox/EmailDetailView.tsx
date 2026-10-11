@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import SandboxedHtml from '@/components/email/SandboxedHtml';
 import type { EmailDetail } from './types';
-import { AI_CATEGORY_LABELS, BADGE_TONES, STATUS_LABELS, clientName, formatBytes, formatFullDate, readAttachments, readCc } from './types';
+import { AI_CATEGORY_LABELS, BADGE_TONES, STATUS_LABELS, UNVERIFIED_SENDER_HINT, clientName, formatBytes, formatFullDate, readAttachments, readCc } from './types';
 
 interface EmailDetailViewProps {
   email: EmailDetail | null;
@@ -34,6 +34,7 @@ function Message({ msg, isLast }: { msg: EmailDetail; isLast: boolean }) {
   const outbound = msg.direction === 'outbound';
   const st = STATUS_LABELS[msg.status];
   const client = clientName(msg);
+  const unverified = !outbound && msg.metadata?.dmarc === 'fail';
 
   return (
     <article className={cn('px-4 py-4 sm:px-5', !isLast && 'border-b border-gray-100')}>
@@ -53,6 +54,9 @@ function Message({ msg, isLast }: { msg: EmailDetail; isLast: boolean }) {
               {msg.template === 'ai-auto-reply' && (
                 <Badge variant="outline" className={BADGE_TONES.violet}><Sparkles className="h-3 w-3" />Auto-reply</Badge>
               )}
+              {unverified && (
+                <Badge variant="outline" className={BADGE_TONES.red} title={UNVERIFIED_SENDER_HINT}><ShieldAlert className="h-3 w-3" />Unverified sender</Badge>
+              )}
               {!outbound && msg.clientId && (
                 <Link
                   href={`/clients/${msg.clientId}`}
@@ -70,6 +74,13 @@ function Message({ msg, isLast }: { msg: EmailDetail; isLast: boolean }) {
         </div>
         <time dateTime={msg.createdAt} className="shrink-0 text-xs text-gray-500">{formatFullDate(msg.createdAt)}</time>
       </header>
+
+      {unverified && (
+        <p role="note" className="mb-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          {UNVERIFIED_SENDER_HINT}
+        </p>
+      )}
 
       {msg.bodyHtml ? (
         <div className="overflow-hidden rounded-xl border border-gray-100">

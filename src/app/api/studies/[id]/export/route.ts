@@ -6,6 +6,7 @@ import { costSegStudies, properties, clients } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { logger } from '@/lib/logger'
 import { formatCurrency } from '@/lib/utils'
+import { conventionLabel, type StudyAssumptions } from '@/lib/cost-seg/conventions'
 
 const CATEGORY_LABELS: Record<string, string> = {
   personal_property_5yr: '5-Year Personal Property',
@@ -83,6 +84,8 @@ export async function GET(
       depreciationSchedule: { year: number; accelerated: number; straightLine: number; difference: number }[]
       taxSavingsSchedule: { year: number; withCostSeg: number; withoutCostSeg: number; savings: number; cumulativeSavings: number }[]
       firstYearAnalysis: { bonusDepreciation: number; regularFirstYear: number; totalFirstYear: number; taxSavings: number }
+      /** absent on results calculated before conventions were recorded */
+      assumptions?: StudyAssumptions
     } | null
 
     if (!results) {
@@ -161,7 +164,7 @@ export async function GET(
 <body>
   <h1>Cost Segregation Study Report</h1>
   <p class="subtitle">${esc(study.studyName)}</p>
-  <p class="meta">Prepared: ${now} | Study Year: ${study.studyYear}</p>
+  <p class="meta">Prepared: ${now} | Placed in Service: ${study.studyYear}</p>
 
   <div class="card">
     <h2 style="margin-top:0">Property Information</h2>
@@ -182,6 +185,7 @@ export async function GET(
       <div><span class="stat-label">Discount Rate</span><p class="stat-value-lg">${esc(study.discountRate || '5')}%</p></div>
       <div><span class="stat-label">Bonus Depreciation</span><p class="stat-value-lg">${esc(study.bonusDepreciationRate || '100')}%</p></div>
     </div>
+    <p style="margin-top:12px;font-size:12px;color:#6b7280"><strong>Depreciation convention:</strong> ${esc(conventionLabel(results.assumptions))}</p>
   </div>
 
   <div class="card">

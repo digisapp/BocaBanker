@@ -173,6 +173,10 @@ function Stars({ rating, className }: { rating: number; className?: string }) {
 export default async function Home() {
   const reviewSummary = await getReviewSummary()
   const hasReviews = reviewSummary.total > 0
+  // The on-page #reviews section only renders when there are 5-star reviews
+  // to show; otherwise send review links to the full /reviews page
+  const showReviewsSection = reviewSummary.latest.length > 0
+  const reviewsHref = showReviewsSection ? '#reviews' : '/reviews'
   const bankerName = siteConfig.ownerName || 'Boca Banker'
 
   const stats = [
@@ -231,7 +235,9 @@ export default async function Home() {
                   <a href="#banker" className="rounded-lg px-3 py-2 hover:text-navy">About</a>
                 )}
                 <a href="#how-it-works" className="rounded-lg px-3 py-2 hover:text-navy">How it works</a>
-                <a href="#reviews" className="rounded-lg px-3 py-2 hover:text-navy">Reviews</a>
+                {hasReviews && (
+                  <a href={reviewsHref} className="rounded-lg px-3 py-2 hover:text-navy">Reviews</a>
+                )}
                 <a href="#faq" className="rounded-lg px-3 py-2 hover:text-navy">FAQ</a>
               </div>
               <NavCallAsk />
@@ -294,7 +300,7 @@ export default async function Home() {
                     )}
                   </p>
                   {hasReviews ? (
-                    <a href="#reviews" className="-mb-2 -mt-1.5 flex items-center gap-2 py-2 text-sm text-gray-600 hover:text-navy">
+                    <a href={reviewsHref} className="-mb-2 -mt-1.5 flex items-center gap-2 py-2 text-sm text-gray-600 hover:text-navy">
                       <Stars rating={reviewSummary.average} />
                       <span>
                         {reviewSummary.average.toFixed(1)} from {reviewSummary.total} client reviews
@@ -378,7 +384,7 @@ export default async function Home() {
         )}
 
         {/* ══════════ REVIEWS ══════════ */}
-        {reviewSummary.latest.length > 0 && (
+        {showReviewsSection && (
           <section id="reviews" aria-label="Client reviews" className="scroll-mt-20 px-4 sm:px-6 py-20 sm:py-24">
             <div className="mx-auto max-w-6xl">
               <Reveal>

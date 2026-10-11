@@ -10,7 +10,7 @@ WORKDIR /home/appuser/app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY --chown=appuser:appuser agent.py leads.py prompt.py ./
+COPY --chown=appuser:appuser agent.py app_api.py leads.py prompt.py ./
 USER appuser
 
 # Pre-download model files (noise cancellation, VAD) so calls start fast

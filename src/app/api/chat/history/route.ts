@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { chatConversations, chatMessages } from '@/db/schema';
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
 export async function DELETE(request: Request) {
   try {
     const user = await requireAuth();
-    const { conversationId } = await request.json();
+    const { conversationId } = await readJson(request);
 
     if (!isUuid(conversationId)) {
       return apiError('conversationId is required', 400);

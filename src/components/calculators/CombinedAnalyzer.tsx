@@ -363,7 +363,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
                 </div>
                 <div>
                   <span className="text-xs text-gray-500">Break-Even</span>
-                  <p className="text-lg font-semibold text-gray-900">{result.monthlySavings > 0 ? `${result.refiBreakEvenMonths} months` : 'N/A'}</p>
+                  <p className="text-lg font-semibold text-gray-900">{result.refiBreakEvenWithinTerm ? `${result.refiBreakEvenMonths} months` : result.monthlySavings > 0 ? 'Not within loan term' : 'N/A'}</p>
                 </div>
                 <div>
                   <span className="text-xs text-gray-500">Total Refi Savings</span>
@@ -425,7 +425,7 @@ export default function CombinedAnalyzer({ initialValues }: CombinedAnalyzerProp
                 <Clock className="h-4 w-4 text-blue-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Break-Even</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{result.monthlySavings > 0 ? `${result.refiBreakEvenMonths} mo` : 'N/A'}</p>
+              <p className="text-2xl font-bold text-gray-900">{result.refiBreakEvenWithinTerm ? `${result.refiBreakEvenMonths} mo` : result.monthlySavings > 0 ? 'Never' : 'N/A'}</p>
             </div>
           </div>
 

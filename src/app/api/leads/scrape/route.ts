@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { db } from '@/db';
 import { leads } from '@/db/schema';
 import { eq, and, isNotNull } from 'drizzle-orm';
@@ -177,7 +178,8 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAdmin();
 
-    const body: ScrapeRequestBody = await request.json();
+    // A JSON `null` body parses fine; treat it like an empty object.
+    const body: ScrapeRequestBody = await readJson(request);
     const { source } = body;
 
     if (!source || (source !== 'attom' && source !== 'county')) {

@@ -4,6 +4,8 @@ import { apiError } from '@/lib/api/response';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 import { getCachedRates } from '@/lib/mortgage/rates';
+import { businessPeriods, isDateInRange } from '@/lib/dates';
+import { CLOSED_LOAN_STATUSES } from '@/lib/loans';
 
 export async function GET(_request: NextRequest) {
   try {
@@ -21,12 +23,14 @@ export async function GET(_request: NextRequest) {
         ? Math.round((currentRate30yr - previousRate30yr) * 100) / 100
         : null;
 
-    // Pipeline summary
+    // Pipeline summary — active loans only. Funded loans are done (they count
+    // toward commission below, as on the commission page) and have no stage
+    // bucket, so including them inflated the pipeline forever.
     const { data: pipelineRows, error: pipelineError } = await supabaseAdmin
       .from('loans')
       .select('status, loan_amount')
       .eq('user_id', user.id)
-      .not('status', 'in', '("closed","withdrawn")');
+      .not('status', 'in', '("funded","closed","withdrawn")');
 
     if (pipelineError) {
       logger.error('mortgage-stats', 'Failed to fetch pipeline loans', pipelineError);
@@ -66,16 +70,15 @@ export async function GET(_request: NextRequest) {
       }
     }
 
-    // Commission MTD & YTD
-    const now = new Date();
-    const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-    const yearStart = `${now.getFullYear()}-01-01`;
+    // Commission MTD & YTD — same rules as /api/mortgage/commission: funded
+    // and closed loans, by actual closing date, month/year in Eastern time.
+    const period = businessPeriods();
 
     const { data: fundedLoans, error: fundedError } = await supabaseAdmin
       .from('loans')
       .select('commission_amount, actual_closing_date, status')
       .eq('user_id', user.id)
-      .in('status', ['funded', 'closed']);
+      .in('status', [...CLOSED_LOAN_STATUSES]);
 
     if (fundedError) {
       logger.error('mortgage-stats', 'Failed to fetch funded loans', fundedError);
@@ -90,10 +93,10 @@ export async function GET(_request: NextRequest) {
     for (const loan of fundedLoans || []) {
       const amount = parseFloat(loan.commission_amount as string) || 0;
       const closeDate = loan.actual_closing_date as string;
-      if (closeDate && closeDate >= yearStart) {
+      if (isDateInRange(closeDate, period.yearStart, period.nextYearStart)) {
         commissionYTD += amount;
         loansFundedYTD++;
-        if (closeDate >= monthStart) {
+        if (isDateInRange(closeDate, period.monthStart, period.nextMonthStart)) {
           commissionMTD += amount;
           loansFundedMTD++;
         }

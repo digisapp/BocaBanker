@@ -1,19 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDefaultAllocation } from '@/lib/cost-seg/asset-classes';
 import { logger } from '@/lib/logger';
+import { ApiError } from '@/lib/api/auth';
+import { readJson } from '@/lib/api/request';
+import { readNumber } from '@/app/api/calculators/_lib/numbers';
 import { calculateBonusDepreciation } from '@/lib/cost-seg/bonus-depreciation';
 import { calculateStraightLineDepreciation } from '@/lib/cost-seg/depreciation';
 import type { MacrsRecoveryPeriod } from '@/lib/cost-seg/macrs-tables';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { propertyType, bonusRate: inputBonusRate } = body;
+    const body = await readJson(request);
+    const { propertyType } = body;
     // This value is the TOTAL property value (land is subtracted via the
     // default allocation below). `buildingValue` is accepted as a legacy alias.
-    const buildingValue = body.propertyValue ?? body.buildingValue;
+    const buildingValue = readNumber(body.propertyValue ?? body.buildingValue);
+    const inputBonusRate = readNumber(body.bonusRate, 100);
 
-    if (!buildingValue || buildingValue <= 0) {
+    if (!(buildingValue > 0)) {
       return NextResponse.json(
         { error: 'propertyValue must be a positive number' },
         { status: 400 }
@@ -38,10 +42,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const bonusRate =
-      typeof inputBonusRate === 'number'
-        ? Math.max(0, Math.min(100, inputBonusRate))
-        : 100;
+    if (Number.isNaN(inputBonusRate)) {
+      return NextResponse.json(
+        { error: 'bonusRate must be a number' },
+        { status: 400 }
+      );
+    }
+    const bonusRate = Math.max(0, Math.min(100, inputBonusRate));
 
     const allocation = getDefaultAllocation(propertyType, buildingValue);
     const isResidential = ['residential', 'multifamily'].includes(propertyType);
@@ -109,6 +116,7 @@ export async function POST(request: NextRequest) {
       breakdown,
     });
   } catch (error) {
+    if (error instanceof ApiError) return error.response;
     logger.error('calculators-api', 'Bonus depreciation calculation error', error);
     return NextResponse.json(
       { error: 'Failed to calculate bonus depreciation' },

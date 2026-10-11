@@ -1,10 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
+import { readJson } from '@/lib/api/request'
+import { ApiError } from '@/lib/api/auth'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const { email, password } = await readJson(request)
 
     if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
       return NextResponse.json(
@@ -38,7 +40,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ user: data.user })
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError) return error.response
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

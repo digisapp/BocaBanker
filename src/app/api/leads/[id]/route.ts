@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError, apiValidationError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { requireUuid } from '@/lib/api/params';
 import { leadUpdateSchema } from '@/lib/validation/update-schemas';
+import { leadStatusChangeError } from '@/lib/leads';
 import { db } from '@/db';
 import { leads } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -42,11 +44,11 @@ export async function PUT(
     const user = await requireAuth();
 
     const id = requireUuid((await params).id, 'Lead not found');
-    const body = await request.json();
+    const body = await readJson(request);
 
     // Verify lead exists and belongs to the authenticated user
     const [existing] = await db
-      .select({ id: leads.id })
+      .select({ id: leads.id, status: leads.status, convertedClientId: leads.convertedClientId })
       .from(leads)
       .where(and(eq(leads.id, id), eq(leads.userId, user.id)));
 
@@ -94,6 +96,14 @@ export async function PUT(
     }
     const d = parsed.data;
     const has = (k: keyof typeof d) => k in normalized;
+
+    // "converted" is owned by the Convert action (it creates the client).
+    if (has('status') && d.status) {
+      const statusError = leadStatusChangeError(existing, d.status);
+      if (statusError) {
+        return apiError(statusError, 400);
+      }
+    }
 
     const updateData: Partial<typeof leads.$inferInsert> = {
       updatedAt: new Date(),

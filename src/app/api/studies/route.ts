@@ -8,6 +8,7 @@ import { eq, and, desc, count } from 'drizzle-orm'
 import { studySchema } from '@/lib/validation/schemas'
 import { studyAssetInputSchema } from '@/lib/validation/update-schemas'
 import { parsePagination } from '@/lib/api/params'
+import { readJson } from '@/lib/api/request'
 import { z } from 'zod'
 
 export async function GET(request: NextRequest) {
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth()
 
-    const body = await request.json()
+    const body = await readJson(request)
     const { assets: assetsData, ...studyData } = body
 
     const parsed = studySchema.safeParse(studyData)
@@ -146,6 +147,7 @@ export async function POST(request: NextRequest) {
           discountRate: data.discount_rate.toString(),
           bonusDepreciationRate: data.bonus_depreciation_rate.toString(),
           studyYear: data.study_year,
+          midQuarterConvention: data.mid_quarter_convention,
         })
         .returning()
 

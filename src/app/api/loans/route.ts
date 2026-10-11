@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError, apiValidationError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { parsePagination, escapeLike } from '@/lib/api/params';
 import { loans, leads } from '@/db/schema';
 import { eq, and, ilike, or, desc, asc, count } from 'drizzle-orm';
 import { loanSchema } from '@/lib/validation/schemas';
+import { autoClosingDate } from '@/lib/loans';
+import { businessToday } from '@/lib/dates';
 
 export async function GET(request: NextRequest) {
   try {
@@ -97,7 +100,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
 
-    const body = await request.json();
+    const body = await readJson(request);
     const parsed = loanSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -124,6 +127,18 @@ export async function POST(request: NextRequest) {
       commissionAmount = ((data.loan_amount * data.commission_bps) / 10000).toFixed(2);
     }
 
+    // A loan entered as already funded/closed gets today's date (Eastern)
+    // unless one is given — commission MTD/YTD only counts dated loans.
+    const actualClosingDate =
+      data.actual_closing_date ||
+      autoClosingDate({
+        previousStatus: null,
+        nextStatus: data.status,
+        existingDate: null,
+        requestedDate: data.actual_closing_date,
+        today: businessToday(),
+      });
+
     const [created] = await db
       .insert(loans)
       .values({
@@ -143,7 +158,7 @@ export async function POST(request: NextRequest) {
         status: data.status,
         ariveLink: data.arive_link || null,
         estimatedClosingDate: data.estimated_closing_date || null,
-        actualClosingDate: data.actual_closing_date || null,
+        actualClosingDate,
         commissionBps: data.commission_bps ?? null,
         commissionAmount,
         lenderName: data.lender_name || null,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { parsePagination } from '@/lib/api/params';
 import { logger } from '@/lib/logger';
 import { rateLimit } from '@/lib/rate-limit';
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
       return apiError('Too many emails sent. Please wait a minute and try again.', 429);
     }
 
-    const body = await request.json().catch(() => ({}));
+    const body = await readJson(request);
     const to = typeof body.to === 'string' ? body.to : '';
     const subject = typeof body.subject === 'string' ? body.subject.slice(0, 300) : '';
     const bodyText = typeof body.bodyText === 'string' ? body.bodyText.slice(0, 20_000) : '';
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     await requireAdmin();
-    const body = await request.json().catch(() => ({}));
+    const body = await readJson(request);
 
     const ids = parseEmailIds(body, 200);
     if (!ids) return apiError('emailIds (UUIDs, max 200) required', 400);
@@ -109,7 +110,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     await requireAdmin();
-    const body = await request.json().catch(() => ({}));
+    const body = await readJson(request);
 
     const ids = parseEmailIds(body, 200);
     if (!ids) return apiError('emailId or emailIds (UUIDs, max 200) required', 400);

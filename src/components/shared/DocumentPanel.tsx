@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/context/AuthContext'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
+import { storageSafeFileName } from '@/lib/utils'
 
 interface DocumentEntry {
   id: string
@@ -89,7 +90,7 @@ export default function DocumentPanel({ clientId, studyId }: DocumentPanelProps)
     fetchDocs()
   }, [fetchDocs])
 
-  async function handleUpload(files: FileList | null) {
+  async function handleUpload(files: FileList | File[] | null) {
     if (!files || files.length === 0 || !user) return
     setUploading(true)
     let successCount = 0
@@ -101,7 +102,8 @@ export default function DocumentPanel({ clientId, studyId }: DocumentPanelProps)
         toast.error(`${file.name} exceeds the 50 MB limit`)
         continue
       }
-      const filePath = `${user.id}/${Date.now()}-${file.name}`
+      // Storage keys reject many characters; keep file.name for display only
+      const filePath = `${user.id}/${Date.now()}-${storageSafeFileName(file.name)}`
       try {
         const { error: uploadError } = await supabase.storage
           .from('documents')
@@ -230,7 +232,12 @@ export default function DocumentPanel({ clientId, studyId }: DocumentPanelProps)
           multiple
           accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp"
           className="hidden"
-          onChange={(e) => handleUpload(e.target.files)}
+          onChange={(e) => {
+            const files = Array.from(e.target.files ?? [])
+            // Clear the value so selecting the same file again re-fires onChange
+            e.target.value = ''
+            handleUpload(files)
+          }}
         />
       </div>
 
