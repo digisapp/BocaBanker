@@ -3,7 +3,7 @@ import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
 import { db } from '@/db';
 import { leads } from '@/db/schema';
-import { eq, and, ilike, or, desc } from 'drizzle-orm';
+import { eq, and, ilike, or, desc, arrayContains } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
 import { escapeLike } from '@/lib/api/params';
 import { businessToday } from '@/lib/dates';
@@ -69,6 +69,8 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') ?? '';
     const propertyType = searchParams.get('propertyType') ?? '';
     const priority = searchParams.get('priority') ?? '';
+    const state = searchParams.get('state') ?? '';
+    const tag = searchParams.get('tag') ?? '';
     const member = searchParams.get('member') ?? '';
 
     // Build where conditions — always scope to the authenticated user
@@ -97,6 +99,14 @@ export async function GET(request: NextRequest) {
 
     if (priority && priority !== 'all') {
       conditions.push(eq(leads.priority, priority as typeof leads.priority.enumValues[number]));
+    }
+
+    if (state && state !== 'all') {
+      conditions.push(eq(leads.propertyState, state));
+    }
+
+    if (tag && tag !== 'all') {
+      conditions.push(arrayContains(leads.tags, [tag]));
     }
 
     if (member) {

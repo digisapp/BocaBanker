@@ -6,7 +6,7 @@ import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { parsePagination, escapeLike } from '@/lib/api/params';
 import { leads } from '@/db/schema';
-import { eq, and, ilike, or, gte, lte, desc, asc, count } from 'drizzle-orm';
+import { eq, and, ilike, or, gte, lte, desc, asc, count, arrayContains, sql } from 'drizzle-orm';
 import { leadSchema } from '@/lib/validation/schemas';
 import { isIsoDate } from '@/lib/validation/dates';
 import { newLeadStatusError } from '@/lib/leads';
@@ -21,6 +21,8 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') ?? '';
     const propertyType = searchParams.get('propertyType') ?? '';
     const priority = searchParams.get('priority') ?? '';
+    const state = searchParams.get('state') ?? '';
+    const tag = searchParams.get('tag') ?? '';
     const minPrice = searchParams.get('minPrice') ?? '';
     const maxPrice = searchParams.get('maxPrice') ?? '';
     const dateFrom = searchParams.get('dateFrom') ?? '';
@@ -56,6 +58,14 @@ export async function GET(request: NextRequest) {
 
     if (priority && priority !== 'all') {
       conditions.push(eq(leads.priority, priority as typeof leads.priority.enumValues[number]));
+    }
+
+    if (state && state !== 'all') {
+      conditions.push(eq(leads.propertyState, state));
+    }
+
+    if (tag && tag !== 'all') {
+      conditions.push(arrayContains(leads.tags, [tag]));
     }
 
     // Numeric/date filters are compared against numeric/date columns, so a
@@ -98,7 +108,8 @@ export async function GET(request: NextRequest) {
         case 'salePrice': return leads.salePrice;
         case 'saleDate': return leads.saleDate;
         case 'status': return leads.status;
-        case 'priority': return leads.priority;
+        // Rank, not alphabetical (which would put "low" between "high" and "medium")
+        case 'priority': return sql`case ${leads.priority} when 'high' then 3 when 'medium' then 2 when 'low' then 1 else 0 end`;
         case 'propertyType': return leads.propertyType;
         default: return leads.createdAt;
       }
@@ -107,8 +118,9 @@ export async function GET(request: NextRequest) {
     const sortColumn = getSortColumn(sort);
     const orderFn = order === 'asc' ? asc : desc;
 
-    // Query leads and total count
-    const [leadRows, totalResult] = await Promise.all([
+    // Query the page of leads plus totals across every lead matching the
+    // filters (not just this page), for the summary cards
+    const [leadRows, summaryResult] = await Promise.all([
       db
         .select()
         .from(leads)
@@ -117,18 +129,29 @@ export async function GET(request: NextRequest) {
         .limit(limit)
         .offset(offset),
       db
-        .select({ total: count() })
+        .select({
+          total: count(),
+          highPriority: sql<number>`count(*) filter (where ${leads.priority} = 'high')`.mapWith(Number),
+          avgSalePrice: sql<number>`coalesce(avg(${leads.salePrice}), 0)`.mapWith(Number),
+          totalValue: sql<number>`coalesce(sum(${leads.salePrice}), 0)`.mapWith(Number),
+        })
         .from(leads)
         .where(whereClause),
     ]);
 
-    const total = totalResult[0]?.total ?? 0;
+    const summary = summaryResult[0];
+    const total = summary?.total ?? 0;
 
     return NextResponse.json({
       leads: leadRows,
       total,
       page,
       limit,
+      summary: {
+        highPriority: summary?.highPriority ?? 0,
+        avgSalePrice: summary?.avgSalePrice ?? 0,
+        totalValue: summary?.totalValue ?? 0,
+      },
     });
   } catch (error) {
     if (error instanceof ApiError) return error.response;

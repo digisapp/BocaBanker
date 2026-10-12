@@ -38,9 +38,24 @@ function parseCsvLine(line: string): string[] {
   return fields
 }
 
+/**
+ * The leads list only shows rows whose user_id is the signed-in user, so
+ * every imported lead must belong to the platform owner (the one admin).
+ */
+async function getOwnerId(): Promise<string> {
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id&role=eq.admin`, {
+    headers: { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` },
+  })
+  if (!resp.ok) throw new Error(`Owner lookup failed: ${await resp.text()}`)
+  const admins: { id: string }[] = await resp.json()
+  if (admins.length !== 1) throw new Error(`Expected exactly one admin user, found ${admins.length}`)
+  return admins[0].id
+}
+
 async function main() {
   console.log('Importing leads to Supabase...\n')
 
+  const ownerId = await getOwnerId()
   const content = fs.readFileSync(CSV_PATH, 'utf-8')
   const lines = content.split('\n').filter(l => l.trim())
   const headers = parseCsvLine(lines[0])
@@ -77,6 +92,8 @@ async function main() {
         row[key] = val
       }
     }
+
+    row.user_id = ownerId
 
     // Ensure required fields
     if (row.property_address && row.property_type) {
