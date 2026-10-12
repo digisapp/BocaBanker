@@ -4,6 +4,9 @@ import { Fragment, useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import { formatCurrency } from '@/lib/utils'
+import { LEAD_PROPERTY_TYPES, PROPERTY_TYPE_LABELS } from '@/constants/property-types'
+import { US_STATE_NAMES } from '@/constants/us-states'
+import { leadTagLabel } from '@/constants/lead-tags'
 import { useRouter } from 'next/navigation'
 import {
   Target,
@@ -175,6 +178,12 @@ export default function LeadsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [propertyTypeFilter, setPropertyTypeFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
+  const [stateFilter, setStateFilter] = useState('all')
+  const [tagFilter, setTagFilter] = useState('all')
+  const [filterOptions, setFilterOptions] = useState<{
+    states: { value: string; count: number }[]
+    tags: { value: string; count: number }[]
+  }>({ states: [], tags: [] })
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
   const [sortKey, setSortKey] = useState('createdAt')
@@ -193,10 +202,10 @@ export default function LeadsPage() {
   const [portfolioLoading, setPortfolioLoading] = useState(false)
   const [expandedMember, setExpandedMember] = useState<string | null>(null)
 
-  // Leads stats
+  // Totals across every lead matching the filters
   const [stats, setStats] = useState({
     total: 0,
-    newLeads: 0,
+    highPriority: 0,
     avgSalePrice: 0,
     totalValue: 0,
   })
@@ -210,7 +219,22 @@ export default function LeadsPage() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setPage(1)
-  }, [debouncedSearch, statusFilter, propertyTypeFilter, priorityFilter, memberFilter])
+  }, [debouncedSearch, statusFilter, propertyTypeFilter, priorityFilter, stateFilter, tagFilter, memberFilter])
+
+  const fetchFilterOptions = useCallback(async () => {
+    try {
+      const res = await fetch('/api/leads/filters')
+      if (!res.ok) throw new Error('Failed to fetch filter options')
+      setFilterOptions(await res.json())
+    } catch (error) {
+      // The State/Tag dropdowns just stay empty; the list itself still works
+      logger.error('leads-page', 'Failed to fetch filter options', error)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchFilterOptions()
+  }, [fetchFilterOptions])
 
   const fetchLeads = useCallback(async (signal?: AbortSignal) => {
     setLoading(true)
@@ -224,6 +248,8 @@ export default function LeadsPage() {
         ...(statusFilter !== 'all' && { status: statusFilter }),
         ...(propertyTypeFilter !== 'all' && { propertyType: propertyTypeFilter }),
         ...(priorityFilter !== 'all' && { priority: priorityFilter }),
+        ...(stateFilter !== 'all' && { state: stateFilter }),
+        ...(tagFilter !== 'all' && { tag: tagFilter }),
         ...(memberFilter && { member: memberFilter }),
       })
 
@@ -233,22 +259,11 @@ export default function LeadsPage() {
       const data = await res.json()
       setLeads(data.leads)
       setTotal(data.total)
-
-      const allLeads: LeadRow[] = data.leads
-      const newCount = allLeads.filter((l) => l.status === 'new').length
-      const prices = allLeads
-        .map((l) => (l.salePrice ? parseFloat(l.salePrice) : 0))
-        .filter((p) => p > 0)
-      const avg = prices.length > 0
-        ? prices.reduce((a, b) => a + b, 0) / prices.length
-        : 0
-      const totalVal = prices.reduce((a, b) => a + b, 0)
-
       setStats({
         total: data.total,
-        newLeads: newCount,
-        avgSalePrice: avg,
-        totalValue: totalVal,
+        highPriority: data.summary?.highPriority ?? 0,
+        avgSalePrice: data.summary?.avgSalePrice ?? 0,
+        totalValue: data.summary?.totalValue ?? 0,
       })
       setLoading(false)
     } catch (error) {
@@ -258,7 +273,7 @@ export default function LeadsPage() {
       toast.error('Failed to load leads')
       setLoading(false)
     }
-  }, [page, sortKey, sortOrder, debouncedSearch, statusFilter, propertyTypeFilter, priorityFilter, memberFilter])
+  }, [page, sortKey, sortOrder, debouncedSearch, statusFilter, propertyTypeFilter, priorityFilter, stateFilter, tagFilter, memberFilter])
 
   const fetchPortfolios = useCallback(async (signal?: AbortSignal) => {
     setPortfolioLoading(true)
@@ -449,9 +464,24 @@ export default function LeadsPage() {
       ...(statusFilter !== 'all' && { status: statusFilter }),
       ...(propertyTypeFilter !== 'all' && { propertyType: propertyTypeFilter }),
       ...(priorityFilter !== 'all' && { priority: priorityFilter }),
+      ...(stateFilter !== 'all' && { state: stateFilter }),
+      ...(tagFilter !== 'all' && { tag: tagFilter }),
       ...(memberFilter && { member: memberFilter }),
     })
     window.open(`/api/leads/export?${params}`, '_blank')
+  }
+
+  const filtersActive =
+    search !== '' ||
+    [statusFilter, propertyTypeFilter, priorityFilter, stateFilter, tagFilter].some((f) => f !== 'all')
+
+  const clearFilters = () => {
+    setSearch('')
+    setStatusFilter('all')
+    setPropertyTypeFilter('all')
+    setPriorityFilter('all')
+    setStateFilter('all')
+    setTagFilter('all')
   }
 
   return (
@@ -521,7 +551,10 @@ export default function LeadsPage() {
               <LeadImportModal
                 open={importOpen}
                 onOpenChange={setImportOpen}
-                onImportComplete={fetchLeads}
+                onImportComplete={() => {
+                  fetchLeads()
+                  fetchFilterOptions()
+                }}
               >
                 <Button
                   variant="outline"
@@ -625,12 +658,9 @@ export default function LeadsPage() {
               </SelectTrigger>
               <SelectContent className="bg-white border-gray-200">
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="industrial">Industrial</SelectItem>
-                <SelectItem value="office">Office</SelectItem>
-                <SelectItem value="retail">Retail</SelectItem>
-                <SelectItem value="multifamily">Multifamily</SelectItem>
-                <SelectItem value="mixed-use">Mixed-Use</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                {LEAD_PROPERTY_TYPES.map((t) => (
+                  <SelectItem key={t} value={t}>{PROPERTY_TYPE_LABELS[t]}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
@@ -644,6 +674,42 @@ export default function LeadsPage() {
                 <SelectItem value="high">High</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={stateFilter} onValueChange={setStateFilter}>
+              <SelectTrigger aria-label="Filter by state" className="w-full sm:w-[170px] bg-gray-50 border-gray-200 text-gray-900">
+                <SelectValue placeholder="All states" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border-gray-200">
+                <SelectItem value="all">All States</SelectItem>
+                {filterOptions.states.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {US_STATE_NAMES[s.value] ?? s.value} ({s.count.toLocaleString()})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={tagFilter} onValueChange={setTagFilter}>
+              <SelectTrigger aria-label="Filter by tag" className="w-full sm:w-[200px] bg-gray-50 border-gray-200 text-gray-900">
+                <SelectValue placeholder="All tags" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border-gray-200">
+                <SelectItem value="all">All Tags</SelectItem>
+                {filterOptions.tags.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {leadTagLabel(t.value)} ({t.count.toLocaleString()})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {filtersActive && (
+              <Button
+                variant="ghost"
+                onClick={clearFilters}
+                className="text-gray-500 hover:text-gray-900"
+              >
+                <X className="h-4 w-4 mr-1" />
+                Clear
+              </Button>
+            )}
           </div>
 
           {/* Stats Summary */}
@@ -653,26 +719,26 @@ export default function LeadsPage() {
                 <Target className="h-4 w-4 text-amber-500" />
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Total Leads</span>
               </div>
-              <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.total}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.total.toLocaleString()}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
                 <Sparkles className="h-4 w-4 text-blue-500" />
-                <span className="text-xs text-gray-500 uppercase tracking-wider">New (this page)</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wider">High Priority</span>
               </div>
-              <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.newLeads}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.highPriority.toLocaleString()}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
                 <TrendingUp className="h-4 w-4 text-emerald-500" />
-                <span className="text-xs text-gray-500 uppercase tracking-wider">Avg Sale Price (this page)</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Avg Sale Price</span>
               </div>
               <p className="text-xl sm:text-2xl font-bold text-gray-900">{formatCurrency(stats.avgSalePrice, '--')}</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center gap-2 mb-1">
                 <DollarSign className="h-4 w-4 text-amber-500" />
-                <span className="text-xs text-gray-500 uppercase tracking-wider">Value (this page)</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Total Value</span>
               </div>
               <p className="text-xl sm:text-2xl font-bold text-gray-900">{formatCurrency(stats.totalValue, '--')}</p>
             </div>
