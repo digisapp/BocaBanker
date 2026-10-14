@@ -228,8 +228,14 @@ export function autoReplySuppressionReason(args: {
 }): string | null {
   const automated = automatedMailReason(args);
   if (automated) return automated;
-  const auth = Object.entries(args.headers || {}).find(([k]) => k.toLowerCase() === 'authentication-results')?.[1];
-  if (!senderAuthenticated(parseAuthResults(Array.isArray(auth) ? auth.join(' ') : auth))) {
+  // Every copy, in order, folded into one value: a second copy (a sender's
+  // own, below the receiving server's) adds a second DMARC verdict, which
+  // parseAuthResults refuses. Taking any single copy could pick the forged one.
+  const auth = Object.entries(args.headers || {})
+    .filter(([k, v]) => k.toLowerCase() === 'authentication-results' && v != null)
+    .flatMap(([, v]) => (Array.isArray(v) ? v : [v as string]))
+    .join(' ');
+  if (!senderAuthenticated(parseAuthResults(auth))) {
     return 'sender not authenticated (no DMARC pass)';
   }
   return null;

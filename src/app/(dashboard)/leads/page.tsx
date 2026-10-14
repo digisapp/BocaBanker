@@ -3,7 +3,7 @@
 import { Fragment, useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, parseDate } from '@/lib/utils'
 import { LEAD_PROPERTY_TYPES, PROPERTY_TYPE_LABELS } from '@/constants/property-types'
 import { US_STATE_NAMES } from '@/constants/us-states'
 import { leadTagLabel } from '@/constants/lead-tags'
@@ -155,7 +155,7 @@ const propertyTypeBadgeColor: Record<string, string> = {
 
 const formatDate = (value: string | null) => {
   if (!value) return '--'
-  return new Date(value).toLocaleDateString('en-US', {
+  return parseDate(value).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -308,7 +308,12 @@ export default function LeadsPage() {
       const res = await fetch(`/api/leads/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Failed to delete')
       toast.success('Lead deleted')
-      fetchLeads()
+      // Step back a page if we just removed the last row on this one
+      if (leads.length === 1 && page > 1) {
+        setPage((p) => p - 1)
+      } else {
+        fetchLeads()
+      }
     } catch (error) {
       logger.error('leads-page', 'Failed to delete lead', error)
       toast.error('Failed to delete lead')
@@ -340,7 +345,14 @@ export default function LeadsPage() {
         body: JSON.stringify({ status: newStatus }),
       })
       if (!res.ok) throw new Error('Failed to update status')
-      fetchLeads()
+      // Under a status filter the row drops out of this page; step back a
+      // page if it was the last one here
+      const leavesFilter = statusFilter !== 'all' && newStatus !== statusFilter
+      if (leavesFilter && leads.length === 1 && page > 1) {
+        setPage((p) => p - 1)
+      } else {
+        fetchLeads()
+      }
     } catch (error) {
       logger.error('leads-page', 'Failed to update lead status', error)
       toast.error('Failed to update lead status')

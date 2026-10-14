@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { sendEmail } from '@/lib/email/resend';
 import { logger } from '@/lib/logger';
 import {
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
       return apiError('Too many emails sent. Please wait a minute and try again.', 429);
     }
 
-    const body = await request.json();
+    const body = await readJson(request);
     const { to, subject, html, template, clientId, clientName, senderName, propertyAddress, studyName, totalSavings, customMessage } = body;
 
     // Validate recipient + subject with the shared email schema

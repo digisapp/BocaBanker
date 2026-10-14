@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { optionalIsoDate } from './dates'
 
 export const loanSchema = z.object({
   borrower_name: z
@@ -53,9 +54,17 @@ export const loanSchema = z.object({
       'withdrawn',
     ])
     .default('pre_qual'),
-  arive_link: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
-  estimated_closing_date: z.string().optional().or(z.literal('')),
-  actual_closing_date: z.string().optional().or(z.literal('')),
+  // http(s) only — the link is emailed to the borrower (send-arive-link), and
+  // z.string().url() alone accepts javascript:/data: URLs.
+  arive_link: z
+    .string()
+    .trim()
+    .url('Please enter a valid URL')
+    .refine((v) => /^https?:\/\//i.test(v), 'URL must start with http:// or https://')
+    .optional()
+    .or(z.literal('')),
+  estimated_closing_date: optionalIsoDate,
+  actual_closing_date: optionalIsoDate,
   commission_bps: z.number().int().min(0).max(500).optional(),
   lender_name: z.string().max(100).optional().or(z.literal('')),
   lead_id: z.string().uuid().optional().or(z.literal('')),

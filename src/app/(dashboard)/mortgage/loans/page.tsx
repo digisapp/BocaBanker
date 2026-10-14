@@ -88,6 +88,7 @@ export default function LoansPage() {
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
   const [sortKey, setSortKey] = useState<SortKey>('createdAt')
@@ -95,7 +96,16 @@ export default function LoansPage() {
 
   const totalPages = Math.ceil(total / limit)
 
-  const fetchLoans = useCallback(async () => {
+  // Debounce search; a new search returns to the first page
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search)
+      setPage(1)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  const fetchLoans = useCallback(async (signal?: AbortSignal) => {
     setLoading(true)
     try {
       const params = new URLSearchParams({
@@ -104,24 +114,28 @@ export default function LoansPage() {
         sort: sortKey,
         order: sortOrder,
       })
-      if (search) params.set('search', search)
+      if (debouncedSearch) params.set('search', debouncedSearch)
       if (statusFilter !== 'all') params.set('status', statusFilter)
       if (typeFilter !== 'all') params.set('loanType', typeFilter)
 
-      const res = await fetch(`/api/loans?${params}`)
+      const res = await fetch(`/api/loans?${params}`, { signal })
       if (!res.ok) throw new Error('Failed to fetch')
       const data = await res.json()
       setLoans(data.loans)
       setTotal(data.total)
+      setLoading(false)
     } catch (error) {
+      // An aborted request means a newer one is in flight; leave its state alone
+      if (signal?.aborted) return
       logger.error('loans-page', 'Failed to fetch loans', error)
-    } finally {
       setLoading(false)
     }
-  }, [page, limit, search, statusFilter, typeFilter, sortKey, sortOrder])
+  }, [page, limit, debouncedSearch, statusFilter, typeFilter, sortKey, sortOrder])
 
   useEffect(() => {
-    fetchLoans()
+    const controller = new AbortController()
+    fetchLoans(controller.signal)
+    return () => controller.abort()
   }, [fetchLoans])
 
   const handleSort = (key: SortKey) => {
@@ -139,7 +153,12 @@ export default function LoansPage() {
       const res = await fetch(`/api/loans/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Failed to delete')
       toast.success('Loan deleted')
-      fetchLoans()
+      // Step back a page if we just removed the last row on this one
+      if (loans.length === 1 && page > 1) {
+        setPage((p) => p - 1)
+      } else {
+        fetchLoans()
+      }
     } catch {
       toast.error('Failed to delete loan')
     }
@@ -227,10 +246,7 @@ export default function LoansPage() {
           <Input
             placeholder="Search borrower, address, lender..."
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value)
-              setPage(1)
-            }}
+            onChange={(e) => setSearch(e.target.value)}
             className="pl-9 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
           />
         </div>

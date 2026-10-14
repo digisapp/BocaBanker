@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts'
+import { parseDate } from '@/lib/utils'
 
 interface RateTrendData {
   weekOf: string
@@ -28,7 +29,7 @@ export function RateTrendChart({ data }: { data: RateTrendData[] }) {
 
   const formatted = data.map((d) => ({
     ...d,
-    label: new Date(d.weekOf).toLocaleDateString('en-US', {
+    label: parseDate(d.weekOf).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
     }),

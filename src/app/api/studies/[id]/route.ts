@@ -3,10 +3,16 @@ import { requireAuth, ApiError } from '@/lib/api/auth'
 import { apiError, apiValidationError } from '@/lib/api/response'
 import { requireUuid } from '@/lib/api/params'
 import { studyUpdateSchema } from '@/lib/validation/update-schemas'
+import { midQuarterConventionField } from '@/lib/validation/study-schemas'
+import { readJson } from '@/lib/api/request'
 import { db } from '@/db'
 import { costSegStudies, studyAssets, properties, clients } from '@/db/schema'
 import { logger } from '@/lib/logger'
 import { eq, and } from 'drizzle-orm'
+
+const studyPutSchema = studyUpdateSchema.extend({
+  mid_quarter_convention: midQuarterConventionField.optional(),
+})
 
 export async function GET(
   request: NextRequest,
@@ -26,6 +32,7 @@ export async function GET(
         discountRate: costSegStudies.discountRate,
         bonusDepreciationRate: costSegStudies.bonusDepreciationRate,
         studyYear: costSegStudies.studyYear,
+        midQuarterConvention: costSegStudies.midQuarterConvention,
         results: costSegStudies.results,
         totalFirstYearDeduction: costSegStudies.totalFirstYearDeduction,
         totalTaxSavings: costSegStudies.totalTaxSavings,
@@ -41,6 +48,7 @@ export async function GET(
         purchasePrice: properties.purchasePrice,
         buildingValue: properties.buildingValue,
         landValue: properties.landValue,
+        purchaseDate: properties.purchaseDate,
         clientId: costSegStudies.clientId,
         clientFirstName: clients.firstName,
         clientLastName: clients.lastName,
@@ -91,9 +99,9 @@ export async function PUT(
     const user = await requireAuth()
     const id = requireUuid((await params).id, 'Study not found')
 
-    const body = await request.json()
+    const body = await readJson(request)
 
-    const parsed = studyUpdateSchema.safeParse(body ?? {})
+    const parsed = studyPutSchema.safeParse(body)
     if (!parsed.success) {
       return apiValidationError(parsed.error)
     }
@@ -106,6 +114,7 @@ export async function PUT(
     if (d.discount_rate !== undefined) updateData.discountRate = d.discount_rate
     if (d.bonus_depreciation_rate !== undefined) updateData.bonusDepreciationRate = d.bonus_depreciation_rate
     if (d.study_year !== undefined) updateData.studyYear = d.study_year
+    if (d.mid_quarter_convention !== undefined) updateData.midQuarterConvention = d.mid_quarter_convention
     if (d.status !== undefined) updateData.status = d.status
     if (d.notes !== undefined) updateData.notes = d.notes
 

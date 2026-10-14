@@ -113,19 +113,18 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
       // eslint-disable-next-line react-hooks/refs
       new DefaultChatTransport({
         api: '/api/chat',
-        body: () => {
-          // Only flag the first message after a guest handoff; re-sending
-          // isGuestHandoff would duplicate the guest history server-side.
-          const isGuestHandoff = guestHandoffRef.current;
-          guestHandoffRef.current = false;
-          return {
-            conversationId: conversationIdRef.current,
-            ...(isGuestHandoff ? { isGuestHandoff: true } : {}),
-          };
-        },
+        body: () => ({
+          conversationId: conversationIdRef.current,
+          // Flag requests until the server has accepted one (see fetch below)
+          // so a failed first send still saves the guest history on retry.
+          ...(guestHandoffRef.current ? { isGuestHandoff: true } : {}),
+        }),
         // Capture conversationId from response header without global fetch mutation
         fetch: async (input, init) => {
           const response = await window.fetch(input, init);
+          // A 2xx means the server stored the guest history before it began
+          // streaming; stop flagging so it isn't imported again.
+          if (response.ok) guestHandoffRef.current = false;
           const convId = response.headers.get('X-Conversation-Id');
           if (convId && !conversationIdRef.current) {
             conversationIdRef.current = convId;
@@ -178,8 +177,8 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
     } catch {
       // Ignore localStorage errors
     }
-    // The handoff flag itself is cleared by the transport's body() callback
-    // after the first message is sent, so nothing else to do here.
+    // The handoff flag itself is cleared by the transport's fetch callback
+    // once the server accepts the first message, so nothing else to do here.
   }, [initialGuestHandoff, setMessages]);
 
   const scrollToBottom = useCallback((smooth: boolean) => {
@@ -197,6 +196,9 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
   }, [fetchConversations]);
 
   const handleLoadConversation = (conversationId: string) => {
+    // Opening another conversation replaces the unsaved guest messages, so
+    // there is no guest history left to hand off.
+    guestHandoffRef.current = false;
     loadConversation(
       conversationId,
       loadConversationMessages,
@@ -208,6 +210,7 @@ export function ChatInterface({ initialGuestHandoff = false }: ChatInterfaceProp
   };
 
   const handleStartNew = () => {
+    guestHandoffRef.current = false; // the guest messages are discarded too
     startNewConversation(setMessages);
   };
 

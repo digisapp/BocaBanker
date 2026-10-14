@@ -1,6 +1,7 @@
 'use client'
 
 import { formatCurrency } from '@/lib/utils'
+import { quarterForMonth } from '@/lib/cost-seg/macrs-tables'
 import type { AssetRow, PropertyOption, ClientOption } from '@/hooks/useStudyForm'
 
 interface StudyReviewStepProps {
@@ -12,6 +13,8 @@ interface StudyReviewStepProps {
   taxRate: number
   discountRate: number
   bonusDepreciationRate: number
+  midQuarterConvention: boolean
+  placedInServiceMonth: number
   assets: AssetRow[]
   totalAssetValue: number
 }
@@ -25,6 +28,8 @@ export default function StudyReviewStep({
   taxRate,
   discountRate,
   bonusDepreciationRate,
+  midQuarterConvention,
+  placedInServiceMonth,
   assets,
   totalAssetValue,
 }: StudyReviewStepProps) {
@@ -52,7 +57,7 @@ export default function StudyReviewStep({
             </p>
           </div>
           <div>
-            <span className="text-xs text-gray-500 uppercase tracking-wide">Study Year</span>
+            <span className="text-xs text-gray-500 uppercase tracking-wide">Placed in Service</span>
             <p className="text-sm font-medium text-gray-900 mt-1">{studyYear}</p>
           </div>
         </div>
@@ -74,6 +79,11 @@ export default function StudyReviewStep({
             <p className="text-sm font-medium text-gray-900">{bonusDepreciationRate}%</p>
           </div>
         </div>
+        {midQuarterConvention && (
+          <p className="text-xs text-gray-500 mt-4">
+            Mid-quarter convention (Q{quarterForMonth(placedInServiceMonth)}) for 5, 7 and 15-year property
+          </p>
+        )}
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">

@@ -39,7 +39,8 @@ function selectPublicReviews(where: ReturnType<typeof and>, limit: number, offse
     })
     .from(reviews)
     .where(where)
-    .orderBy(desc(reviews.reviewDate))
+    // id breaks reviewDate ties so LIMIT/OFFSET pages never repeat or skip rows
+    .orderBy(desc(reviews.reviewDate), desc(reviews.id))
     .limit(limit)
     .offset(offset)
 }

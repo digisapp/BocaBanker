@@ -3,7 +3,8 @@
  *
  * Official IRS percentage tables for the Modified Accelerated Cost Recovery System.
  * All rates are expressed as percentages (e.g., 20.00 = 20%).
- * Half-year convention is used for 5, 7, and 15-year property.
+ * Half-year convention is used for 5, 7, and 15-year property (mid-quarter
+ * when IRC §168(d)(3) applies — see MACRS_MID_QUARTER).
  * Mid-month convention is used for 27.5 and 39-year property.
  */
 
@@ -209,6 +210,53 @@ function round3(n: number): number {
   return Math.round(n * 1000) / 1000;
 }
 
+/** Quarter of the (calendar) tax year in which property was placed in service. */
+export type PlacedInServiceQuarter = 1 | 2 | 3 | 4;
+
+/**
+ * Mid-quarter convention rates for 5/7/15-year property (IRC §168(d)(3)),
+ * keyed by recovery period, then by the quarter placed in service. IRS Pub
+ * 946 Tables A-2 (Q1), A-3 (Q2), A-4 (Q3) and A-5 (Q4): GDS 200% declining
+ * balance for 5/7-year and 150% DB for 15-year, switching to straight line.
+ *
+ * Year 1 gets (quarters remaining - 0.5) / 4 of a full year: 87.5% (Q1),
+ * 62.5% (Q2), 37.5% (Q3), 12.5% (Q4). Each column sums to exactly 100%.
+ */
+export const MACRS_MID_QUARTER: Readonly<
+  Record<5 | 7 | 15, Readonly<Record<PlacedInServiceQuarter, readonly number[]>>>
+> = {
+  5: {
+    1: [35.00, 26.00, 15.60, 11.01, 11.01, 1.38],
+    2: [25.00, 30.00, 18.00, 11.37, 11.37, 4.26],
+    3: [15.00, 34.00, 20.40, 12.24, 11.30, 7.06],
+    4: [5.00, 38.00, 22.80, 13.68, 10.94, 9.58],
+  },
+  7: {
+    1: [25.00, 21.43, 15.31, 10.93, 8.75, 8.74, 8.75, 1.09],
+    // As printed in Pub 946 (17.85, column sums to 99.99); the final-year
+    // true-up in calculateDepreciation still recovers the full basis.
+    2: [17.85, 23.47, 16.76, 11.97, 8.87, 8.87, 8.87, 3.33],
+    3: [10.71, 25.51, 18.22, 13.02, 9.30, 8.85, 8.86, 5.53],
+    4: [3.57, 27.55, 19.68, 14.06, 10.04, 8.73, 8.73, 7.64],
+  },
+  15: {
+    1: [8.75, 9.13, 8.21, 7.39, 6.65, 5.99, 5.90, 5.91, 5.90, 5.91, 5.90, 5.91, 5.90, 5.91, 5.90, 0.74],
+    2: [6.25, 9.38, 8.44, 7.59, 6.83, 6.15, 5.91, 5.90, 5.91, 5.90, 5.91, 5.90, 5.91, 5.90, 5.91, 2.21],
+    3: [3.75, 9.63, 8.66, 7.80, 7.02, 6.31, 5.90, 5.90, 5.91, 5.90, 5.91, 5.90, 5.91, 5.90, 5.91, 3.69],
+    4: [1.25, 9.88, 8.89, 8.00, 7.20, 6.48, 5.90, 5.90, 5.90, 5.91, 5.90, 5.91, 5.90, 5.91, 5.90, 5.17],
+  },
+};
+
+/** Normalise a placed-in-service month to 1-12 (invalid values become 1). */
+function normaliseMonth(month: number): number {
+  return Number.isInteger(month) && month >= 1 && month <= 12 ? month : 1;
+}
+
+/** Quarter (1-4) of a placed-in-service month (1-12) in a calendar tax year. */
+export function quarterForMonth(month: number): PlacedInServiceQuarter {
+  return Math.ceil(normaliseMonth(month) / 3) as PlacedInServiceQuarter;
+}
+
 /**
  * Map of recovery periods to their MACRS rate tables
  */
@@ -224,19 +272,25 @@ const MACRS_TABLES: Record<MacrsRecoveryPeriod, readonly number[]> = {
  * Returns the MACRS depreciation rate table for the given recovery period.
  *
  * 5/7/15-year property uses the half-year convention, so the
- * placed-in-service month does not matter. 27.5/39-year real property uses
+ * placed-in-service month does not matter — unless the mid-quarter
+ * convention applies, in which case the table for the quarter of the
+ * placed-in-service month is used. 27.5/39-year real property always uses
  * the mid-month convention, so the first-year (and final-year) rate depends
  * on the month the property was placed in service.
  *
  * @param period - The MACRS recovery period (5, 7, 15, 27.5, or 39 years)
  * @param placedInServiceMonth - 1 (January) through 12 (December); default 1.
- *   Only affects 27.5 and 39-year property. Invalid values fall back to 1.
+ *   Affects 27.5/39-year property, and 5/7/15-year property under the
+ *   mid-quarter convention. Invalid values fall back to 1.
+ * @param midQuarter - Apply the mid-quarter convention to 5/7/15-year
+ *   property (IRC §168(d)(3)); default false (half-year convention).
  * @returns Array of annual depreciation percentages
  * @throws Error if an invalid recovery period is provided
  */
 export function getMacrsRates(
   period: MacrsRecoveryPeriod,
-  placedInServiceMonth: number = 1
+  placedInServiceMonth: number = 1,
+  midQuarter: boolean = false
 ): number[] {
   const rates = MACRS_TABLES[period];
   if (!rates) {
@@ -244,12 +298,10 @@ export function getMacrsRates(
       `Invalid MACRS recovery period: ${period}. Valid periods are: ${Object.keys(MACRS_TABLES).join(', ')}`
     );
   }
-  const month =
-    Number.isInteger(placedInServiceMonth) &&
-    placedInServiceMonth >= 1 &&
-    placedInServiceMonth <= 12
-      ? placedInServiceMonth
-      : 1;
+  const month = normaliseMonth(placedInServiceMonth);
+  if (midQuarter && (period === 5 || period === 7 || period === 15)) {
+    return [...MACRS_MID_QUARTER[period][quarterForMonth(month)]];
+  }
   if (period === 27.5 && month !== 1) return build27_5YearTable(month);
   if (period === 39 && month !== 1) return build39YearTable(month);
   return [...rates];

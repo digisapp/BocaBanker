@@ -54,6 +54,12 @@ export interface RefinanceResult {
   newMonthlyPayment: number;
   monthlySavings: number;
   breakEvenMonths: number;
+  /**
+   * Whether the monthly savings recover the closing costs while both loans
+   * are still being paid. False when there are no monthly savings or the
+   * break-even falls beyond that window (e.g. 2,591 months on a 30-year loan).
+   */
+  breakEvenWithinTerm: boolean;
   totalSavingsOverTerm: number;
   npvSavings: number;
   lifetimeInterestCurrent: number;
@@ -272,6 +278,11 @@ export function calculateRefinanceAnalysis(
   const currentSchedule = generateAmortizationSchedule(currentBalance, currentRate, remainingYears);
   const newSchedule = generateAmortizationSchedule(currentBalance, newRate, newTermYears);
 
+  // The monthly savings only accrue while both loans would be paying
+  const breakEvenWithinTerm =
+    monthlySavings > 0 &&
+    breakEvenMonths <= Math.min(currentSchedule.length, newSchedule.length);
+
   const sumOf = (entries: AmortizationEntry[], key: 'payment' | 'interest') =>
     entries.reduce((sum, e) => sum + e[key], 0);
 
@@ -318,6 +329,7 @@ export function calculateRefinanceAnalysis(
     newMonthlyPayment: Math.round(newMonthly * 100) / 100,
     monthlySavings,
     breakEvenMonths,
+    breakEvenWithinTerm,
     totalSavingsOverTerm,
     npvSavings,
     lifetimeInterestCurrent,
@@ -414,8 +426,6 @@ export function calculateRateSensitivity(
   const basePayment = calculateMonthlyPayment(loanAmount, baseRate, termYears);
   const entries: RateSensitivityEntry[] = [];
 
-  const n = termMonths(termYears);
-
   // Build the grid by integer offsets from the base rate so the base rate is
   // always on the grid (clamping the start to a floor would shift every row
   // off the base rate) and no floating-point drift accumulates.
@@ -423,8 +433,11 @@ export function calculateRateSensitivity(
     const roundedRate = Math.round((baseRate + i * stepSize) * 1000) / 1000;
     if (roundedRate <= 0) continue;
     const monthlyPayment = calculateMonthlyPayment(loanAmount, roundedRate, termYears);
-    const totalCost = monthlyPayment * n;
-    const totalInterest = totalCost - loanAmount;
+    // Totals come from the amortization schedule (whose final payment absorbs
+    // the cent rounding), matching calculateMortgage, not payment x n.
+    const schedule = generateAmortizationSchedule(loanAmount, roundedRate, termYears);
+    const totalCost = schedule.reduce((sum, m) => sum + m.payment, 0);
+    const totalInterest = schedule.reduce((sum, m) => sum + m.interest, 0);
 
     entries.push({
       rate: roundedRate,
@@ -466,6 +479,7 @@ export interface CombinedAnalysisResult {
   newMonthlyPayment: number;
   monthlySavings: number;
   refiBreakEvenMonths: number;
+  refiBreakEvenWithinTerm: boolean;
   refiTotalSavings: number;
   // Combined
   totalYear1Benefit: number;
@@ -590,14 +604,25 @@ export function calculateCombinedAnalysis(
   // Loan paydown scenario: apply Year 1 cost seg savings as lump-sum to principal
   // after the first year of the new loan
   const r = newRate > 0 ? newRate / 100 / 12 : 0;
+  const nNew = termMonths(newTermYears);
 
-  // Track two loan balances: with and without the cost seg paydown
-  let balanceWithout = loanAmount;
-  let balanceWith = loanAmount;
-  let interestWithout = 0;
-  let interestWith = 0;
-  let monthsPaidWith = 0;
-  let monthsPaidWithout = 0;
+  // Track two loans: with and without the cost seg paydown
+  const without = { balance: loanAmount, interest: 0, months: 0 };
+  const withPaydown = { balance: loanAmount, interest: 0, months: 0 };
+
+  // Pays one month on a simulated loan. Interest accrues unrounded against a
+  // cent-rounded payment, so the scheduled final payment absorbs the residual
+  // (as in generateAmortizationSchedule) — otherwise a few dollars of rounding
+  // drift would count as an extra month on the loan.
+  const payMonth = (loan: typeof without) => {
+    if (loan.balance <= 0) return;
+    const interest = loan.balance * r;
+    const principal =
+      loan.months + 1 >= nNew ? loan.balance : Math.min(newMonthly - interest, loan.balance);
+    loan.interest += interest;
+    loan.balance = Math.max(0, loan.balance - principal);
+    loan.months++;
+  };
 
   const combinedSchedule: CombinedYearEntry[] = [];
   let cumulativeBenefit = -closingCosts; // Start negative (closing costs)
@@ -610,26 +635,14 @@ export function calculateCombinedAnalysis(
 
     // Simulate 12 months for both balances
     for (let m = 0; m < 12; m++) {
-      if (balanceWithout > 0) {
-        const intWithout = balanceWithout * r;
-        const princWithout = Math.min(newMonthly - intWithout, balanceWithout);
-        interestWithout += intWithout;
-        balanceWithout = Math.max(0, balanceWithout - princWithout);
-        monthsPaidWithout++;
-      }
-      if (balanceWith > 0) {
-        const intWith = balanceWith * r;
-        const princWith = Math.min(newMonthly - intWith, balanceWith);
-        interestWith += intWith;
-        balanceWith = Math.max(0, balanceWith - princWith);
-        monthsPaidWith++;
-      }
+      payMonth(without);
+      payMonth(withPaydown);
     }
 
     // Apply cost seg savings as lump-sum principal payment at end of year
-    if (balanceWith > 0 && yearCostSegSavings > 0) {
-      const paydown = Math.min(yearCostSegSavings, balanceWith);
-      balanceWith = Math.max(0, balanceWith - paydown);
+    if (withPaydown.balance > 0 && yearCostSegSavings > 0) {
+      const paydown = Math.min(yearCostSegSavings, withPaydown.balance);
+      withPaydown.balance = Math.max(0, withPaydown.balance - paydown);
     }
 
     combinedSchedule.push({
@@ -638,42 +651,29 @@ export function calculateCombinedAnalysis(
       refiSavings: Math.round(yearRefiSavings * 100) / 100,
       combinedSavings: combined,
       cumulativeBenefit,
-      loanBalanceWithPaydown: Math.round(balanceWith * 100) / 100,
-      loanBalanceWithout: Math.round(balanceWithout * 100) / 100,
+      loanBalanceWithPaydown: Math.round(withPaydown.balance * 100) / 100,
+      loanBalanceWithout: Math.round(without.balance * 100) / 100,
     });
   }
 
   // Continue simulating BOTH loans to full payoff (the schedule above only
   // covers the comparison window, during which neither balance reaches zero),
   // so monthsSaved and additionalInterestSaved reflect real payoff dates.
-  // Capped at the new loan term plus a buffer to guard against
-  // non-amortizing inputs (payment <= monthly interest).
-  const maxSimulationMonths = termMonths(newTermYears) + 24;
+  // Both loans are paid off by the final scheduled payment; the cap is a
+  // safety net against bad inputs.
+  const maxSimulationMonths = nNew + 24;
   let simulatedMonths = horizonYears * 12;
   while (
-    (balanceWithout > 0 || balanceWith > 0) &&
+    (without.balance > 0 || withPaydown.balance > 0) &&
     simulatedMonths < maxSimulationMonths
   ) {
     simulatedMonths++;
-    if (balanceWithout > 0) {
-      const intWithout = balanceWithout * r;
-      const princWithout = Math.min(newMonthly - intWithout, balanceWithout);
-      if (princWithout <= 0) break; // non-amortizing; avoid infinite loop
-      interestWithout += intWithout;
-      balanceWithout = Math.max(0, balanceWithout - princWithout);
-      monthsPaidWithout++;
-    }
-    if (balanceWith > 0) {
-      const intWith = balanceWith * r;
-      const princWith = Math.min(newMonthly - intWith, balanceWith);
-      interestWith += intWith;
-      balanceWith = Math.max(0, balanceWith - princWith);
-      monthsPaidWith++;
-    }
+    payMonth(without);
+    payMonth(withPaydown);
   }
 
-  const monthsSaved = monthsPaidWithout - monthsPaidWith;
-  const additionalInterestSaved = Math.round((interestWithout - interestWith) * 100) / 100;
+  const monthsSaved = without.months - withPaydown.months;
+  const additionalInterestSaved = Math.round((without.interest - withPaydown.interest) * 100) / 100;
 
   return {
     costSegFirstYearSavings: Math.round(costSegFirstYearSavings * 100) / 100,
@@ -684,6 +684,7 @@ export function calculateCombinedAnalysis(
     newMonthlyPayment: Math.round(newMonthly * 100) / 100,
     monthlySavings,
     refiBreakEvenMonths,
+    refiBreakEvenWithinTerm: refi.breakEvenWithinTerm,
     refiTotalSavings,
     totalYear1Benefit,
     totalFiveYearBenefit,

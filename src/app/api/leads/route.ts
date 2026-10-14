@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
-import { apiError } from '@/lib/api/response';
+import { apiError, apiValidationError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { parsePagination, escapeLike } from '@/lib/api/params';
 import { leads } from '@/db/schema';
 import { eq, and, ilike, or, gte, lte, desc, asc, count, arrayContains, sql } from 'drizzle-orm';
 import { leadSchema } from '@/lib/validation/schemas';
+import { isIsoDate } from '@/lib/validation/dates';
+import { newLeadStatusError } from '@/lib/leads';
 
 export async function GET(request: NextRequest) {
   try {
@@ -68,11 +71,10 @@ export async function GET(request: NextRequest) {
     // Numeric/date filters are compared against numeric/date columns, so a
     // malformed value would raise a Postgres cast error (500) — reject as 400.
     const isNum = (v: string) => v.trim() !== '' && Number.isFinite(Number(v));
-    const isDate = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v) && !isNaN(Date.parse(v));
     if ((minPrice && !isNum(minPrice)) || (maxPrice && !isNum(maxPrice))) {
       return apiError('minPrice/maxPrice must be numbers', 400);
     }
-    if ((dateFrom && !isDate(dateFrom)) || (dateTo && !isDate(dateTo))) {
+    if ((dateFrom && !isIsoDate(dateFrom)) || (dateTo && !isIsoDate(dateTo))) {
       return apiError('dateFrom/dateTo must be YYYY-MM-DD', 400);
     }
 
@@ -162,17 +164,20 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
 
-    const body = await request.json();
+    const body = await readJson(request);
     const parsed = leadSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: parsed.error.flatten() },
-        { status: 400 }
-      );
+      return apiValidationError(parsed.error);
     }
 
     const data = parsed.data;
+
+    // "converted" is owned by the Convert action, which creates the client
+    const statusError = newLeadStatusError(data.status);
+    if (statusError) {
+      return apiError(statusError, 400);
+    }
 
     // Convert comma-separated tags string to array
     const tagsArray = data.tags

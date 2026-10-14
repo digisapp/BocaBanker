@@ -2,6 +2,7 @@
 
 import { DollarSign, TrendingUp, Percent, Calculator } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { conventionLabel, type StudyAssumptions } from '@/lib/cost-seg/conventions'
 
 import dynamic from 'next/dynamic'
 
@@ -56,11 +57,13 @@ interface StudyResultsProps {
       totalFirstYear: number
       taxSavings: number
     }
+    /** absent on results calculated before conventions were recorded */
+    assumptions?: StudyAssumptions
   }
 }
 
 export default function StudyResults({ results }: StudyResultsProps) {
-  const { summary, assetBreakdown, depreciationSchedule, taxSavingsSchedule, firstYearAnalysis } = results
+  const { summary, assetBreakdown, depreciationSchedule, taxSavingsSchedule, firstYearAnalysis, assumptions } = results
 
   return (
     <div className="space-y-6">
@@ -95,7 +98,7 @@ export default function StudyResults({ results }: StudyResultsProps) {
           <p className="text-2xl font-bold text-[#10B981]">
             {formatCurrency(summary.totalTaxSavings)}
           </p>
-          <p className="text-xs text-gray-400 mt-1">Cumulative over asset life</p>
+          <p className="text-xs text-gray-400 mt-1">Peak cumulative savings vs. straight-line</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
@@ -185,6 +188,10 @@ export default function StudyResults({ results }: StudyResultsProps) {
             </p>
           </div>
         </div>
+        <p className="text-xs text-gray-400 mt-4">
+          {assumptions ? `Year 1 = ${assumptions.placedInServiceYear}. ` : ''}
+          Depreciation convention: {conventionLabel(assumptions)}
+        </p>
       </div>
 
       {/* Asset Detail Table */}

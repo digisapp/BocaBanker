@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger'
 import { captureLeadSchema } from './tools'
 import { getDefaultOwnerId } from '@/lib/email/default-owner'
 import { rateLimit } from '@/lib/rate-limit'
+import { sendNewLeadAlert } from '@/lib/lead-alerts'
 
 type CaptureLeadInput = z.infer<typeof captureLeadSchema>
 
@@ -24,7 +25,7 @@ export function createAuthLeadCapture(userId: string) {
     try {
       // Dedup: check for an existing lead with the same email or address+name
       const dupeCondition = input.buyerEmail
-        ? and(eq(leads.userId, userId), eq(leads.buyerEmail, input.buyerEmail))
+        ? and(eq(leads.userId, userId), ilike(leads.buyerEmail, escapeLike(input.buyerEmail)))
         : and(
             eq(leads.userId, userId),
             ilike(leads.propertyAddress, escapeLike(input.propertyAddress || 'Not provided')),
@@ -51,7 +52,7 @@ export function createAuthLeadCapture(userId: string) {
           userId,
           propertyAddress: input.propertyAddress || 'Not provided',
           propertyCity: input.propertyCity || undefined,
-          propertyState: input.propertyState || 'FL',
+          propertyState: input.propertyState || null,
           propertyType: input.propertyType || 'other',
           buyerName: input.buyerName,
           buyerEmail: input.buyerEmail || undefined,
@@ -88,8 +89,9 @@ export function createAuthLeadCapture(userId: string) {
  * Uses supabaseAdmin (service role) since there is no authenticated user.
  *
  * Anonymous visitors can steer the model into calling this tool (prompt
- * injection), so inserts are capped per IP to keep junk out of the admin's
- * lead pipeline.
+ * injection), so when `ip` is given, inserts are capped per IP to keep junk
+ * out of the admin's lead pipeline. The contact form passes no ip: it has its
+ * own visible rate limit, and a silent cap there would drop real leads.
  */
 export function createGuestLeadCapture(ip?: string) {
   return async (input: CaptureLeadInput) => {
@@ -107,17 +109,37 @@ export function createGuestLeadCapture(ip?: string) {
         }
       }
 
-      // Dedup: skip insert if a guest lead with this email already exists
-      if (input.buyerEmail) {
-        const { data: existing } = await supabaseAdmin
+      const newNotes = [input.interestType, input.notes].filter(Boolean).join(' — ')
+
+      // Dedup on email (any case), else phone: the model can call this tool
+      // again on later turns. A repeat can carry a phone number or a new
+      // question, so merge those into the existing lead.
+      if (input.buyerEmail || input.buyerPhone) {
+        const lookup = supabaseAdmin
           .from('leads')
-          .select('id')
-          .eq('buyer_email', input.buyerEmail)
+          .select('id, buyer_phone, notes')
           .eq('source', 'guest-chat')
+        const { data: existing, error: lookupError } = await (input.buyerEmail
+          ? lookup.ilike('buyer_email', escapeLike(input.buyerEmail))
+          : lookup.eq('buyer_phone', input.buyerPhone!)
+        )
           .limit(1)
           .maybeSingle();
+        if (lookupError) throw lookupError
 
         if (existing) {
+          const patch: { buyer_phone?: string; notes?: string } = {}
+          if (input.buyerPhone && !existing.buyer_phone) patch.buyer_phone = input.buyerPhone
+          if (newNotes && !existing.notes?.includes(newNotes)) {
+            patch.notes = existing.notes ? `${existing.notes}\n${newNotes}` : newNotes
+          }
+          if (patch.buyer_phone || patch.notes) {
+            const { error } = await supabaseAdmin
+              .from('leads')
+              .update({ ...patch, updated_at: new Date().toISOString() })
+              .eq('id', existing.id)
+            if (error) throw error
+          }
           return {
             success: true,
             message: `Thank you, ${input.buyerName}! I already have your information on file.`,
@@ -128,29 +150,31 @@ export function createGuestLeadCapture(ip?: string) {
       // Assign to the default admin so the lead is visible in the dashboard —
       // every lead read path filters by user_id, so an unowned lead is lost.
       const ownerId = await getDefaultOwnerId()
+      if (!ownerId) throw new Error('No admin user to own guest leads')
 
-      const { error } = await supabaseAdmin
+      const { data: created, error } = await supabaseAdmin
         .from('leads')
         .insert({
           user_id: ownerId,
           property_address: input.propertyAddress || 'Not provided',
           property_city: input.propertyCity || null,
-          property_state: input.propertyState || 'FL',
+          property_state: input.propertyState || null,
           property_type: input.propertyType || 'other',
           buyer_name: input.buyerName,
           buyer_email: input.buyerEmail || null,
           buyer_phone: input.buyerPhone || null,
           sale_price: input.salePrice?.toString() ?? null,
           source: 'guest-chat',
-          notes:
-            [input.interestType, input.notes].filter(Boolean).join(' — ') ||
-            null,
+          notes: newNotes || null,
           tags: ['guest-chat-captured'],
           status: 'new',
           priority: 'medium',
         })
+        .select('id')
+        .single()
 
       if (error) throw error
+      await sendNewLeadAlert(created.id)
 
       return {
         success: true,

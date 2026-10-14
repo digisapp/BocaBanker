@@ -7,6 +7,7 @@ import { costSegStudies, studyAssets, properties } from '@/db/schema'
 import { logger } from '@/lib/logger'
 import { eq, and } from 'drizzle-orm'
 import { generateStudyReport } from '@/lib/cost-seg/report-generator'
+import { placedInServiceMonthFor } from '@/lib/cost-seg/placed-in-service'
 
 export async function POST(
   request: NextRequest,
@@ -53,21 +54,21 @@ export async function POST(
       return apiError('No assets found for this study. Add assets before calculating.', 400)
     }
 
-    // Real property uses the mid-month convention, so the month placed in
-    // service matters. Use the purchase month when it falls in the study year
-    // (look-back studies keep the January default).
-    let placedInServiceMonth = 1
-    if (property.purchaseDate) {
-      const [y, m] = property.purchaseDate.split('-').map(Number)
-      if (y === study.studyYear && m >= 1 && m <= 12) placedInServiceMonth = m
-    }
+    // The study year is the tax year placed in service. Real property uses
+    // the mid-month convention (and personal property the mid-quarter one
+    // when it applies), so the month matters: the purchase month when it
+    // falls in the study year, January otherwise.
+    const placedInServiceMonth = placedInServiceMonthFor(study.studyYear, property.purchaseDate)
 
     // Build report input
     const reportInput = {
       placedInServiceMonth,
+      midQuarterConvention: study.midQuarterConvention === true,
       propertyAddress: property.address,
       propertyType: property.propertyType,
       purchasePrice: parseFloat(property.purchasePrice),
+      // 0 = not on record: the report baselines against the depreciable
+      // asset basis instead (the form allocated purchase price minus land)
       buildingValue: property.buildingValue ? parseFloat(property.buildingValue) : 0,
       landValue: property.landValue ? parseFloat(property.landValue) : 0,
       studyYear: study.studyYear,

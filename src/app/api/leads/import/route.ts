@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { leads } from '@/db/schema';
 import { LEAD_PROPERTY_TYPES, type LeadPropertyType } from '@/constants/property-types';
+import { normalizeDate, normalizeInteger, normalizeNumeric } from '@/lib/csv/normalize';
+import { insertInBatches, type ImportRow } from '@/lib/csv/batch-insert';
+import { IMPORT_CONVERTED_STATUS_ERROR } from '@/lib/leads';
 
 const MAX_IMPORT_ROWS = 5000;
 
@@ -13,57 +17,13 @@ interface ImportBody {
   mapping: Record<string, string>;
 }
 
-/**
- * Normalize a currency/numeric string ("$1,200,000" -> "1200000").
- * Returns null for empty input, undefined if unparseable.
- */
-function normalizeNumeric(raw: string): string | null | undefined {
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-  const cleaned = trimmed.replace(/[$,\s]/g, '');
-  const parsed = parseFloat(cleaned);
-  if (isNaN(parsed)) return undefined;
-  return parsed.toString();
-}
-
-/**
- * Normalize a date string to ISO (YYYY-MM-DD). Accepts ISO-parseable dates
- * and MM/DD/YYYY (or M/D/YY) by converting.
- * Returns null for empty input, undefined if unparseable.
- */
-function normalizeDate(raw: string): string | null | undefined {
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-
-  // MM/DD/YYYY or M/D/YY
-  const slashMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-  if (slashMatch) {
-    const month = parseInt(slashMatch[1], 10);
-    const day = parseInt(slashMatch[2], 10);
-    let year = parseInt(slashMatch[3], 10);
-    if (year < 100) year += 2000;
-    if (month < 1 || month > 12 || day < 1 || day > 31) return undefined;
-    const iso = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    if (isNaN(Date.parse(iso))) return undefined;
-    return iso;
-  }
-
-  // ISO-parseable (e.g. YYYY-MM-DD)
-  if (!isNaN(Date.parse(trimmed))) {
-    const date = new Date(trimmed);
-    return date.toISOString().split('T')[0];
-  }
-
-  return undefined;
-}
-
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
 
-    const body: ImportBody = await request.json();
+    const body = await readJson<ImportBody | null>(request);
 
-    if (!body.leads || !Array.isArray(body.leads) || body.leads.length === 0) {
+    if (!body || !Array.isArray(body.leads) || body.leads.length === 0) {
       return apiError('No lead data provided', 400);
     }
 
@@ -84,7 +44,7 @@ export async function POST(request: NextRequest) {
     });
 
     const errors: { row: number; message: string }[] = [];
-    const validRows: (typeof leads.$inferInsert)[] = [];
+    const validRows: ImportRow<typeof leads.$inferInsert>[] = [];
 
     inputRows.forEach((row, index) => {
       const propertyAddress = (row.property_address ?? '').trim();
@@ -113,11 +73,16 @@ export async function POST(request: NextRequest) {
         return;
       }
 
-      // Validate status if provided
+      // Validate status if provided. "converted" is set only by the Convert
+      // action (it creates the client); an imported converted lead has none.
       const rawStatus = (row.status ?? '').trim().toLowerCase();
-      const validStatuses = ['new', 'contacted', 'qualified', 'proposal_sent', 'converted', 'lost'];
+      if (rawStatus === 'converted') {
+        errors.push({ row: index + 1, message: IMPORT_CONVERTED_STATUS_ERROR });
+        return;
+      }
+      const validStatuses = ['new', 'contacted', 'qualified', 'proposal_sent', 'lost'];
       const status = validStatuses.includes(rawStatus)
-        ? (rawStatus as 'new' | 'contacted' | 'qualified' | 'proposal_sent' | 'converted' | 'lost')
+        ? (rawStatus as 'new' | 'contacted' | 'qualified' | 'proposal_sent' | 'lost')
         : 'new';
 
       // Validate priority if provided
@@ -133,7 +98,8 @@ export async function POST(request: NextRequest) {
         ? tagsRaw.split(',').map((t) => t.trim()).filter(Boolean)
         : [];
 
-      // Parse numeric fields — strip $ and commas, validate
+      // Parse numeric fields — strip $ and commas, allow K/M suffixes; the
+      // whole cell must be numeric (no reading "12abc" as 12)
       const salePrice = normalizeNumeric(row.sale_price ?? '');
       if (salePrice === undefined) {
         errors.push({
@@ -159,7 +125,8 @@ export async function POST(request: NextRequest) {
         return;
       }
 
-      // Parse date field — accept ISO and MM/DD/YYYY
+      // Parse date field — ISO, MM/DD/YYYY, "Mar 3, 2026"; impossible dates
+      // (Feb 30) are rejected rather than failing the whole insert batch
       const saleDate = normalizeDate(row.sale_date ?? '');
       if (saleDate === undefined) {
         errors.push({
@@ -169,61 +136,55 @@ export async function POST(request: NextRequest) {
         return;
       }
 
-      const squareFootageRaw = (row.square_footage ?? '').trim();
-      const squareFootage = squareFootageRaw ? parseInt(squareFootageRaw.replace(/[,\s]/g, ''), 10) : null;
-      const yearBuiltRaw = (row.year_built ?? '').trim();
-      const yearBuilt = yearBuiltRaw ? parseInt(yearBuiltRaw, 10) : null;
+      // Secondary building facts: unreadable or out-of-range values (incl. the
+      // 0 county records use for "unknown") are dropped rather than failing
+      // the row. Bounds match the edit form's and keep sqft inside int4.
+      const squareFootage = normalizeInteger(row.square_footage ?? '', { min: 1, max: 2_000_000_000 }) ?? null;
+      const yearBuilt = normalizeInteger(row.year_built ?? '', { min: 1000, max: 2100 }) ?? null;
 
       validRows.push({
-        userId: user.id,
-        propertyAddress,
-        propertyCity: (row.property_city ?? '').trim() || null,
-        propertyCounty: (row.property_county ?? '').trim() || null,
-        propertyState: (row.property_state ?? '').trim() || 'FL',
-        propertyZip: (row.property_zip ?? '').trim() || null,
-        propertyType,
-        salePrice,
-        saleDate,
-        parcelId: (row.parcel_id ?? '').trim() || null,
-        deedBookPage: (row.deed_book_page ?? '').trim() || null,
-        buyerName: (row.buyer_name ?? '').trim() || null,
-        buyerCompany: (row.buyer_company ?? '').trim() || null,
-        buyerEmail: buyerEmail || null,
-        buyerPhone: (row.buyer_phone ?? '').trim() || null,
-        sellerName: (row.seller_name ?? '').trim() || null,
-        squareFootage: squareFootage && !isNaN(squareFootage) ? squareFootage : null,
-        yearBuilt: yearBuilt && !isNaN(yearBuilt) ? yearBuilt : null,
-        buildingValue,
-        landValue,
-        status,
-        priority,
-        source: (row.source ?? '').trim() || null,
-        notes: (row.notes ?? '').trim() || null,
-        tags,
+        row: index + 1,
+        values: {
+          userId: user.id,
+          propertyAddress,
+          propertyCity: (row.property_city ?? '').trim() || null,
+          propertyCounty: (row.property_county ?? '').trim() || null,
+          propertyState: (row.property_state ?? '').trim() || 'FL',
+          propertyZip: (row.property_zip ?? '').trim() || null,
+          propertyType,
+          salePrice,
+          saleDate,
+          parcelId: (row.parcel_id ?? '').trim() || null,
+          deedBookPage: (row.deed_book_page ?? '').trim() || null,
+          buyerName: (row.buyer_name ?? '').trim() || null,
+          buyerCompany: (row.buyer_company ?? '').trim() || null,
+          buyerEmail: buyerEmail || null,
+          buyerPhone: (row.buyer_phone ?? '').trim() || null,
+          sellerName: (row.seller_name ?? '').trim() || null,
+          squareFootage,
+          yearBuilt,
+          buildingValue,
+          landValue,
+          status,
+          priority,
+          source: (row.source ?? '').trim() || null,
+          notes: (row.notes ?? '').trim() || null,
+          tags,
+        },
       });
     });
 
-    let imported = 0;
+    // Batch insert in chunks of 100 — a failed batch is retried row by row,
+    // and errors carry the real CSV row number
+    const inserted = await insertInBatches(
+      validRows,
+      (values) => db.insert(leads).values(values),
+      (message, err) => logger.error('leads-api', `Lead import: ${message}`, err),
+    );
+    errors.push(...inserted.errors);
+    errors.sort((a, b) => a.row - b.row);
 
-    if (validRows.length > 0) {
-      // Batch insert in chunks of 100 — a failed batch is reported, not fatal
-      const BATCH_SIZE = 100;
-      for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
-        const batch = validRows.slice(i, i + BATCH_SIZE);
-        try {
-          await db.insert(leads).values(batch);
-          imported += batch.length;
-        } catch (batchError) {
-          logger.error('leads-api', `Failed to insert lead batch starting at row ${i + 1}`, batchError);
-          errors.push({
-            row: i + 1,
-            message: `Failed to insert batch of ${batch.length} rows (rows ${i + 1}-${i + batch.length})`,
-          });
-        }
-      }
-    }
-
-    return NextResponse.json({ imported, errors });
+    return NextResponse.json({ imported: inserted.imported, errors });
   } catch (error) {
     if (error instanceof ApiError) return error.response;
     logger.error('leads-api', 'POST /api/leads/import error', error);

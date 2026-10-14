@@ -1,11 +1,11 @@
 'use client';
 
-import { Star, Paperclip, Inbox as InboxIcon, Sparkles } from 'lucide-react';
+import { Star, Paperclip, Inbox as InboxIcon, Sparkles, ShieldAlert } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import type { EmailListItem, InboxFolder } from './types';
-import { AI_CATEGORY_LABELS, BADGE_TONES, STATUS_LABELS, clientName, counterpart, formatListDate } from './types';
+import { AI_CATEGORY_LABELS, BADGE_TONES, STATUS_LABELS, UNVERIFIED_SENDER_HINT, clientName, counterpart, formatListDate } from './types';
 
 interface EmailListProps {
   emails: EmailListItem[];
@@ -88,6 +88,9 @@ export function EmailList({ emails, folder, selectedId, onSelect, onToggleStar, 
                 <p className="flex-1 truncate text-xs text-gray-500">{email.aiSummary || email.bodyText || ''}</p>
                 {email.hasAttachments && <Paperclip className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-label="Has attachments" />}
                 {email.isTest && <Badge variant="outline" className={BADGE_TONES.neutral}>Test</Badge>}
+                {email.unverifiedSender && (
+                  <Badge variant="outline" className={BADGE_TONES.red} title={UNVERIFIED_SENDER_HINT}><ShieldAlert className="h-3 w-3" />Unverified</Badge>
+                )}
                 {email.template === 'ai-auto-reply' && (
                   <Badge variant="outline" className={BADGE_TONES.violet}><Sparkles className="h-3 w-3" />Auto</Badge>
                 )}

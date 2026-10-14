@@ -18,10 +18,11 @@ export class ApiError extends Error {
 }
 
 /**
- * Authenticate the current request. Returns the Supabase User.
+ * Require a signed-in Supabase session, with no role check. Only
+ * /api/auth/me should use this: it reports the role so the UI can react.
  * Throws ApiError(401) if not authenticated.
  */
-export async function requireAuth(): Promise<User> {
+export async function requireSession(): Promise<User> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -33,11 +34,15 @@ export async function requireAuth(): Promise<User> {
 }
 
 /**
- * Authenticate + verify admin role. Returns the Supabase User.
+ * Authenticate the owner. Returns the Supabase User.
+ *
+ * Boca Banker is a single-user platform, so a session alone is not enough:
+ * anyone who can sign up through Supabase Auth would have one. The account
+ * must also hold the admin role in `users`.
  * Throws ApiError(401) if not authenticated, ApiError(403) if not admin.
  */
-export async function requireAdmin(): Promise<User> {
-  const user = await requireAuth()
+export async function requireAuth(): Promise<User> {
+  const user = await requireSession()
   const [dbUser] = await db
     .select({ role: users.role })
     .from(users)
@@ -48,3 +53,6 @@ export async function requireAdmin(): Promise<User> {
   }
   return user
 }
+
+/** Same check as requireAuth; kept for routes that read as admin-only. */
+export const requireAdmin = requireAuth

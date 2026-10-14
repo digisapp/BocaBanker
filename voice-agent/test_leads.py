@@ -56,3 +56,51 @@ def test_instructions_per_channel():
     assert "caller ID is" not in web
     assert "bocabanker.com" in web
     assert "{" not in web and "{" not in phone
+
+
+def _client(handler):
+    import httpx
+
+    return httpx.AsyncClient(transport=httpx.MockTransport(handler))
+
+
+def test_claim_web_call_follows_the_app(monkeypatch):
+    import asyncio
+
+    import httpx
+
+    from app_api import claim_web_call
+
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-key")
+    seen = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["auth"] = request.headers["authorization"]
+        seen["url"] = str(request.url)
+        return httpx.Response(200, json={"allowed": False})
+
+    assert asyncio.run(claim_web_call(_client(handler))) is False
+    assert seen["auth"] == "Bearer service-key"
+    assert seen["url"].endswith("/api/voice/claim")
+
+
+def test_claim_web_call_fails_open(monkeypatch):
+    import asyncio
+
+    import httpx
+
+    from app_api import claim_web_call
+
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-key")
+    assert asyncio.run(claim_web_call(_client(lambda r: httpx.Response(503)))) is True
+
+
+def test_lead_alert_never_raises(monkeypatch):
+    import asyncio
+
+    import httpx
+
+    from app_api import send_lead_alert
+
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-key")
+    asyncio.run(send_lead_alert("lead-1", _client(lambda r: httpx.Response(500))))

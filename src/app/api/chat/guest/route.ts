@@ -1,4 +1,6 @@
 import { apiError } from '@/lib/api/response'
+import { readJson } from '@/lib/api/request'
+import { ApiError } from '@/lib/api/auth'
 import { createChatStream, getMessageText } from '@/lib/api/chat-shared'
 import { createGuestLeadCapture } from '@/lib/ai/tool-executors'
 import { GUEST_SYSTEM_PROMPT, GUEST_SYSTEM_PROMPT_LEAD_CAPTURE } from '@/lib/ai/guest-system-prompt'
@@ -53,14 +55,17 @@ export async function POST(request: Request) {
     }
 
     const count = getGuestCount(request)
-    const { messages } = await request.json()
+    const { messages } = await readJson(request)
 
-    if (!Array.isArray(messages) || messages.length === 0 || messages.length > MAX_MESSAGE_ENTRIES) {
+    if (!Array.isArray(messages) || messages.length === 0) {
       return apiError('Invalid messages', 400)
     }
 
-    // Guests only ever author user/assistant text; drop anything else.
+    // The widget sends its whole saved history, so long chats are normal:
+    // ignore old entries rather than reject. Guests only ever author
+    // user/assistant text; drop anything else.
     const chatMessages = messages
+      .slice(-MAX_MESSAGE_ENTRIES)
       .filter((m) => m && (m.role === 'user' || m.role === 'assistant'))
       .slice(-MODEL_CONTEXT_MESSAGES)
 
@@ -100,6 +105,7 @@ export async function POST(request: Request) {
       },
     })
   } catch (error) {
+    if (error instanceof ApiError) return error.response
     logger.error('chat-api', 'Guest chat API error', error)
     return apiError('Internal Server Error')
   }

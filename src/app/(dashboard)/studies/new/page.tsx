@@ -3,28 +3,31 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { logger } from '@/lib/logger'
+import { toast } from 'sonner'
 import { FileBarChart } from 'lucide-react'
 import PageHeader from '@/components/shared/PageHeader'
 import { Skeleton } from '@/components/ui/skeleton'
 import StudyForm from '@/components/studies/StudyForm'
+import type { PropertyOption, ClientOption, StudyFormData } from '@/hooks/useStudyForm'
 
-interface PropertyOption {
-  id: string
-  address: string
-  city?: string | null
-  state?: string | null
-  propertyType: string
-  purchasePrice: string | number
-  buildingValue?: string | number | null
-  landValue?: string | number | null
-  clientId?: string | null
-}
+// The list APIs cap `limit` at 100, so page through until a short page
+// (measured against the limit the API reports it actually applied).
+const PAGE_SIZE = 100
+const MAX_PAGES = 100
 
-interface ClientOption {
-  id: string
-  firstName: string
-  lastName: string
-  company?: string | null
+async function fetchAllPages<T extends { id?: unknown }>(path: string, key: string): Promise<T[]> {
+  // keyed by id: a row added mid-load can shift offsets and repeat one
+  const rows = new Map<unknown, T>()
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const res = await fetch(`${path}?limit=${PAGE_SIZE}&page=${page}`)
+    if (!res.ok) throw new Error(`Failed to load ${key} (${res.status})`)
+    const data = await res.json()
+    const batch: T[] = Array.isArray(data[key]) ? data[key] : []
+    for (const row of batch) rows.set(row.id ?? rows.size, row)
+    const appliedLimit = Number(data.limit ?? data.pagination?.limit) || PAGE_SIZE
+    if (batch.length === 0 || batch.length < appliedLimit) break
+  }
+  return [...rows.values()]
 }
 
 function NewStudyContent() {
@@ -39,15 +42,15 @@ function NewStudyContent() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [propsRes, clientsRes] = await Promise.all([
-          fetch('/api/properties?limit=200'),
-          fetch('/api/clients?limit=200'),
+        // Load each list independently so one failing doesn't empty both
+        const [propsResult, clientsResult] = await Promise.allSettled([
+          fetchAllPages<Record<string, unknown>>('/api/properties', 'properties'),
+          fetchAllPages<Record<string, string>>('/api/clients', 'clients'),
         ])
 
-        if (propsRes.ok) {
-          const data = await propsRes.json()
+        if (propsResult.status === 'fulfilled') {
           setProperties(
-            (data.properties || []).map((p: Record<string, unknown>) => ({
+            propsResult.value.map((p) => ({
               id: p.id as string,
               address: p.address as string,
               city: p.city as string | null,
@@ -56,21 +59,27 @@ function NewStudyContent() {
               purchasePrice: p.purchasePrice as string,
               buildingValue: p.buildingValue as string | null,
               landValue: p.landValue as string | null,
+              purchaseDate: p.purchaseDate as string | null,
               clientId: p.clientId as string | null,
             }))
           )
+        } else {
+          logger.error('studies-page', 'Error loading properties', propsResult.reason)
+          toast.error('Could not load your properties. Refresh to try again.')
         }
 
-        if (clientsRes.ok) {
-          const data = await clientsRes.json()
+        if (clientsResult.status === 'fulfilled') {
           setClients(
-            (data.clients || []).map((c: Record<string, string>) => ({
+            clientsResult.value.map((c) => ({
               id: c.id,
               firstName: c.firstName || c.first_name,
               lastName: c.lastName || c.last_name,
               company: c.company,
             }))
           )
+        } else {
+          logger.error('studies-page', 'Error loading clients', clientsResult.reason)
+          toast.error('Could not load your clients. Refresh to try again.')
         }
       } catch (error) {
         logger.error('studies-page', 'Error loading data', error)
@@ -81,22 +90,7 @@ function NewStudyContent() {
     fetchData()
   }, [])
 
-  async function handleSubmit(data: {
-    study_name: string
-    property_id: string
-    client_id: string
-    tax_rate: number
-    discount_rate: number
-    bonus_depreciation_rate: number
-    study_year: number
-    assets: Array<{
-      category: string
-      description: string
-      amount: number
-      recoveryPeriod: number
-      bonusEligible: boolean
-    }>
-  }) {
+  async function handleSubmit(data: StudyFormData) {
     const res = await fetch('/api/studies', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

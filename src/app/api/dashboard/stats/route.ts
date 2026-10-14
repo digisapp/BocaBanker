@@ -11,6 +11,7 @@ import {
   leads,
 } from '@/db/schema';
 import { eq, count, sql, desc, gte, and } from 'drizzle-orm';
+import { businessPeriods, startOfBusinessDay } from '@/lib/dates';
 
 export async function GET(_request: NextRequest) {
   try {
@@ -18,9 +19,9 @@ export async function GET(_request: NextRequest) {
 
     const userId = user.id;
 
-    // Date for "this month" calculations
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    // "This month" starts at midnight Eastern on the 1st — the server's UTC
+    // clock started it at 8pm the evening before.
+    const startOfMonth = startOfBusinessDay(businessPeriods().monthStart);
 
     // One aggregate query per table (COUNT ... FILTER) instead of 17
     // sequential round-trips, all issued in parallel.

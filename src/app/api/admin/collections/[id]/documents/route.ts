@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, ApiError } from '@/lib/api/auth'
 import { apiError } from '@/lib/api/response'
+import { readJson } from '@/lib/api/request'
 import { logger } from '@/lib/logger'
 import { listDocuments, uploadDocument } from '@/lib/ai/xai-collections'
 
@@ -31,7 +32,7 @@ export async function POST(
     const { id: collectionId } = await params
     await requireAdmin()
 
-    const { content, title } = await request.json()
+    const { content, title } = await readJson(request)
     if (!content || typeof content !== 'string') {
       return apiError('content is required', 400)
     }

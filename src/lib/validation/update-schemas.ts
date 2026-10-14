@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { LEAD_PROPERTY_TYPES } from '@/constants/property-types'
+import { LEAD_PROPERTY_TYPES, PROPERTY_PROPERTY_TYPES } from '@/constants/property-types'
+import { isoDateString } from './dates'
 
 /**
  * Schemas for partial (PUT) updates. Unlike the create schemas these accept
@@ -27,10 +28,7 @@ const optionalText = (max: number) => z.string().max(max).nullable()
 
 /** YYYY-MM-DD, or empty string / null to clear. */
 const dateOrNull = z
-  .union([
-    z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD').refine((v) => !isNaN(Date.parse(v)), 'Invalid date'),
-    z.literal(''),
-  ])
+  .union([z.literal(''), isoDateString])
   .nullable()
   .transform((v) => (v ? v : null))
 
@@ -121,6 +119,50 @@ export const loanUpdateSchema = z.object({
 }).partial()
 
 export type LoanUpdateInput = z.infer<typeof loanUpdateSchema>
+
+/** '' / null / omitted -> null; otherwise the trimmed value must pass `check`. */
+const blankableText = (max: number, check?: { re: RegExp; message: string }) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .refine((v) => v === '' || !check || check.re.test(v), check?.message ?? 'Invalid value')
+    .nullable()
+    .optional()
+    .transform((v) => (v ? v : null))
+
+/**
+ * Full-replace schema for PUT /api/properties/[id]. Looser than
+ * propertySchema (which the create form uses): properties created by lead
+ * conversion or CSV import have no city/state/ZIP and a purchase price of 0
+ * when the sale price was unknown (the column is NOT NULL), and the edit page
+ * re-sends those values — the strict schema made such properties unsaveable.
+ */
+export const propertyUpdateSchema = z.object({
+  address: z.string({ message: 'Address is required' }).trim().min(1, 'Address is required').max(1000),
+  city: blankableText(200),
+  state: blankableText(50, { re: /^[A-Za-z]{2}$/, message: 'Use 2-letter state abbreviation' })
+    .transform((v) => (v ? v.toUpperCase() : null)),
+  zip: blankableText(20, { re: /^\d{5}(-\d{4})?$/, message: 'Please enter a valid ZIP code' }),
+  property_type: z.enum(PROPERTY_PROPERTY_TYPES, { message: 'Property type is required' }),
+  purchase_price: z
+    .union([z.number(), z.string()], { message: 'Purchase price is required' })
+    .pipe(numericString({ min: 0 })),
+  purchase_date: dateOrNull.optional(),
+  building_value: numericString({ min: 0 }).nullable().optional(),
+  land_value: numericString({ min: 0 }).nullable().optional(),
+  square_footage: intValue(0, 2_000_000_000).nullable().optional(),
+  year_built: intValue(1000, 2100).nullable().optional(),
+  loan_amount: numericString({ min: 0 }).nullable().optional(),
+  interest_rate: numericString({ min: 0, max: 30 }).nullable().optional(),
+  loan_term_years: intValue(1, 40).nullable().optional(),
+  monthly_payment: numericString({ min: 0 }).nullable().optional(),
+  loan_type: optionalText(50).optional(),
+  lender_name: optionalText(100).optional(),
+  loan_origination_date: dateOrNull.optional(),
+})
+
+export type PropertyUpdateInput = z.infer<typeof propertyUpdateSchema>
 
 export const studyUpdateSchema = z.object({
   study_name: z.string().trim().min(1).max(200),

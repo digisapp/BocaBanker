@@ -1,5 +1,7 @@
 import { z } from 'zod'
 import { LEAD_PROPERTY_TYPES } from '@/constants/property-types'
+import { optionalIsoDate } from './dates'
+import { businessYear } from '@/lib/dates'
 
 export const leadSchema = z.object({
   property_address: z
@@ -14,7 +16,7 @@ export const leadSchema = z.object({
     message: 'Property type is required',
   }),
   sale_price: z.number().positive('Sale price must be positive').optional(),
-  sale_date: z.string().optional().or(z.literal('')),
+  sale_date: optionalIsoDate,
   parcel_id: z.string().max(50).optional().or(z.literal('')),
   buyer_name: z.string().max(200).optional().or(z.literal('')),
   buyer_company: z.string().max(200).optional().or(z.literal('')),
@@ -26,7 +28,14 @@ export const leadSchema = z.object({
   buyer_phone: z.string().max(20).optional().or(z.literal('')),
   seller_name: z.string().max(200).optional().or(z.literal('')),
   square_footage: z.number().int().positive().optional(),
-  year_built: z.number().int().min(1800).max(new Date().getFullYear()).optional(),
+  // Checked per call, not frozen at module load (a warm server would keep
+  // last year's limit past New Year)
+  year_built: z
+    .number()
+    .int()
+    .min(1800)
+    .refine((y) => y <= businessYear(), 'Year cannot be in the future')
+    .optional(),
   status: z
     .enum(['new', 'contacted', 'qualified', 'proposal_sent', 'converted', 'lost'])
     .default('new'),

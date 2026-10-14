@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin, ApiError } from '@/lib/api/auth'
 import { apiError } from '@/lib/api/response'
+import { readJson } from '@/lib/api/request'
 import { logger } from '@/lib/logger'
 import { listCollections, createCollection } from '@/lib/ai/xai-collections'
 
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
   try {
     await requireAdmin()
 
-    const { name, description } = await request.json()
+    const { name, description } = await readJson(request)
     if (!name || typeof name !== 'string') {
       return apiError('name is required', 400)
     }

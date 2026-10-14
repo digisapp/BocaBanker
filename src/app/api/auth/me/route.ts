@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireAuth, ApiError } from '@/lib/api/auth'
+import { requireSession, ApiError } from '@/lib/api/auth'
 import { apiError } from '@/lib/api/response'
 import { db } from '@/db'
 import { users } from '@/db/schema'
@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger'
 
 export async function GET() {
   try {
-    const user = await requireAuth()
+    const user = await requireSession()
 
     let [dbUser] = await db
       .select({ role: users.role, fullName: users.fullName })

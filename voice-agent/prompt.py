@@ -20,6 +20,11 @@ WEB_WRAP_UP = (
     "This voice chat ends in about a minute. Tell the visitor briefly. If you don't have their "
     "name and phone number yet, offer to have Boca Banker follow up with them personally."
 )
+# The day's website call cap is reached (see claim_web_call in app_api.py)
+WEB_BUSY = _say_exactly(
+    "Sorry, voice chat is busy right now. Please type your question in the chat on the website, "
+    "and Boca Banker will get back to you."
+)
 WEB_GOODBYE = (
     "The time for this voice chat is up. Thank the visitor, tell them they can keep asking by "
     "text on the website, and say goodbye in one or two short sentences."

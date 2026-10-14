@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { db } from '@/db';
 import { platformSettings } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -41,8 +42,7 @@ export async function PUT(request: NextRequest) {
   try {
     await requireAdmin();
 
-    const body = await request.json();
-    const { key, value } = body;
+    const { key, value } = await readJson(request);
 
     if (!key) return apiError('key is required', 400);
 

@@ -32,6 +32,8 @@ vi.mock('next/server', async (importOriginal) => {
 
 const SECRET = 'whsec_' + Buffer.from('test-secret-test-secret-1234').toString('base64')
 const { POST } = await import('./route')
+const ai = await import('@/lib/ai/ai-email')
+const { autoReplySuppressionReason } = await import('@/lib/email/inbound-address')
 
 function signed(body: unknown, secret = SECRET) {
   const payload = JSON.stringify(body)
@@ -138,6 +140,54 @@ describe('POST /api/email/webhook', () => {
     storeInboundEmail.mockResolvedValue(null)
     const res = await POST(signed({ type: 'email.received', data: { email_id: 'e4', from: 'a@b.com', to: ['team@bocabanker.com'] } }) as never)
     expect(await res.json()).toMatchObject({ success: true, duplicate: true })
+  })
+
+  it('keeps every copy of a repeated header from the [{name, value}] form, so a forged Authentication-Results cannot win', async () => {
+    process.env.XAI_API_KEY = 'xai_test'
+    vi.mocked(ai.classifyAndDraftReply).mockResolvedValue({ autoSendable: true } as never)
+    vi.mocked(ai.storeClassification).mockResolvedValue(undefined as never)
+    vi.mocked(ai.sendAutoReply).mockReset().mockResolvedValue({ sent: false })
+    receivingGet.mockResolvedValue({
+      data: {
+        id: 'e5', from: 'jane@example.com', to: ['team@bocabanker.com'], cc: null, bcc: null, subject: 'Rates', text: 'Hi', html: null, message_id: '<r@example.com>', attachments: [],
+        headers: [
+          { name: 'Authentication-Results', value: 'amazonses.com; spf=pass smtp.mailfrom=example.com; dkim=none; dmarc=fail header.from=example.com' },
+          { name: 'Authentication-Results', value: 'amazonses.com; dmarc=pass header.from=example.com' },
+          { name: 'Message-ID', value: '<r@example.com>' },
+        ],
+      },
+      error: null,
+    })
+    storeInboundEmail.mockResolvedValue({ id: 'row5', isSpam: false, threadId: 't', userId: 'u', clientId: null, createdAt: new Date() })
+
+    await POST(signed({ type: 'email.received', data: { email_id: 'e5', from: 'jane@example.com', to: ['team@bocabanker.com'] } }) as never)
+    await vi.waitFor(() => expect(ai.sendAutoReply).toHaveBeenCalledTimes(1))
+
+    const headers = vi.mocked(ai.sendAutoReply).mock.calls[0][1].headers!
+    expect(headers['authentication-results']).toMatch(/dmarc=fail.*dmarc=pass/)
+    expect(autoReplySuppressionReason({ from: 'jane@example.com', headers })).toMatch(/not authenticated/)
+    expect(storeInboundEmail.mock.calls[0][0]).toMatchObject({ messageId: 'r@example.com' })
+  })
+
+  it("hands the receiving server's DMARC verdict to the store; a forged pass below a fail stays a fail", async () => {
+    const cases: Array<[Array<{ name: string; value: string }>, string]> = [
+      [[{ name: 'Authentication-Results', value: 'amazonses.com; spf=pass; dmarc=pass header.from=example.com' }], 'pass'],
+      [[{ name: 'Authentication-Results', value: 'amazonses.com; spf=pass; dmarc=none header.from=example.com' }], 'none'],
+      [[
+        { name: 'Authentication-Results', value: 'amazonses.com; spf=fail; dkim=none; dmarc=fail header.from=example.com' },
+        { name: 'Authentication-Results', value: 'amazonses.com; dmarc=pass header.from=example.com' },
+      ], 'fail'],
+      [[], 'unknown'],
+    ]
+    for (const [headers, dmarc] of cases) {
+      storeInboundEmail.mockReset().mockResolvedValue({ id: 'row6', isSpam: false, threadId: 't', userId: 'u', clientId: null, createdAt: new Date() })
+      receivingGet.mockResolvedValue({
+        data: { id: 'e6', from: 'jane@example.com', to: ['team@bocabanker.com'], cc: null, bcc: null, subject: 'Hi', text: 'Hi', html: null, message_id: '<d@example.com>', headers, attachments: [] },
+        error: null,
+      })
+      await POST(signed({ type: 'email.received', data: { email_id: 'e6', from: 'jane@example.com', to: ['team@bocabanker.com'] } }) as never)
+      expect(storeInboundEmail.mock.calls[0][0]).toMatchObject({ dmarc })
+    }
   })
 
   it('maps delivery events onto the outbound row', async () => {

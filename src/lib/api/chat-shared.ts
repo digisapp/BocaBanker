@@ -4,7 +4,8 @@ import {
   calculateMortgage,
   captureLeadSchema,
   CAPTURE_LEAD_DESCRIPTION,
-  scheduleConsultation,
+  scheduleConsultationSchema,
+  SCHEDULE_CONSULTATION_DESCRIPTION,
 } from '@/lib/ai/tools'
 import { augmentPromptWithContext } from '@/lib/ai/xai-collections'
 import type { XaiResponsesProviderOptions } from '@ai-sdk/xai'
@@ -30,15 +31,19 @@ export interface ChatStreamConfig {
 
 /**
  * Extract text content from a UIMessage (handles both parts-based and plain content).
+ *
+ * Request bodies are untrusted: only string text is returned, so an array
+ * `content` (content parts, files, images) can't slip past the callers'
+ * length caps and reach the model.
  */
 export function getMessageText(msg: UIMessage): string {
-  if (msg.parts) {
+  if (Array.isArray(msg.parts)) {
     return msg.parts
-      .filter((p) => p.type === 'text')
-      .map((p) => p.text || '')
+      .filter((p) => p?.type === 'text' && typeof p.text === 'string')
+      .map((p) => p.text)
       .join('')
   }
-  return msg.content || ''
+  return typeof msg.content === 'string' ? msg.content : ''
 }
 
 /**
@@ -79,6 +84,37 @@ export async function createChatStream(config: ChatStreamConfig) {
     description: CAPTURE_LEAD_DESCRIPTION,
     inputSchema: captureLeadSchema,
     execute: captureLeadExecutor,
+  })
+
+  // A consultation request is only useful if it reaches the owner, so it is
+  // saved as a lead through the same executor as capture_lead.
+  const scheduleConsultation = tool({
+    description: SCHEDULE_CONSULTATION_DESCRIPTION,
+    inputSchema: scheduleConsultationSchema,
+    execute: async ({ clientName, clientEmail, clientPhone, topic, preferredTime }) => {
+      if (!clientEmail && !clientPhone) {
+        return {
+          status: 'needs_contact',
+          message: 'Not saved yet: ask for an email or phone number so Boca Banker can follow up.',
+        }
+      }
+      const result = await captureLeadExecutor({
+        buyerName: clientName,
+        buyerEmail: clientEmail,
+        buyerPhone: clientPhone,
+        interestType: `Consultation request: ${topic}`,
+        notes: preferredTime ? `Preferred time: ${preferredTime}` : undefined,
+      })
+      return result?.success
+        ? {
+            status: 'requested',
+            message: `Consultation request saved for ${clientName} regarding "${topic}". Boca Banker will follow up.`,
+          }
+        : {
+            status: 'failed',
+            message: 'The request could not be saved. Ask them to use the contact form or call instead.',
+          }
+    },
   })
 
   return streamText({

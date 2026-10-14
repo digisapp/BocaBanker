@@ -4,24 +4,18 @@ import { apiError } from '@/lib/api/response';
 import { requireUuid } from '@/lib/api/params';
 import { db } from '@/db';
 import { leads, clients, properties } from '@/db/schema';
-import { eq, and, ne } from 'drizzle-orm';
+import { eq, and, isNull, sql } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
+import { realValue } from '@/lib/leads';
+import { PROPERTY_PROPERTY_TYPES, type PropertyPropertyType } from '@/constants/property-types';
 
-// Map lead property type to client/property type
-const mapPropertyType = (leadType: string) => {
-  switch (leadType) {
-    case 'industrial': return 'industrial';
-    case 'retail': return 'retail';
-    case 'multifamily': return 'multifamily';
-    case 'mixed-use': return 'mixed-use';
-    case 'hospitality': return 'hospitality';
-    case 'healthcare': return 'healthcare';
-    case 'office':
-    case 'other':
-    default:
-      return 'commercial';
-  }
-};
+// Every lead type is also a property type ('office' and 'other' included), so
+// keep it as-is rather than flattening office/other into 'commercial'. The
+// study form already maps office/other to commercial for cost-seg allocation.
+const mapPropertyType = (leadType: string): PropertyPropertyType =>
+  (PROPERTY_PROPERTY_TYPES as readonly string[]).includes(leadType)
+    ? (leadType as PropertyPropertyType)
+    : 'other';
 
 // Sentinel error used to roll back the transaction on a concurrent convert
 class AlreadyConvertedError extends Error {}
@@ -45,14 +39,22 @@ export async function POST(
       return apiError('Lead not found', 404);
     }
 
-    if (lead.status === 'converted') {
+    // convertedClientId also covers a converted lead whose status was later
+    // edited (older data) — converting again would duplicate the client.
+    if (lead.status === 'converted' || lead.convertedClientId) {
       return apiError('Lead has already been converted', 400);
     }
 
-    // Parse buyer name into first/last — prefer LLC member name if available
-    const contactName = (lead.memberName || lead.buyerName || '').trim();
-    const nameParts = contactName.split(/\s+/);
-    const firstName = nameParts[0] || 'Unknown';
+    // Chat/phone leads carry placeholders ("Not provided", "Unknown yet") —
+    // never copy those onto the client or property.
+    const propertyAddress = realValue(lead.propertyAddress);
+
+    // Parse buyer name into first/last — prefer LLC member name if available.
+    // first/last are NOT NULL; with no usable name fall back to the company,
+    // then 'Unknown' (the client form requires both names).
+    const contactName = realValue(lead.memberName) ?? realValue(lead.buyerName);
+    const nameParts = contactName ? contactName.split(/\s+/) : [];
+    const firstName = nameParts[0] ?? realValue(lead.buyerCompany) ?? 'Unknown';
     const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'Unknown';
 
     // Build notes with LLC/member info
@@ -74,13 +76,13 @@ export async function POST(
           userId: user.id,
           firstName,
           lastName,
-          email: lead.buyerEmail || null,
-          phone: lead.buyerPhone || null,
-          company: lead.buyerCompany || null,
-          address: lead.memberAddress || lead.propertyAddress,
-          city: lead.memberCity || lead.propertyCity || null,
-          state: lead.memberState || lead.propertyState || null,
-          zip: lead.memberZip || lead.propertyZip || null,
+          email: realValue(lead.buyerEmail),
+          phone: realValue(lead.buyerPhone),
+          company: realValue(lead.buyerCompany),
+          address: realValue(lead.memberAddress) ?? propertyAddress,
+          city: realValue(lead.memberCity) ?? realValue(lead.propertyCity),
+          state: realValue(lead.memberState) ?? realValue(lead.propertyState),
+          zip: realValue(lead.memberZip) ?? realValue(lead.propertyZip),
           status: 'active',
           source: lead.source || 'lead-conversion',
           tags: lead.tags ?? [],
@@ -88,25 +90,30 @@ export async function POST(
         })
         .returning();
 
-      // Create property from property info
-      const [property] = await tx
-        .insert(properties)
-        .values({
-          userId: user.id,
-          clientId: client.id,
-          address: lead.propertyAddress,
-          city: lead.propertyCity || null,
-          state: lead.propertyState || null,
-          zip: lead.propertyZip || null,
-          propertyType: mapPropertyType(lead.propertyType) as typeof properties.propertyType.enumValues[number],
-          purchasePrice: lead.salePrice ?? '0',
-          purchaseDate: lead.saleDate || null,
-          buildingValue: lead.buildingValue || null,
-          landValue: lead.landValue || null,
-          squareFootage: lead.squareFootage || null,
-          yearBuilt: lead.yearBuilt || null,
-        })
-        .returning();
+      // Create a property only when the lead names one — a chat/phone lead
+      // with address "Not provided" would otherwise become a junk "$0
+      // commercial at Not provided" record. purchase_price is NOT NULL, so an
+      // unknown sale price is stored as 0 (the property edit form accepts 0).
+      const [property] = propertyAddress
+        ? await tx
+            .insert(properties)
+            .values({
+              userId: user.id,
+              clientId: client.id,
+              address: propertyAddress,
+              city: realValue(lead.propertyCity),
+              state: realValue(lead.propertyState),
+              zip: realValue(lead.propertyZip),
+              propertyType: mapPropertyType(lead.propertyType),
+              purchasePrice: lead.salePrice ?? '0',
+              purchaseDate: lead.saleDate || null,
+              buildingValue: lead.buildingValue || null,
+              landValue: lead.landValue || null,
+              squareFootage: lead.squareFootage || null,
+              yearBuilt: lead.yearBuilt || null,
+            })
+            .returning()
+        : [];
 
       // Update lead status to converted and link to client — conditional on
       // the lead not already being converted, so concurrent converts can't
@@ -122,7 +129,9 @@ export async function POST(
           and(
             eq(leads.id, id),
             eq(leads.userId, user.id),
-            ne(leads.status, 'converted')
+            // IS DISTINCT FROM: status is nullable and `<>` never matches NULL
+            sql`${leads.status} IS DISTINCT FROM 'converted'`,
+            isNull(leads.convertedClientId)
           )
         )
         .returning({ id: leads.id });

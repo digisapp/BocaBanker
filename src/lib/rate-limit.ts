@@ -115,6 +115,45 @@ export async function rateLimit(
   return inMemoryRateLimit(key, config.maxRequests, config.windowMs);
 }
 
+// ── Daily counters ─────────────────────────────────────────────────
+// A cap that is checked without being spent (e.g. "is today's voice call cap
+// used up?") and spent only when the metered thing actually happens.
+
+const DAY_TTL_S = 2 * 24 * 60 * 60;
+const memoryCounters = new Map<string, number>();
+
+function counterKey(name: string, day: string): string {
+  return `counter:${name}:${day}`;
+}
+
+/** Current value of a per-day counter (`day` is any stable day label). */
+export async function readDailyCounter(name: string, day: string): Promise<number> {
+  const redis = getRedis();
+  const key = counterKey(name, day);
+  if (!redis) return memoryCounters.get(key) ?? 0;
+  return Number((await redis.get<number>(key)) ?? 0);
+}
+
+/** Add one to a per-day counter unless it has reached `cap`. True when counted. */
+export async function claimDailyCounter(name: string, day: string, cap: number): Promise<boolean> {
+  const redis = getRedis();
+  const key = counterKey(name, day);
+  if (!redis) {
+    const count = memoryCounters.get(key) ?? 0;
+    if (count >= cap) return false;
+    memoryCounters.set(key, count + 1);
+    return true;
+  }
+  const count = await redis.incr(key);
+  if (count === 1) await redis.expire(key, DAY_TTL_S);
+  if (count > cap) {
+    // Over the cap: give the slot back so the count stays exact
+    await redis.decr(key);
+    return false;
+  }
+  return true;
+}
+
 export function getClientIp(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for');
   if (forwarded) return forwarded.split(',')[0].trim();

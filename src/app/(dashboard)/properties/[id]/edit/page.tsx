@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, type FieldErrors } from 'react-hook-form';
 import { Building2, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,11 @@ import {
 } from '@/constants/property-types';
 
 const PROPERTY_TYPES = propertyTypeOptions(PROPERTY_PROPERTY_TYPES);
+
+// Blank optional fields are sent as null so the PUT clears them
+const textOrNull = (v: string) => (v.trim() ? v.trim() : null);
+const floatOrNull = (v: string) => (v.trim() ? parseFloat(v) : null);
+const intOrNull = (v: string) => (v.trim() ? parseInt(v, 10) : null);
 
 interface PropertyFormData {
   address: string;
@@ -55,7 +60,9 @@ export default function EditPropertyPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [error, setError] = useState('');
+  // A load error replaces the page; a save error shows inline under the form
+  const [loadError, setLoadError] = useState('');
+  const [saveError, setSaveError] = useState('');
 
   const form = useForm<PropertyFormData>();
 
@@ -88,10 +95,10 @@ export default function EditPropertyPage() {
             loanOriginationDate: prop.loanOriginationDate || '',
           });
         } else {
-          setError('Property not found');
+          setLoadError('Property not found');
         }
       } catch {
-        setError('Failed to load property');
+        setLoadError('Failed to load property');
       } finally {
         setLoading(false);
       }
@@ -102,32 +109,32 @@ export default function EditPropertyPage() {
   async function handleSave(data: PropertyFormData) {
     setSaving(true);
     setSaved(false);
-    setError('');
+    setSaveError('');
 
     try {
       const res = await fetch(`/api/properties/${propertyId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          address: data.address,
-          city: data.city,
-          state: data.state,
-          zip: data.zip,
+          address: data.address.trim(),
+          city: textOrNull(data.city),
+          state: textOrNull(data.state),
+          zip: textOrNull(data.zip),
           property_type: data.propertyType,
-          purchase_price: data.purchasePrice ? parseFloat(data.purchasePrice) : undefined,
-          purchase_date: data.purchaseDate || undefined,
-          building_value: data.buildingValue ? parseFloat(data.buildingValue) : undefined,
-          land_value: data.landValue ? parseFloat(data.landValue) : undefined,
-          square_footage: data.squareFootage ? parseInt(data.squareFootage) : undefined,
-          year_built: data.yearBuilt ? parseInt(data.yearBuilt) : undefined,
-          description: data.description || undefined,
-          loan_amount: data.loanAmount ? parseFloat(data.loanAmount) : undefined,
-          interest_rate: data.interestRate ? parseFloat(data.interestRate) : undefined,
-          loan_term_years: data.loanTermYears ? parseInt(data.loanTermYears) : undefined,
-          monthly_payment: data.monthlyPayment ? parseFloat(data.monthlyPayment) : undefined,
-          loan_type: data.loanType || undefined,
-          lender_name: data.lenderName || undefined,
-          loan_origination_date: data.loanOriginationDate || undefined,
+          purchase_price: parseFloat(data.purchasePrice),
+          purchase_date: data.purchaseDate || null,
+          building_value: floatOrNull(data.buildingValue),
+          land_value: floatOrNull(data.landValue),
+          square_footage: intOrNull(data.squareFootage),
+          year_built: intOrNull(data.yearBuilt),
+          description: textOrNull(data.description),
+          loan_amount: floatOrNull(data.loanAmount),
+          interest_rate: floatOrNull(data.interestRate),
+          loan_term_years: intOrNull(data.loanTermYears),
+          monthly_payment: floatOrNull(data.monthlyPayment),
+          loan_type: textOrNull(data.loanType),
+          lender_name: textOrNull(data.lenderName),
+          loan_origination_date: data.loanOriginationDate || null,
         }),
       });
 
@@ -137,25 +144,40 @@ export default function EditPropertyPage() {
           router.push('/properties');
         }, 1500);
       } else {
-        const errData = await res.json();
-        setError(errData.error || 'Failed to save property');
+        // The API's message names the field that failed validation
+        const errData = await res.json().catch(() => ({}));
+        setSaveError(errData.error || 'Failed to save property');
       }
     } catch {
-      setError('Failed to save property');
+      setSaveError('Failed to save property');
     } finally {
       setSaving(false);
     }
+  }
+
+  // Required fields left blank: say so instead of silently not submitting
+  function handleInvalid(errors: FieldErrors<PropertyFormData>) {
+    const missing = [
+      errors.address && 'Address',
+      errors.purchasePrice && 'Purchase price',
+    ].filter(Boolean);
+    setSaved(false);
+    setSaveError(
+      missing.length > 0
+        ? `${missing.join(' and ')} ${missing.length > 1 ? 'are' : 'is'} required`
+        : 'Please check the form',
+    );
   }
 
   if (loading) {
     return <LoadingSpinner text="Loading property..." />;
   }
 
-  if (error && !form.formState.isDirty) {
+  if (loadError) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center max-w-md mx-auto">
         <AlertCircle className="h-10 w-10 text-red-400 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">{error}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">{loadError}</h3>
         <Link href="/properties">
           <Button
             variant="outline"
@@ -180,7 +202,7 @@ export default function EditPropertyPage() {
 
       {/* Form */}
       <form
-        onSubmit={form.handleSubmit(handleSave)}
+        onSubmit={form.handleSubmit(handleSave, handleInvalid)}
         className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5"
       >
         {/* Address */}
@@ -396,10 +418,10 @@ export default function EditPropertyPage() {
         </div>
 
         {/* Error / Success */}
-        {error && (
+        {saveError && (
           <div className="flex items-center gap-2 text-red-400 text-sm">
             <AlertCircle className="h-4 w-4" />
-            {error}
+            {saveError}
           </div>
         )}
         {saved && (

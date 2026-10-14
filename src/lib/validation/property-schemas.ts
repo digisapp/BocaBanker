@@ -1,5 +1,7 @@
 import { z } from 'zod'
 import { PROPERTY_PROPERTY_TYPES } from '@/constants/property-types'
+import { optionalIsoDate } from './dates'
+import { businessYear } from '@/lib/dates'
 
 export const propertySchema = z.object({
   address: z
@@ -25,7 +27,7 @@ export const propertySchema = z.object({
   purchase_price: z
     .number({ message: 'Purchase price is required' })
     .positive('Purchase price must be positive'),
-  purchase_date: z.string().optional().or(z.literal('')),
+  purchase_date: optionalIsoDate,
   building_value: z.number().positive('Building value must be positive').optional(),
   land_value: z.number().positive('Land value must be positive').optional(),
   square_footage: z
@@ -37,7 +39,8 @@ export const propertySchema = z.object({
     .number()
     .int('Year must be a whole number')
     .min(1800, 'Year must be 1800 or later')
-    .max(new Date().getFullYear(), 'Year cannot be in the future')
+    // Checked per call, not frozen at module load
+    .refine((y) => y <= businessYear(), 'Year cannot be in the future')
     .optional(),
   // Loan / Mortgage fields
   loan_amount: z.number().positive('Loan amount must be positive').optional(),
@@ -55,7 +58,7 @@ export const propertySchema = z.object({
   monthly_payment: z.number().positive('Monthly payment must be positive').optional(),
   loan_type: z.string().max(50, 'Loan type must be 50 characters or less').optional().or(z.literal('')),
   lender_name: z.string().max(100, 'Lender name must be 100 characters or less').optional().or(z.literal('')),
-  loan_origination_date: z.string().optional().or(z.literal('')),
+  loan_origination_date: optionalIsoDate,
 })
 
 export type PropertyInput = z.infer<typeof propertySchema>

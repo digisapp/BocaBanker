@@ -1,16 +1,19 @@
 import { AccessToken, RoomAgentDispatch, RoomConfiguration, TrackSource } from 'livekit-server-sdk'
 import { apiError } from '@/lib/api/response'
 import { logger } from '@/lib/logger'
-import { rateLimit, getClientIp } from '@/lib/rate-limit'
+import { businessToday } from '@/lib/dates'
+import { rateLimit, getClientIp, readDailyCounter } from '@/lib/rate-limit'
+import { WEB_VOICE_CALLS_PER_DAY, WEB_VOICE_COUNTER } from '@/lib/voice'
 
 /** Must match AGENT_NAME in voice-agent/agent.py (the phone agent also takes website calls). */
 const VOICE_AGENT_NAME = 'boca-banker-phone'
 
 // Each call can run up to 10 minutes of paid xAI + LiveKit time, and anyone can
 // start one without signing up, so these bound the worst-case daily spend.
+// The site-wide daily cap (WEB_VOICE_CALLS_PER_DAY) is counted by the voice
+// agent when a call really starts; here it is only checked.
 const CALLS_PER_MINUTE_PER_IP = 3
 const CALLS_PER_DAY_PER_IP = 6
-const CALLS_PER_DAY_TOTAL = 150
 const DAY_MS = 24 * 60 * 60_000
 
 function tooManyRequests(resetTime: number, message: string) {
@@ -34,6 +37,13 @@ export async function POST(request: Request) {
   }
 
   try {
+    // Checked first so a refused request doesn't spend the visitor's own calls
+    const callsToday = await readDailyCounter(WEB_VOICE_COUNTER, businessToday())
+    if (callsToday >= WEB_VOICE_CALLS_PER_DAY) {
+      logger.warn('voice', 'Daily website voice call cap reached')
+      return apiError("Voice chat is busy right now. Please type your question instead.", 429)
+    }
+
     const ip = getClientIp(request)
     const minute = await rateLimit(`voice-call:${ip}`, { maxRequests: CALLS_PER_MINUTE_PER_IP, windowMs: 60_000 })
     if (!minute.success) {
@@ -45,11 +55,6 @@ export async function POST(request: Request) {
         daily.resetTime,
         "You've reached today's voice chat limit. You can keep asking by text, or come back tomorrow."
       )
-    }
-    const total = await rateLimit('voice-call-day:all', { maxRequests: CALLS_PER_DAY_TOTAL, windowMs: DAY_MS })
-    if (!total.success) {
-      logger.warn('voice', 'Daily website voice call cap reached')
-      return tooManyRequests(total.resetTime, "Voice chat is busy right now. Please type your question instead.")
     }
 
     const id = crypto.randomUUID()

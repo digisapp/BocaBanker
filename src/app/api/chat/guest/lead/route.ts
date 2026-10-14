@@ -1,5 +1,7 @@
 import { z } from 'zod'
 import { apiError } from '@/lib/api/response'
+import { readJson } from '@/lib/api/request'
+import { ApiError } from '@/lib/api/auth'
 import { createGuestLeadCapture } from '@/lib/ai/tool-executors'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
@@ -19,7 +21,7 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const parsed = schema.safeParse(await request.json())
+    const parsed = schema.safeParse(await readJson(request))
     if (!parsed.success) {
       return apiError(parsed.error.issues[0]?.message || 'Validation failed', 400)
     }
@@ -27,11 +29,15 @@ export async function POST(request: Request) {
 
     const ip = getClientIp(request)
     const rl = await rateLimit(`guest-lead-form:${ip}`, { maxRequests: 5, windowMs: 60 * 60_000 })
-    if (!rl.success) {
+    const daily = rl.success
+      ? await rateLimit(`guest-lead-form-day:${ip}`, { maxRequests: 10, windowMs: 24 * 60 * 60_000 })
+      : rl
+    if (!daily.success) {
       return apiError('Too many requests. Please try again later.', 429)
     }
 
-    const result = await createGuestLeadCapture(ip)({
+    // No ip: the AI tool's silent per-IP cap must not swallow form submissions
+    const result = await createGuestLeadCapture()({
       buyerName: name,
       buyerEmail: email,
       buyerPhone: phone || undefined,
@@ -43,6 +49,7 @@ export async function POST(request: Request) {
     if (!result.success) return apiError('Something went wrong. Please try again.', 500)
     return Response.json({ success: true })
   } catch (error) {
+    if (error instanceof ApiError) return error.response
     logger.error('chat-api', 'Guest lead form error', error)
     return apiError('Internal Server Error')
   }

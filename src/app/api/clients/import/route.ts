@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { clients } from '@/db/schema';
+import { insertInBatches, type ImportRow } from '@/lib/csv/batch-insert';
 
 const MAX_IMPORT_ROWS = 5000;
 
@@ -16,9 +18,9 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
 
-    const body: ImportBody = await request.json();
+    const body = await readJson<ImportBody | null>(request);
 
-    if (!body.clients || !Array.isArray(body.clients) || body.clients.length === 0) {
+    if (!body || !Array.isArray(body.clients) || body.clients.length === 0) {
       return apiError('No client data provided', 400);
     }
 
@@ -39,7 +41,7 @@ export async function POST(request: NextRequest) {
     });
 
     const errors: { row: number; message: string }[] = [];
-    const validRows: (typeof clients.$inferInsert)[] = [];
+    const validRows: ImportRow<typeof clients.$inferInsert>[] = [];
 
     inputRows.forEach((row, index) => {
       const firstName = (row.first_name ?? '').trim();
@@ -77,44 +79,37 @@ export async function POST(request: NextRequest) {
         : [];
 
       validRows.push({
-        userId: user.id,
-        firstName,
-        lastName,
-        email: email || null,
-        phone: (row.phone ?? '').trim() || null,
-        company: (row.company ?? '').trim() || null,
-        address: (row.address ?? '').trim() || null,
-        city: (row.city ?? '').trim() || null,
-        state: (row.state ?? '').trim() || null,
-        zip: (row.zip ?? '').trim() || null,
-        status,
-        tags,
-        notes: (row.notes ?? '').trim() || null,
-        source: (row.source ?? '').trim() || null,
+        row: index + 1,
+        values: {
+          userId: user.id,
+          firstName,
+          lastName,
+          email: email || null,
+          phone: (row.phone ?? '').trim() || null,
+          company: (row.company ?? '').trim() || null,
+          address: (row.address ?? '').trim() || null,
+          city: (row.city ?? '').trim() || null,
+          state: (row.state ?? '').trim() || null,
+          zip: (row.zip ?? '').trim() || null,
+          status,
+          tags,
+          notes: (row.notes ?? '').trim() || null,
+          source: (row.source ?? '').trim() || null,
+        },
       });
     });
 
-    let imported = 0;
+    // Batch insert in chunks of 100 — a failed batch is retried row by row,
+    // and errors carry the real CSV row number
+    const inserted = await insertInBatches(
+      validRows,
+      (values) => db.insert(clients).values(values),
+      (message, err) => logger.error('clients-api', `Client import: ${message}`, err),
+    );
+    errors.push(...inserted.errors);
+    errors.sort((a, b) => a.row - b.row);
 
-    if (validRows.length > 0) {
-      // Batch insert in chunks of 100 — a failed batch is reported, not fatal
-      const BATCH_SIZE = 100;
-      for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
-        const batch = validRows.slice(i, i + BATCH_SIZE);
-        try {
-          await db.insert(clients).values(batch);
-          imported += batch.length;
-        } catch (batchError) {
-          logger.error('clients-api', `Failed to insert client batch starting at row ${i + 1}`, batchError);
-          errors.push({
-            row: i + 1,
-            message: `Failed to insert batch of ${batch.length} rows (rows ${i + 1}-${i + batch.length})`,
-          });
-        }
-      }
-    }
-
-    return NextResponse.json({ imported, errors });
+    return NextResponse.json({ imported: inserted.imported, errors });
   } catch (error) {
     if (error instanceof ApiError) return error.response;
     logger.error('clients-api', 'POST /api/clients/import error', error);

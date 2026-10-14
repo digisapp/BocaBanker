@@ -9,15 +9,28 @@ export const calculateMortgage = tool({
     'Calculate monthly mortgage payment, total interest, and amortization summary. ' +
     'Use this when a user asks about mortgage payments, affordability, or wants to compare loan scenarios.',
   inputSchema: z.object({
-    loanAmount: z.number().describe('The loan principal amount in dollars'),
+    loanAmount: z
+      .number()
+      .positive()
+      .describe(
+        'The amount borrowed in dollars. If the user gives a home price and down payment, pass the price as homePrice instead'
+      ),
     annualRate: z
       .number()
+      .min(0)
+      .max(30)
       .describe('The annual interest rate as a percentage (e.g., 6.5 for 6.5%)'),
-    termYears: z.number().describe('The loan term in years (e.g., 30, 15)'),
+    termYears: z.number().positive().max(50).describe('The loan term in years (e.g., 30, 15)'),
+    homePrice: z
+      .number()
+      .positive()
+      .optional()
+      .describe('Purchase price in dollars, when the user gives a price and down payment rather than a loan amount'),
     downPayment: z
       .number()
+      .min(0)
       .optional()
-      .describe('Down payment amount in dollars, if applicable'),
+      .describe('Down payment in dollars; only subtracted from homePrice, never from loanAmount'),
     propertyTax: z
       .number()
       .optional()
@@ -31,11 +44,13 @@ export const calculateMortgage = tool({
     loanAmount,
     annualRate,
     termYears,
+    homePrice,
     downPayment,
     propertyTax,
     insurance,
   }) => {
-    const principal = downPayment ? loanAmount - downPayment : loanAmount
+    // The down payment comes off the price, not off an amount already borrowed
+    const principal = homePrice ? Math.max(homePrice - (downPayment ?? 0), 0) : loanAmount
     const monthlyRate = annualRate / 100 / 12
     const numPayments = termYears * 12
 
@@ -109,31 +124,26 @@ export const CAPTURE_LEAD_DESCRIPTION =
 
 // ─── Schedule Consultation Tool ─────────────────────────────────────
 
-export const scheduleConsultation = tool({
-  description:
-    'Offer to schedule a consultation when a client expresses interest in a detailed analysis, ' +
-    'meeting, or follow-up. Returns a confirmation that the request was noted.',
-  inputSchema: z.object({
-    clientName: z.string().describe('Name of the client'),
-    clientEmail: z
-      .string()
-      .email()
-      .optional()
-      .describe('Email for sending calendar invite'),
-    topic: z
-      .string()
-      .describe(
-        'What the consultation is about (e.g., "cost segregation study for warehouse", "refinance options")'
-      ),
-    preferredTime: z
-      .string()
-      .optional()
-      .describe('Any time preference mentioned by the client'),
-  }),
-  execute: async ({ clientName, topic, preferredTime }) => {
-    return {
-      status: 'noted',
-      message: `Consultation request noted for ${clientName} regarding "${topic}".${preferredTime ? ` Preferred time: ${preferredTime}.` : ''} The team will follow up.`,
-    }
-  },
+export const scheduleConsultationSchema = z.object({
+  clientName: z.string().describe('Name of the client'),
+  clientEmail: z
+    .string()
+    .email()
+    .optional()
+    .describe('Email address, if provided'),
+  clientPhone: z.string().optional().describe('Phone number, if provided'),
+  topic: z
+    .string()
+    .describe(
+      'What the consultation is about (e.g., "cost segregation study for warehouse", "refinance options")'
+    ),
+  preferredTime: z
+    .string()
+    .optional()
+    .describe('Any time preference mentioned by the client'),
 })
+
+export const SCHEDULE_CONSULTATION_DESCRIPTION =
+  'Request a consultation when a client wants a detailed analysis, meeting, or follow-up. ' +
+  'Saves the request to the leads dashboard so Boca Banker can reach out. ' +
+  'Ask for an email or phone number first: without one, nobody can follow up.'

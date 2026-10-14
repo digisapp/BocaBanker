@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError, apiValidationError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { db } from '@/db';
 import { logger } from '@/lib/logger';
 import { clients } from '@/db/schema';
-import { eq, and, ilike, desc, asc, count, or } from 'drizzle-orm';
+import { eq, and, ilike, desc, asc, count, or, sql } from 'drizzle-orm';
 import { clientSchema } from '@/lib/validation/schemas';
 import { parsePagination, escapeLike } from '@/lib/api/params';
 
@@ -22,12 +23,14 @@ export async function GET(request: NextRequest) {
     // Build where conditions
     const conditions = [eq(clients.userId, user.id)];
 
-    if (search) {
-      const term = `%${escapeLike(search)}%`;
+    if (search.trim()) {
+      const term = `%${escapeLike(search.trim())}%`;
       conditions.push(
         or(
           ilike(clients.firstName, term),
           ilike(clients.lastName, term),
+          // "John Smith" spans both columns, so match the full name too
+          sql`(${clients.firstName} || ' ' || ${clients.lastName}) ILIKE ${term}`,
           ilike(clients.email, term),
           ilike(clients.company, term)
         )!
@@ -89,7 +92,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
 
-    const body = await request.json();
+    const body = await readJson(request);
     const parsed = clientSchema.safeParse(body);
 
     if (!parsed.success) {

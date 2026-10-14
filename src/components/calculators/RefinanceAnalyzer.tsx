@@ -107,7 +107,12 @@ export default function RefinanceAnalyzer({ initialValues }: RefinanceAnalyzerPr
     cumulativeSavings: Math.round(item.cumulativeSavings),
   })) ?? [];
 
-  const breakEvenYear = result ? Math.ceil(result.breakEvenMonths / 12) : 0;
+  const breakEvenYear = result?.breakEvenWithinTerm ? Math.ceil(result.breakEvenMonths / 12) : 0;
+
+  // Why a lower payment still loses money: when the payments alone already
+  // cost more in total, the longer term is to blame; otherwise the closing
+  // costs outweigh the payment savings.
+  const paymentSavingsBeforeClosing = result ? result.totalSavingsOverTerm + result.closingCosts : 0;
 
   return (
     <div className="space-y-6">
@@ -279,10 +284,14 @@ export default function RefinanceAnalyzer({ initialValues }: RefinanceAnalyzerPr
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Break-Even</span>
               </div>
               <p className="text-2xl font-bold text-gray-900">
-                {result.monthlySavings > 0 ? `${result.breakEvenMonths} mo` : 'N/A'}
+                {result.breakEvenWithinTerm
+                  ? `${result.breakEvenMonths} mo`
+                  : result.monthlySavings > 0 ? 'Never' : 'N/A'}
               </p>
               <p className="text-xs text-gray-400 mt-0.5">
-                {result.monthlySavings > 0 ? `~${Math.ceil(result.breakEvenMonths / 12)} years` : 'No savings'}
+                {result.breakEvenWithinTerm
+                  ? `~${Math.ceil(result.breakEvenMonths / 12)} years`
+                  : result.monthlySavings > 0 ? 'Not within the loan term' : 'No savings'}
               </p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -322,10 +331,12 @@ export default function RefinanceAnalyzer({ initialValues }: RefinanceAnalyzerPr
             }`}>
               {result.totalSavingsOverTerm > 0
                 ? result.monthlySavings > 0
-                  ? `Refinancing saves you ${formatCurrencyCents(result.monthlySavings)}/month. You break even in ${result.breakEvenMonths} months and save ${formatCurrency(result.totalSavingsOverTerm)} in total payments over the life of the loans, after closing costs.`
+                  ? `Refinancing saves you ${formatCurrencyCents(result.monthlySavings)}/month. ${result.breakEvenWithinTerm ? `You break even in ${result.breakEvenMonths} months and save` : 'You save'} ${formatCurrency(result.totalSavingsOverTerm)} in total payments over the life of the loans, after closing costs.`
                   : `Your payment rises by ${formatCurrencyCents(-result.monthlySavings)}/month, but the shorter term saves ${formatCurrency(result.totalSavingsOverTerm)} in total payments over the life of the loans, after closing costs.`
                 : result.monthlySavings > 0
-                  ? `Lower payment (${formatCurrencyCents(result.monthlySavings)}/month), but total payments on the new loan plus closing costs exceed what remains on the current loan by ${formatCurrency(-result.totalSavingsOverTerm)} (the longer term adds payments).`
+                  ? paymentSavingsBeforeClosing > 0
+                    ? `Lower payment (${formatCurrencyCents(result.monthlySavings)}/month), but the ${formatCurrency(result.closingCosts)} in closing costs exceeds the ${formatCurrency(paymentSavingsBeforeClosing)} saved in payments over the life of the loans.`
+                    : `Lower payment (${formatCurrencyCents(result.monthlySavings)}/month), but total payments on the new loan plus closing costs exceed what remains on the current loan by ${formatCurrency(-result.totalSavingsOverTerm)} (the longer term adds payments).`
                   : `Refinancing at this rate would not save money. Total payments plus closing costs exceed what remains on the current loan.`
               }
             </p>

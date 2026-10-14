@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { leadUpdateSchema, loanUpdateSchema, studyUpdateSchema } from './update-schemas'
+import { leadUpdateSchema, loanUpdateSchema, propertyUpdateSchema, studyUpdateSchema } from './update-schemas'
+import { firstIssueMessage } from './errors'
 import { parsePagination, isUuid, escapeLike } from '@/lib/api/params'
 
 describe('leadUpdateSchema', () => {
@@ -30,6 +31,69 @@ describe('leadUpdateSchema', () => {
     const r = leadUpdateSchema.safeParse({ buyer_email: null, notes: null, sale_date: '' })
     expect(r.success).toBe(true)
     if (r.success) expect(r.data.sale_date).toBeNull()
+  })
+
+  it('rejects impossible dates instead of letting Postgres 500', () => {
+    expect(leadUpdateSchema.safeParse({ sale_date: '2026-02-30' }).success).toBe(false)
+    expect(leadUpdateSchema.safeParse({ sale_date: '2026-02-28' }).success).toBe(true)
+  })
+})
+
+describe('propertyUpdateSchema', () => {
+  // What the edit page sends for a property created by lead conversion:
+  // no city/state/ZIP and the NOT NULL purchase price stored as 0.
+  const converted = {
+    address: '1 Ocean Blvd',
+    city: '',
+    state: '',
+    zip: '',
+    property_type: 'other',
+    purchase_price: 0,
+  }
+
+  it('saves a converted property (blank location, $0 price)', () => {
+    const r = propertyUpdateSchema.safeParse(converted)
+    expect(r.success).toBe(true)
+    if (r.success) {
+      expect(r.data.city).toBeNull()
+      expect(r.data.state).toBeNull()
+      expect(r.data.zip).toBeNull()
+      expect(r.data.purchase_price).toBe('0')
+    }
+  })
+
+  it('accepts null location fields and numeric strings', () => {
+    const r = propertyUpdateSchema.safeParse({
+      ...converted,
+      city: null,
+      zip: null,
+      state: 'fl',
+      purchase_price: '425000.00',
+      building_value: 0,
+    })
+    expect(r.success).toBe(true)
+    if (r.success) {
+      expect(r.data.state).toBe('FL')
+      expect(r.data.purchase_price).toBe('425000')
+      expect(r.data.building_value).toBe('0')
+    }
+  })
+
+  it('still validates non-empty values, naming the field', () => {
+    const zip = propertyUpdateSchema.safeParse({ ...converted, zip: '12' })
+    expect(zip.success).toBe(false)
+    if (!zip.success) expect(firstIssueMessage(zip.error)).toBe('zip: Please enter a valid ZIP code')
+
+    const state = propertyUpdateSchema.safeParse({ ...converted, state: 'Florida' })
+    expect(state.success).toBe(false)
+    if (!state.success) expect(firstIssueMessage(state.error)).toBe('state: Use 2-letter state abbreviation')
+
+    const price = propertyUpdateSchema.safeParse({ ...converted, purchase_price: undefined })
+    expect(price.success).toBe(false)
+    if (!price.success) expect(firstIssueMessage(price.error)).toBe('purchase_price: Purchase price is required')
+
+    expect(propertyUpdateSchema.safeParse({ ...converted, purchase_price: -1 }).success).toBe(false)
+    expect(propertyUpdateSchema.safeParse({ ...converted, purchase_date: '2026-02-30' }).success).toBe(false)
   })
 })
 

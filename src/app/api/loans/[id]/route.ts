@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, ApiError } from '@/lib/api/auth';
 import { apiError, apiValidationError } from '@/lib/api/response';
+import { readJson } from '@/lib/api/request';
 import { requireUuid } from '@/lib/api/params';
 import { loanUpdateSchema } from '@/lib/validation/update-schemas';
 import { db } from '@/db';
 import { loans, leads } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { logger } from '@/lib/logger';
+import { autoClosingDate } from '@/lib/loans';
+import { businessToday } from '@/lib/dates';
 
 export async function GET(
   _request: NextRequest,
@@ -42,7 +45,7 @@ export async function PUT(
     const user = await requireAuth();
 
     const id = requireUuid((await params).id, 'Loan not found');
-    const body = await request.json();
+    const body = await readJson(request);
 
     // Verify loan exists and belongs to user (full row needed for commission recompute)
     const [existing] = await db
@@ -130,6 +133,18 @@ export async function PUT(
     if (has('lender_name')) updateData.lenderName = d.lender_name;
     if (has('lead_id')) updateData.leadId = d.lead_id;
     if (has('notes')) updateData.notes = d.notes;
+
+    // Moving into funded/closed with no closing date on file or in the
+    // request: record today (Eastern). Commission MTD/YTD only counts loans
+    // with an actual closing date, and nothing else ever set it.
+    const stampedClosingDate = autoClosingDate({
+      previousStatus: existing.status,
+      nextStatus: has('status') ? d.status : existing.status,
+      existingDate: existing.actualClosingDate,
+      requestedDate: has('actual_closing_date') ? d.actual_closing_date : undefined,
+      today: businessToday(),
+    });
+    if (stampedClosingDate) updateData.actualClosingDate = stampedClosingDate;
 
     // Recompute commission only when loanAmount or commissionBps is being
     // updated, merging new values with the existing row.
